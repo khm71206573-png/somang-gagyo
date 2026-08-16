@@ -1,0 +1,42 @@
+import Image from "next/image";
+import { Bell } from "lucide-react";
+import type { GreetingInfo } from "@/lib/mock-data";
+
+interface GreetingHeaderProps {
+  greeting: GreetingInfo;
+}
+
+export function GreetingHeader({ greeting }: GreetingHeaderProps) {
+  return (
+    <header className="sticky top-0 z-40 flex w-full flex-col items-start justify-between bg-background px-margin-main pt-stack-md pb-stack-sm">
+      <div className="mb-1 flex w-full items-center justify-between">
+        <div className="flex flex-col">
+          <span className="mb-1 text-label-sm text-muted-foreground">
+            {greeting.dateLabel}
+          </span>
+          <h1 className="font-heading text-headline-md-mobile tracking-tight text-primary">
+            {greeting.userName}님, {greeting.greetingMessage}
+          </h1>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-surface-container-low active:scale-95"
+            aria-label="알림"
+          >
+            <Bell className="h-6 w-6" strokeWidth={1.75} />
+          </button>
+          <div className="h-10 w-10 cursor-pointer overflow-hidden rounded-full border border-border transition-transform duration-150 active:scale-95">
+            <Image
+              src={greeting.profileImageUrl}
+              alt="프로필"
+              width={40}
+              height={40}
+              className="h-full w-full object-cover"
+            />
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}

@@ -1,0 +1,278 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "pretendard/dist/web/variable/pretendardvariable.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * 온기 (On-gi) 디자인 시스템 토큰
+ * 출처: DESIGN.md (Stitch 프로젝트 "소망가교 어플")
+ */
+@theme inline {
+  /* ---- shadcn/ui 표준 토큰 (On-gi 팔레트로 매핑) ---- */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-be-vietnam-pro), Pretendard, sans-serif;
+  --font-heading: var(--font-plus-jakarta-sans), Pretendard, sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  /* ---- On-gi 확장 브랜드 토큰 ---- */
+  --color-cta: var(--cta);
+  --color-cta-foreground: var(--cta-foreground);
+  --color-primary-container: var(--primary-container);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-container: var(--success-container);
+  --color-success-container-foreground: var(--success-container-foreground);
+  --color-tertiary: var(--tertiary);
+  --color-tertiary-foreground: var(--tertiary-foreground);
+  --color-tertiary-container: var(--tertiary-container);
+  --color-tertiary-container-foreground: var(--tertiary-container-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-container: var(--warning-container);
+  --color-warning-container-foreground: var(--warning-container-foreground);
+  --color-secondary-fixed-dim: var(--secondary-fixed-dim);
+  --color-outline: var(--outline);
+  --color-outline-variant: var(--outline-variant);
+  --color-surface-dim: var(--surface-dim);
+  --color-surface-bright: var(--surface-bright);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-highest: var(--surface-container-highest);
+
+  /* ---- radius: DESIGN.md rounded 스케일 그대로 노출 ---- */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+
+  /* ---- spacing: DESIGN.md 간격 토큰 ---- */
+  --spacing-stack-sm: 8px;
+  --spacing-stack-md: 16px;
+  --spacing-stack-lg: 32px;
+  --spacing-gutter-card: 12px;
+  --spacing-margin-main: 20px;
+
+  /* ---- typography: DESIGN.md 타이포 스케일 ---- */
+  --text-display-lg: 2rem;
+  --text-display-lg--line-height: 2.75rem;
+  --text-display-lg--letter-spacing: -0.02em;
+  --text-display-lg--font-weight: 700;
+
+  --text-headline-md: 1.5rem;
+  --text-headline-md--line-height: 2rem;
+  --text-headline-md--letter-spacing: -0.01em;
+  --text-headline-md--font-weight: 700;
+
+  /* headline-md의 모바일 축소 변형 (Stitch 대시보드 헤더 타이틀용) */
+  --text-headline-md-mobile: 1.25rem;
+  --text-headline-md-mobile--line-height: 1.75rem;
+  --text-headline-md-mobile--letter-spacing: -0.01em;
+  --text-headline-md-mobile--font-weight: 700;
+
+  --text-title-lg: 1.25rem;
+  --text-title-lg--line-height: 1.75rem;
+  --text-title-lg--font-weight: 600;
+
+  --text-body-lg: 1.0625rem;
+  --text-body-lg--line-height: 1.625rem;
+  --text-body-lg--font-weight: 400;
+
+  --text-body-md: 0.9375rem;
+  --text-body-md--line-height: 1.375rem;
+  --text-body-md--font-weight: 400;
+
+  --text-label-sm: 0.8125rem;
+  --text-label-sm--line-height: 1.125rem;
+  --text-label-sm--letter-spacing: 0.02em;
+  --text-label-sm--font-weight: 500;
+}
+
+:root {
+  --radius: 0.75rem;
+
+  /* ---- On-gi 팔레트: 기본(light) ---- */
+  --background: #fcf9f8;
+  --foreground: #1b1c1c;
+  --card: #ffffff;
+  --card-foreground: #1b1c1c;
+  --popover: #ffffff;
+  --popover-foreground: #1b1c1c;
+
+  /* Primary(M3): 헤드라인·배지·강조 텍스트 톤 + 솔리드 버튼 배경 (Stitch 화면에서 실제로 bg-primary를 CTA 버튼에도 사용) */
+  --primary: #914723;
+  --primary-foreground: #ffffff;
+  --primary-container: #b05f38;
+
+  /* CTA: 문서상의 vivid "Point Color". 실제 화면에서는 버튼에 primary를 그대로 쓰므로 향후 별도 강조가 필요할 때만 사용 */
+  --cta: #c8724a;
+  --cta-foreground: #ffffff;
+
+  /* Secondary(M3): 진행률 바 등에 쓰이는 세이지 계열 그린 */
+  --secondary: #4c6545;
+  --secondary-foreground: #ffffff;
+
+  --muted: #f0eded;
+  --muted-foreground: #54433c;
+
+  --accent: #ffdbcd;
+  --accent-foreground: #76330f;
+
+  --destructive: #ba1a1a;
+  --destructive-foreground: #ffffff;
+
+  --border: #eae7e7;
+  --input: #e4e2e1;
+  --ring: #c8724a;
+
+  /* Success: Sage Green — 습관 완료, 진행률 */
+  --success: #7a9471;
+  --success-foreground: #ffffff;
+  --success-container: #ceebc3;
+  --success-container-foreground: #526b4b;
+
+  --tertiary: #5f5b57;
+  --tertiary-foreground: #ffffff;
+  --tertiary-container: #78746f;
+  --tertiary-container-foreground: #fffbff;
+
+  /* Warning: 성경통독 진행 상황 화면의 "밀린 분량" 경고 배너 */
+  --warning: #f57c00;
+  --warning-foreground: #ffffff;
+  --warning-container: #fff8e1;
+  --warning-container-foreground: #f57c00;
+
+  --secondary-fixed-dim: #b3cea8;
+
+  --outline: #87736b;
+  --outline-variant: #dac1b8;
+
+  --surface-dim: #dcd9d9;
+  --surface-bright: #fcf9f8;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f6f3f2;
+  --surface-container: #f0eded;
+  --surface-container-high: #eae7e7;
+  --surface-container-highest: #e4e2e1;
+
+  --chart-1: #c8724a;
+  --chart-2: #7a9471;
+  --chart-3: #914723;
+  --chart-4: #5f5b57;
+  --chart-5: #8a8580;
+
+  --sidebar: #f6f3f2;
+  --sidebar-foreground: #1b1c1c;
+  --sidebar-primary: #c8724a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ffdbcd;
+  --sidebar-accent-foreground: #76330f;
+  --sidebar-border: #e4e2e1;
+  --sidebar-ring: #c8724a;
+}
+
+/*
+ * 다크 모드 팔레트는 DESIGN.md에 정의되어 있지 않음(colorMode: LIGHT).
+ * shadcn 기본 다크 토큰을 유지하며, 추후 On-gi 다크 팔레트가 정의되면 교체 필요.
+ */
+.dark {
+  --background: oklch(0.147 0.004 49.25);
+  --foreground: oklch(0.985 0.001 106.423);
+  --card: oklch(0.216 0.006 56.043);
+  --card-foreground: oklch(0.985 0.001 106.423);
+  --popover: oklch(0.216 0.006 56.043);
+  --popover-foreground: oklch(0.985 0.001 106.423);
+  --primary: oklch(0.923 0.003 48.717);
+  --primary-foreground: oklch(0.216 0.006 56.043);
+  --primary-container: oklch(0.5 0.09 40);
+  --cta: #c8724a;
+  --cta-foreground: #ffffff;
+  --secondary: oklch(0.268 0.007 34.298);
+  --secondary-foreground: oklch(0.985 0.001 106.423);
+  --muted: oklch(0.268 0.007 34.298);
+  --muted-foreground: oklch(0.709 0.01 56.259);
+  --accent: oklch(0.268 0.007 34.298);
+  --accent-foreground: oklch(0.985 0.001 106.423);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0.001 106.423);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.553 0.013 58.071);
+  --success: #7a9471;
+  --success-foreground: #ffffff;
+  --success-container: #365331;
+  --success-container-foreground: #ceebc3;
+  --tertiary: oklch(0.709 0.01 56.259);
+  --tertiary-foreground: oklch(0.147 0.004 49.25);
+  --tertiary-container: oklch(0.45 0.01 67.558);
+  --tertiary-container-foreground: oklch(0.985 0.001 106.423);
+  --warning: #f57c00;
+  --warning-foreground: #ffffff;
+  --warning-container: oklch(0.3 0.05 60);
+  --warning-container-foreground: #ffb74d;
+  --secondary-fixed-dim: #4c6545;
+  --outline: oklch(0.553 0.013 58.071);
+  --outline-variant: oklch(0.374 0.01 67.558);
+  --surface-dim: oklch(0.147 0.004 49.25);
+  --surface-bright: oklch(0.268 0.007 34.298);
+  --surface-container-lowest: oklch(0.216 0.006 56.043);
+  --surface-container-low: oklch(0.216 0.006 56.043);
+  --surface-container: oklch(0.268 0.007 34.298);
+  --surface-container-high: oklch(0.32 0.008 40);
+  --surface-container-highest: oklch(0.374 0.01 67.558);
+  --chart-1: oklch(0.869 0.005 56.366);
+  --chart-2: oklch(0.553 0.013 58.071);
+  --chart-3: oklch(0.444 0.011 73.639);
+  --chart-4: oklch(0.374 0.01 67.558);
+  --chart-5: oklch(0.268 0.007 34.298);
+  --sidebar: oklch(0.216 0.006 56.043);
+  --sidebar-foreground: oklch(0.985 0.001 106.423);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0.001 106.423);
+  --sidebar-accent: oklch(0.268 0.007 34.298);
+  --sidebar-accent-foreground: oklch(0.985 0.001 106.423);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.553 0.013 58.071);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
