@@ -4,11 +4,11 @@ import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { TodayRegistrationStatus } from "@/components/admin/TodayRegistrationStatus";
 import { QuickManagementGrid } from "@/components/admin/QuickManagementGrid";
 import { PendingApprovalList } from "@/components/admin/PendingApprovalList";
-import { ScheduledNotificationCard } from "@/components/admin/ScheduledNotificationCard";
+import { SendNotificationsButton } from "@/components/admin/SendNotificationsButton";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
-import { quickManagementActions, scheduledNotification } from "@/lib/mock-data";
+import { quickManagementActions } from "@/lib/mock-data";
 import type { RegistrationStatusItem } from "@/lib/mock-data";
 import { useAdminPageData } from "@/hooks/useAdminPageData";
 
@@ -60,7 +60,7 @@ export default function AdminPage() {
         <TodayRegistrationStatus items={registrationItems} />
         <QuickManagementGrid actions={quickManagementActions} />
         <PendingApprovalList members={data.pendingMembers} />
-        <ScheduledNotificationCard notification={scheduledNotification} />
+        <SendNotificationsButton />
       </main>
       <BottomNav active="더보기" />
     </div>
