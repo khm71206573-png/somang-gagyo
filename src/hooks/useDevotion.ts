@@ -9,6 +9,7 @@ export interface DevotionDetailData {
   title: string;
   reference: string;
   verses: { number: number; text: string }[];
+  questions: { id: number; question: string }[];
 }
 
 async function fetchDevotion(id: string): Promise<DevotionDetailData> {

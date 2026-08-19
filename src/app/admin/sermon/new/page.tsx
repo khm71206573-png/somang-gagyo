@@ -43,6 +43,7 @@ function NewSermonForm() {
   const [summaryParagraphs, setSummaryParagraphs] = useState("");
   const [sharingQuestions, setSharingQuestions] = useState("");
   const [sermonSongs, setSermonSongs] = useState("");
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -50,6 +51,7 @@ function NewSermonForm() {
     hasPrefilled.current = true;
     setTitle(draft.title);
     setSermonDate(draft.sermon_date);
+    setImageUrls(draft.image_urls);
   }, [draft]);
 
   async function handleSubmit(event: FormEvent) {
@@ -72,6 +74,7 @@ function NewSermonForm() {
         summaryParagraphs,
         sharingQuestions,
         sermonSongs,
+        imageUrls,
       });
       if (draftId) {
         consumeSermonDraft(draftId);

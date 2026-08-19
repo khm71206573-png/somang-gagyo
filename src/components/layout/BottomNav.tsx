@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, BookOpen, Hand, Users, MoreHorizontal } from "lucide-react";
+import { Home, BookOpen, Music, Hand, Users, MoreHorizontal } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface NavItem {
@@ -14,6 +14,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: "홈", icon: Home, href: "/" },
   { label: "묵상", icon: BookOpen, href: "/devotion" },
+  { label: "찬양", icon: Music, href: "/song" },
   { label: "기도", icon: Hand, href: "/prayer" },
   { label: "교제", icon: Users, href: "/group" },
   { label: "더보기", icon: MoreHorizontal, href: "/more" },

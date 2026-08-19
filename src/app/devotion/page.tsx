@@ -10,7 +10,6 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { EmptyState } from "@/components/common/EmptyState";
-import { reflectionQuestions } from "@/lib/mock-data";
 import { useDevotionPageData } from "@/hooks/useDevotionPageData";
 
 export default function DevotionDetailPage() {
@@ -43,7 +42,9 @@ export default function DevotionDetailPage() {
       <main className="flex flex-col gap-stack-lg px-margin-main pt-stack-sm">
         <ScriptureHeading devotion={devotion} />
         <ScriptureCard verses={devotion.verses} />
-        <ReflectionQuestions questions={reflectionQuestions} />
+        {devotion.questions.length > 0 && (
+          <ReflectionQuestions questions={devotion.questions} />
+        )}
         <ReflectionInput />
         <SharedReflections
           reflections={sharedReflections}

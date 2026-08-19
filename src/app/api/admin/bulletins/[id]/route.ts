@@ -2,13 +2,9 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { linesToArray } from "@/lib/adminFormParsing";
 
-interface UpdateDevotionBody {
-  devotionDate?: string;
-  tag?: string;
-  title?: string;
-  reference?: string;
-  verses?: string;
-  questions?: string;
+interface UpdateBulletinBody {
+  bulletinDate?: string;
+  imageUrls?: string;
 }
 
 async function requireAdmin() {
@@ -49,7 +45,7 @@ export async function GET(
   if (errorResponse) return errorResponse;
 
   const { data, error } = await supabase
-    .from("devotions")
+    .from("bulletins")
     .select("*")
     .eq("id", id)
     .maybeSingle();
@@ -59,7 +55,7 @@ export async function GET(
   }
 
   if (!data) {
-    return NextResponse.json({ error: "묵상을 찾을 수 없어요." }, { status: 404 });
+    return NextResponse.json({ error: "주보를 찾을 수 없어요." }, { status: 404 });
   }
 
   return NextResponse.json(data);
@@ -73,41 +69,28 @@ export async function PATCH(
   const { supabase, errorResponse } = await requireAdmin();
   if (errorResponse) return errorResponse;
 
-  const body = (await request.json().catch(() => null)) as UpdateDevotionBody | null;
-  const devotionDate = body?.devotionDate?.trim();
-  const title = body?.title?.trim();
-  const reference = body?.reference?.trim();
-  const tag = body?.tag?.trim() || null;
-  const verseLines = linesToArray(body?.verses ?? "");
+  const body = (await request.json().catch(() => null)) as UpdateBulletinBody | null;
+  const bulletinDate = body?.bulletinDate?.trim();
+  const imageUrls = linesToArray(body?.imageUrls ?? "");
 
-  if (!devotionDate || !title || !reference || verseLines.length === 0) {
+  if (!bulletinDate || imageUrls.length === 0) {
     return NextResponse.json(
-      { error: "날짜, 제목, 본문 구절, 말씀 내용을 입력해주세요." },
+      { error: "날짜와 이미지 URL을 입력해주세요." },
       { status: 400 },
     );
   }
 
-  const verses = verseLines.map((text, index) => ({ number: index + 1, text }));
-  const questions = linesToArray(body?.questions ?? "").map((question, index) => ({
-    id: index + 1,
-    question,
-  }));
-
   const { error } = await supabase
-    .from("devotions")
+    .from("bulletins")
     .update({
-      devotion_date: devotionDate,
-      tag,
-      title,
-      reference,
-      verses,
-      questions,
+      bulletin_date: bulletinDate,
+      image_urls: imageUrls,
     })
     .eq("id", id);
 
   if (error) {
     const message =
-      error.code === "23505" ? "해당 날짜에 이미 등록된 묵상이 있어요." : error.message;
+      error.code === "23505" ? "해당 날짜에 이미 등록된 주보가 있어요." : error.message;
     return NextResponse.json({ error: message }, { status: error.code === "23505" ? 409 : 500 });
   }
 
@@ -122,7 +105,7 @@ export async function DELETE(
   const { supabase, errorResponse } = await requireAdmin();
   if (errorResponse) return errorResponse;
 
-  const { error } = await supabase.from("devotions").delete().eq("id", id);
+  const { error } = await supabase.from("bulletins").delete().eq("id", id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

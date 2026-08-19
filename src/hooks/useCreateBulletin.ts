@@ -2,21 +2,13 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-export interface CreateSermonInput {
-  sermonDate: string;
-  categoryLabel: string;
-  title: string;
-  reference: string;
-  preacher: string;
-  quote: string;
-  summaryParagraphs: string;
-  sharingQuestions: string;
-  sermonSongs: string;
-  imageUrls: string[];
+export interface CreateBulletinInput {
+  bulletinDate: string;
+  imageUrls: string;
 }
 
-async function createSermon(input: CreateSermonInput) {
-  const response = await fetch("/api/admin/sermons", {
+async function createBulletin(input: CreateBulletinInput) {
+  const response = await fetch("/api/admin/bulletins", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -24,17 +16,17 @@ async function createSermon(input: CreateSermonInput) {
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
-    throw new Error(data.error ?? "설교 등록에 실패했어요.");
+    throw new Error(data.error ?? "주보 등록에 실패했어요.");
   }
 
   return response.json();
 }
 
-export function useCreateSermon() {
+export function useCreateBulletin() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: createSermon,
+    mutationFn: createBulletin,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin"] });
       queryClient.invalidateQueries({ queryKey: ["group"] });

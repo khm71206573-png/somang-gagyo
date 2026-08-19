@@ -15,6 +15,7 @@ import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { useDevotion } from "@/hooks/useDevotion";
 import { useUpdateDevotion } from "@/hooks/useUpdateDevotion";
+import { useGenerateDevotionQuestions } from "@/hooks/useGenerateDevotionQuestions";
 import { arrayToLines } from "@/lib/adminFormParsing";
 
 export default function EditDevotionPage({
@@ -26,12 +27,15 @@ export default function EditDevotionPage({
   const router = useRouter();
   const { data, isLoading, isError, error, refetch, isFetching } = useDevotion(id);
   const { mutateAsync, isPending } = useUpdateDevotion();
+  const { mutateAsync: generateQuestions, isPending: isGenerating } =
+    useGenerateDevotionQuestions();
 
   const [devotionDate, setDevotionDate] = useState("");
   const [tag, setTag] = useState("");
   const [title, setTitle] = useState("");
   const [reference, setReference] = useState("");
   const [verses, setVerses] = useState("");
+  const [questions, setQuestions] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -41,6 +45,7 @@ export default function EditDevotionPage({
     setTitle(data.title);
     setReference(data.reference);
     setVerses(arrayToLines(data.verses.map((verse) => verse.text)));
+    setQuestions(arrayToLines(data.questions.map((q) => q.question)));
   }, [data]);
 
   if (isLoading) {
@@ -57,6 +62,20 @@ export default function EditDevotionPage({
     );
   }
 
+  async function handleGenerateQuestions() {
+    setFormError(null);
+    if (!reference.trim() || !verses.trim()) {
+      setFormError("본문 구절과 말씀 내용을 먼저 입력해주세요.");
+      return;
+    }
+    try {
+      const generated = await generateQuestions({ reference, verses });
+      setQuestions(generated.join("\n"));
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "묵상 질문 생성에 실패했어요.");
+    }
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setFormError(null);
@@ -67,7 +86,7 @@ export default function EditDevotionPage({
     }
 
     try {
-      await mutateAsync({ id, devotionDate, tag, title, reference, verses });
+      await mutateAsync({ id, devotionDate, tag, title, reference, verses, questions });
       router.push("/admin/devotion");
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "수정에 실패했어요.");
@@ -142,6 +161,32 @@ export default function EditDevotionPage({
               value={verses}
               onChange={(event) => setVerses(event.target.value)}
               placeholder={"하나님이 세상을 이처럼 사랑하사...\n이는 그를 믿는 자마다..."}
+              className={fieldTextarea}
+            />
+          </div>
+
+          <div className={fieldGroup}>
+            <div className="flex items-center justify-between">
+              <label htmlFor="questions" className={fieldLabel}>
+                묵상 질문 <span className="text-muted-foreground">(선택, 한 줄에 하나씩)</span>
+              </label>
+              <button
+                type="button"
+                onClick={handleGenerateQuestions}
+                disabled={isGenerating}
+                className="text-label-sm font-medium text-primary disabled:opacity-50"
+              >
+                {isGenerating ? "생성 중..." : "AI로 질문 자동 생성"}
+              </button>
+            </div>
+            <textarea
+              id="questions"
+              rows={4}
+              value={questions}
+              onChange={(event) => setQuestions(event.target.value)}
+              placeholder={
+                "오늘 본문에서 하나님은 어떤 분으로 묘사되고 있나요?\n이 말씀이 지금 내 삶과 어떻게 연결되나요?\n오늘 하루 실천하고 싶은 것은 무엇인가요?"
+              }
               className={fieldTextarea}
             />
           </div>

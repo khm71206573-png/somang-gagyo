@@ -2,30 +2,26 @@
 
 import { useState } from "react";
 import { GroupTabBar } from "@/components/group/GroupTabBar";
-import { SermonSummaryTab } from "@/components/group/SermonSummaryTab";
-import { SharingQuestionsTab } from "@/components/group/SharingQuestionsTab";
+import { BulletinTab } from "@/components/group/BulletinTab";
+import { SermonManuscriptTab } from "@/components/group/SermonManuscriptTab";
 import { PraiseSheetsTab } from "@/components/group/PraiseSheetsTab";
-import type {
-  GroupTab,
-  GroupTabId,
-  SermonSummary,
-  SharingQuestion,
-  PraiseSheet,
-} from "@/lib/mock-data";
+import type { GroupTab, GroupTabId, PraiseSheet } from "@/lib/mock-data";
 
 interface GroupTabsSectionProps {
   tabs: GroupTab[];
   defaultTabId: GroupTabId;
-  summary: SermonSummary;
-  questions: SharingQuestion[];
+  bulletinImageUrls: string[];
+  sermonImageUrls: string[];
+  sermonId: string | null;
   sheets: PraiseSheet[];
 }
 
 export function GroupTabsSection({
   tabs,
   defaultTabId,
-  summary,
-  questions,
+  bulletinImageUrls,
+  sermonImageUrls,
+  sermonId,
   sheets,
 }: GroupTabsSectionProps) {
   const [activeTabId, setActiveTabId] = useState<GroupTabId>(defaultTabId);
@@ -37,11 +33,15 @@ export function GroupTabsSection({
         activeTabId={activeTabId}
         onSelect={setActiveTabId}
       />
-      {activeTabId === "summary" && <SermonSummaryTab summary={summary} />}
-      {activeTabId === "questions" && (
-        <SharingQuestionsTab questions={questions} />
+      {activeTabId === "bulletin" && (
+        <BulletinTab imageUrls={bulletinImageUrls} />
       )}
-      {activeTabId === "praise" && <PraiseSheetsTab sheets={sheets} />}
+      {activeTabId === "manuscript" && (
+        <SermonManuscriptTab imageUrls={sermonImageUrls} />
+      )}
+      {activeTabId === "praise" && (
+        <PraiseSheetsTab sheets={sheets} sermonId={sermonId} />
+      )}
     </>
   );
 }

@@ -108,16 +108,17 @@ export interface DevotionVerse {
   text: string;
 }
 
+export interface ReflectionQuestion {
+  id: number;
+  question: string;
+}
+
 export interface DevotionDetail {
   dateLabel: string;
   title: string;
   reference: string;
   verses: DevotionVerse[];
-}
-
-export interface ReflectionQuestion {
-  id: number;
-  question: string;
+  questions: ReflectionQuestion[];
 }
 
 export interface SharedReflection {
@@ -144,15 +145,12 @@ export const devotionDetail: DevotionDetail = {
       text: "내 영혼을 소생시키시고 자기 이름을 위하여 의의 길로 인도하시는도다",
     },
   ],
+  questions: [
+    { id: 1, question: "오늘 본문에서 하나님은 어떤 분으로 묘사되고 있나요?" },
+    { id: 2, question: "내 삶에서 '푸른 풀밭'과 '쉴 만한 물 가'는 어디인가요?" },
+    { id: 3, question: "이 본문을 읽고 오늘 하루 실천하고 싶은 것은 무엇인가요?" },
+  ],
 };
-
-export const reflectionQuestions: ReflectionQuestion[] = [
-  { id: 1, question: "오늘 본문에서 하나님은 어떤 분으로 묘사되고 있나요?" },
-  {
-    id: 2,
-    question: "내 삶에서 '푸른 풀밭'과 '쉴 만한 물 가'는 어디인가요?",
-  },
-];
 
 export const sharedReflections: SharedReflection[] = [
   {
@@ -702,6 +700,7 @@ export type QuickManagementIcon =
   | "devotion"
   | "song"
   | "sermon"
+  | "bulletin"
   | "calendar"
   | "memberApproval"
   | "notification";
@@ -718,6 +717,7 @@ export const quickManagementActions: QuickManagementAction[] = [
   { id: "devotion", label: "묵상 등록", icon: "devotion", href: "/admin/devotion/new" },
   { id: "song", label: "찬양 등록", icon: "song", href: "/admin/song/new" },
   { id: "sermon", label: "설교 등록", icon: "sermon", href: "/admin/sermon/new" },
+  { id: "bulletin", label: "주보 등록", icon: "bulletin", href: "/admin/bulletin/new" },
   { id: "calendar", label: "일정 등록", icon: "calendar", href: "/admin/event/new" },
   {
     id: "memberApproval",
@@ -768,7 +768,7 @@ export const scheduledNotification: ScheduledNotification = {
   scheduleLabel: "오늘 오후 6:00 발송 예정",
 };
 
-export type GroupTabId = "summary" | "questions" | "praise";
+export type GroupTabId = "bulletin" | "manuscript" | "praise";
 
 export interface GroupTab {
   id: GroupTabId;
@@ -776,12 +776,12 @@ export interface GroupTab {
 }
 
 export const groupTabs: GroupTab[] = [
-  { id: "summary", label: "설교요약" },
-  { id: "questions", label: "나눔질문" },
+  { id: "bulletin", label: "주보" },
+  { id: "manuscript", label: "설교안" },
   { id: "praise", label: "찬양악보" },
 ];
 
-export const activeGroupTabId: GroupTabId = "summary";
+export const activeGroupTabId: GroupTabId = "bulletin";
 
 export const groupMeetingTitle = "가교모임 (2월 11일)";
 
@@ -799,44 +799,16 @@ export const sermonInfo: SermonInfo = {
   preacher: "김하온 목사",
 };
 
-export interface SermonSummary {
-  quote: string;
-  paragraphs: string[];
-}
-
-export const sermonSummary: SermonSummary = {
-  quote:
-    "예배는 형식이 아니라 마음의 중심을 하나님께 드리는 것입니다.",
-  paragraphs: [
-    "오늘 본문에서 예수님은 사마리아 여인에게 영과 진리로 예배할 때가 온다고 말씀하십니다. 참된 예배는 특정한 장소나 형식에 매여 있는 것이 아닙니다. 우리의 삶의 자리가 곧 예배의 자리가 되어야 합니다.",
-    "우리는 종종 주일 예배의 화려함이나 감정적인 고양을 예배의 전부로 착각하곤 합니다. 하지만 하나님이 찾으시는 예배자는 일상의 평범하고 때로는 고단한 순간 속에서도 하나님을 인정하고 그분의 뜻을 구하는 사람입니다.",
-    "이번 한 주, 우리가 머무는 가정, 직장, 학교가 거룩한 성전이 되기를 소망합니다. 우리의 정직한 마음과 순종의 발걸음이 하나님이 기뻐 받으시는 향기로운 제물이 될 것입니다.",
-  ],
-};
-
-export interface SharingQuestion {
-  id: number;
-  question: string;
-}
-
-export const sharingQuestions: SharingQuestion[] = [
-  { id: 1, question: "한 주 동안 가장 감사했던 순간은 언제인가요?" },
-  { id: 2, question: "오늘 말씀을 통해 새롭게 깨달은 점은 무엇인가요?" },
-  {
-    id: 3,
-    question: "이번 한 주간 구체적으로 실천하고 싶은 한 가지는 무엇인가요?",
-  },
-];
-
 export interface PraiseSheet {
   id: string;
   key: string;
   title: string;
+  sheetUrl: string | null;
 }
 
 export const praiseSheets: PraiseSheet[] = [
-  { id: "1", key: "G Key", title: "주님 마음 내게 주소서" },
-  { id: "2", key: "F Key", title: "예배합니다" },
+  { id: "1", key: "G Key", title: "주님 마음 내게 주소서", sheetUrl: null },
+  { id: "2", key: "F Key", title: "예배합니다", sheetUrl: null },
 ];
 
 export type MoreMenuIcon = "admin" | "biblePlan";

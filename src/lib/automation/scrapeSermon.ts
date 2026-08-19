@@ -26,6 +26,45 @@ function parseSermonDate(title: string): string | null {
   return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
 }
 
+const SERMON_IMAGES_BUCKET = "sermon-images";
+
+/**
+ * 원본 이미지를 다운로드해 sermon-images 버킷에 재호스팅하고 우리 쪽 public URL을 반환한다.
+ * 원본 교회 홈페이지가 HTTPS를 지원하지 않아(https 요청이 http로 리다이렉트됨) 그대로 쓰면
+ * 브라우저가 혼합 콘텐츠로 이미지를 차단하기 때문에, 스크랩 시점에 우리 Storage로 옮겨온다.
+ * 다운로드/업로드 실패는 해당 이미지만 건너뛴다 (전체 스크랩을 막지 않음).
+ */
+async function rehostImage(
+  supabase: ReturnType<typeof createServiceClient>,
+  sourceImageUrl: string,
+  wrId: number,
+  index: number,
+): Promise<string | null> {
+  try {
+    const response = await fetch(sourceImageUrl, {
+      headers: { "User-Agent": USER_AGENT },
+    });
+    if (!response.ok) return null;
+
+    const contentType = response.headers.get("content-type") ?? "image/png";
+    const buffer = await response.arrayBuffer();
+    const ext = contentType.split("/")[1]?.split(";")[0] ?? "png";
+    const path = `${wrId}/${index}.${ext}`;
+
+    const { error } = await supabase.storage
+      .from(SERMON_IMAGES_BUCKET)
+      .upload(path, buffer, { contentType, upsert: true });
+    if (error) return null;
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from(SERMON_IMAGES_BUCKET).getPublicUrl(path);
+    return publicUrl;
+  } catch {
+    return null;
+  }
+}
+
 export type ScrapeSermonResult =
   | { ok: true; inserted: true; draftId: string }
   | { ok: true; skipped: true; reason: string };
@@ -125,19 +164,19 @@ export async function scrapeSermon(): Promise<ScrapeSermonResult> {
     const detailHtml = await detailResponse.text();
     const $detail = cheerio.load(detailHtml);
 
-    const viewImageHrefs = $detail("#bo_v_con a.view_image")
-      .map((_, el) => $detail(el).attr("href"))
+    // NOTE: #bo_v_con a.view_image의 href는 실제 이미지가 아니라 "크게보기" HTML 뷰어
+    // 페이지 URL이라 <img> 태그로 못 그린다. 실제 이미지 파일은 항상 #bo_v_con img의
+    // src 속성에 있으므로 그것만 사용한다.
+    const rawImageUrls = $detail("#bo_v_con img")
+      .map((_, el) => $detail(el).attr("src"))
       .get()
-      .filter((href): href is string => Boolean(href));
+      .filter((src): src is string => Boolean(src))
+      .map((src) => new URL(src, sourceUrl).toString());
 
-    if (viewImageHrefs.length > 0) {
-      imageUrls = viewImageHrefs;
-    } else {
-      imageUrls = $detail("#bo_v_con img")
-        .map((_, el) => $detail(el).attr("src"))
-        .get()
-        .filter((src): src is string => Boolean(src));
-    }
+    const rehosted = await Promise.all(
+      rawImageUrls.map((url, index) => rehostImage(supabase, url, wrId, index)),
+    );
+    imageUrls = rehosted.filter((url): url is string => Boolean(url));
   } catch (error) {
     if (error instanceof HttpError) throw error;
     const message = error instanceof Error ? error.message : "게시글 상세 스크랩에 실패했어요.";

@@ -12,6 +12,7 @@ interface CreateSermonBody {
   summaryParagraphs?: string;
   sharingQuestions?: string;
   sermonSongs?: string;
+  imageUrls?: string[];
 }
 
 function parseSermonSongs(text: string) {
@@ -93,6 +94,7 @@ export async function POST(request: Request) {
     question,
   }));
   const sermonSongs = parseSermonSongs(body?.sermonSongs ?? "");
+  const imageUrls = Array.isArray(body?.imageUrls) ? body.imageUrls : [];
 
   const { data: sermon, error: sermonError } = await supabase
     .from("sermons")
@@ -105,6 +107,7 @@ export async function POST(request: Request) {
       quote: body?.quote?.trim() || null,
       summary_paragraphs: summaryParagraphs,
       sharing_questions: sharingQuestions,
+      image_urls: imageUrls,
       created_by: user.id,
     })
     .select("id")

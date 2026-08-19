@@ -36,6 +36,7 @@ export default function EditSermonPage({
   const [summaryParagraphs, setSummaryParagraphs] = useState("");
   const [sharingQuestions, setSharingQuestions] = useState("");
   const [sermonSongs, setSermonSongs] = useState("");
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -59,6 +60,7 @@ export default function EditSermonPage({
         ),
       ),
     );
+    setImageUrls(data.image_urls);
   }, [data]);
 
   if (isLoading) {
@@ -96,6 +98,7 @@ export default function EditSermonPage({
         summaryParagraphs,
         sharingQuestions,
         sermonSongs,
+        imageUrls,
       });
       router.push("/admin/sermon");
     } catch (err) {
@@ -107,6 +110,22 @@ export default function EditSermonPage({
     <div className="relative mx-auto min-h-screen w-full max-w-[480px] bg-background pb-[104px]">
       <AdminFormTopBar title="설교 수정" />
       <main className="px-margin-main pt-stack-sm">
+        {imageUrls.length > 0 && (
+          <div className="mb-stack-md flex flex-col gap-2">
+            <p className={fieldLabel}>설교안 원문 이미지 ({imageUrls.length}장)</p>
+            <div className="flex gap-2 overflow-x-auto">
+              {imageUrls.map((url) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={url}
+                  src={url}
+                  alt="설교안 원문 이미지"
+                  className="h-20 w-auto shrink-0 rounded-md border border-outline-variant/40"
+                />
+              ))}
+            </div>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="flex flex-col gap-stack-md">
           <div className={fieldGroup}>
             <label htmlFor="sermonDate" className={fieldLabel}>

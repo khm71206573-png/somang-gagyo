@@ -13,7 +13,7 @@ export async function fetchDevotionPageData(
 ): Promise<DevotionPageData | null> {
   const { data: devotionRow } = await supabase
     .from("devotions")
-    .select("id, devotion_date, title, reference, verses")
+    .select("id, devotion_date, title, reference, verses, questions")
     .order("devotion_date", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -33,11 +33,17 @@ export async function fetchDevotionPageData(
     text: string;
   }[];
 
+  const questions = (devotionRow.questions ?? []) as {
+    id: number;
+    question: string;
+  }[];
+
   const devotion: DevotionDetail = {
     dateLabel: formatDateLabel(new Date(`${devotionRow.devotion_date}T00:00:00`)),
     title: devotionRow.title,
     reference: devotionRow.reference,
     verses,
+    questions,
   };
 
   const sharedReflections: SharedReflection[] = (noteRows ?? []).map((row) => {

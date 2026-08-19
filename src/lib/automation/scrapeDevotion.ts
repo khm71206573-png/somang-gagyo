@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import { createServiceClient } from "@/lib/supabase/service";
 import { HttpError } from "./HttpError";
+import { generateDevotionQuestions } from "./generateDevotionQuestions";
 
 const DEVOTION_URL = "https://sum.su.or.kr:8888/bible/today";
 const USER_AGENT =
@@ -99,6 +100,14 @@ export async function scrapeDevotion(): Promise<ScrapeDevotionResult> {
     throw new HttpError(message, 502);
   }
 
+  let questions: { id: number; question: string }[] = [];
+  try {
+    questions = await generateDevotionQuestions(reference, verses);
+  } catch (error) {
+    // 질문 자동 생성 실패는 묵상 등록 자체를 막지 않는다 (빈 배열로 대체).
+    console.error("묵상 질문 자동 생성 실패:", error);
+  }
+
   const supabase = createServiceClient();
 
   const { error: insertError } = await supabase.from("devotions").insert({
@@ -107,6 +116,7 @@ export async function scrapeDevotion(): Promise<ScrapeDevotionResult> {
     title,
     reference,
     verses,
+    questions,
     created_by: null,
   });
 

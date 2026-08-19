@@ -8,6 +8,7 @@ export interface CreateDevotionInput {
   title: string;
   reference: string;
   verses: string;
+  questions: string;
 }
 
 async function createDevotion(input: CreateDevotionInput) {

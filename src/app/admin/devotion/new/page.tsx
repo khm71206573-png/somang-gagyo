@@ -12,18 +12,36 @@ import {
   submitButton,
 } from "@/components/admin/adminFormStyles";
 import { useCreateDevotion } from "@/hooks/useCreateDevotion";
+import { useGenerateDevotionQuestions } from "@/hooks/useGenerateDevotionQuestions";
 import { toDateString } from "@/lib/supabase/queries/utils";
 
 export default function NewDevotionPage() {
   const router = useRouter();
   const { mutateAsync, isPending } = useCreateDevotion();
+  const { mutateAsync: generateQuestions, isPending: isGenerating } =
+    useGenerateDevotionQuestions();
 
   const [devotionDate, setDevotionDate] = useState(toDateString(new Date()));
   const [tag, setTag] = useState("");
   const [title, setTitle] = useState("");
   const [reference, setReference] = useState("");
   const [verses, setVerses] = useState("");
+  const [questions, setQuestions] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  async function handleGenerateQuestions() {
+    setError(null);
+    if (!reference.trim() || !verses.trim()) {
+      setError("본문 구절과 말씀 내용을 먼저 입력해주세요.");
+      return;
+    }
+    try {
+      const generated = await generateQuestions({ reference, verses });
+      setQuestions(generated.join("\n"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "묵상 질문 생성에 실패했어요.");
+    }
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -35,7 +53,7 @@ export default function NewDevotionPage() {
     }
 
     try {
-      await mutateAsync({ devotionDate, tag, title, reference, verses });
+      await mutateAsync({ devotionDate, tag, title, reference, verses, questions });
       router.push("/admin");
     } catch (err) {
       setError(err instanceof Error ? err.message : "등록에 실패했어요.");
@@ -110,6 +128,32 @@ export default function NewDevotionPage() {
               value={verses}
               onChange={(event) => setVerses(event.target.value)}
               placeholder={"하나님이 세상을 이처럼 사랑하사...\n이는 그를 믿는 자마다..."}
+              className={fieldTextarea}
+            />
+          </div>
+
+          <div className={fieldGroup}>
+            <div className="flex items-center justify-between">
+              <label htmlFor="questions" className={fieldLabel}>
+                묵상 질문 <span className="text-muted-foreground">(선택, 한 줄에 하나씩)</span>
+              </label>
+              <button
+                type="button"
+                onClick={handleGenerateQuestions}
+                disabled={isGenerating}
+                className="text-label-sm font-medium text-primary disabled:opacity-50"
+              >
+                {isGenerating ? "생성 중..." : "AI로 질문 자동 생성"}
+              </button>
+            </div>
+            <textarea
+              id="questions"
+              rows={4}
+              value={questions}
+              onChange={(event) => setQuestions(event.target.value)}
+              placeholder={
+                "오늘 본문에서 하나님은 어떤 분으로 묘사되고 있나요?\n이 말씀이 지금 내 삶과 어떻게 연결되나요?\n오늘 하루 실천하고 싶은 것은 무엇인가요?"
+              }
               className={fieldTextarea}
             />
           </div>

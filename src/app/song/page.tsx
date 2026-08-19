@@ -42,7 +42,7 @@ export default function SongPage() {
         <SongLyrics stanzas={data.songDetail.lyrics} />
         <PastSongsScroll songs={data.pastSongs} />
       </main>
-      <BottomNav active="묵상" />
+      <BottomNav />
     </div>
   );
 }

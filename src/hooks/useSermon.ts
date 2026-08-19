@@ -22,6 +22,7 @@ export interface SermonDetailData {
   quote: string | null;
   summary_paragraphs: string[];
   sharing_questions: { id: number; question: string }[];
+  image_urls: string[];
   sermonSongs: SermonSongRow[];
 }
 
