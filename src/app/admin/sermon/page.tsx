@@ -8,6 +8,7 @@ import { ErrorState } from "@/components/common/ErrorState";
 import { useSermonList } from "@/hooks/useSermonList";
 import { useDeleteSermon } from "@/hooks/useDeleteSermon";
 import { useSermonDraftList } from "@/hooks/useSermonDraftList";
+import { TriggerSermonScrapeButton } from "@/components/admin/TriggerSermonScrapeButton";
 
 export default function SermonListPage() {
   const { data, isLoading, isError, error, refetch, isFetching } = useSermonList();
@@ -33,6 +34,8 @@ export default function SermonListPage() {
     <div className="relative mx-auto min-h-screen w-full max-w-[480px] bg-background pb-stack-lg">
       <AdminFormTopBar title="설교 관리" />
       <main className="flex flex-col gap-stack-md px-margin-main pt-stack-sm">
+        <TriggerSermonScrapeButton />
+
         {drafts && drafts.length > 0 && (
           <div className="flex flex-col gap-2">
             <h2 className="text-body-md font-semibold text-foreground">가져온 설교 초안</h2>
