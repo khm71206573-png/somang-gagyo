@@ -7,28 +7,24 @@ const CHANNELS_URL =
   "https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true";
 const PLAYLIST_ITEMS_URL = "https://www.googleapis.com/youtube/v3/playlistItems";
 
-interface LikedSong {
+export interface LikedSong {
   title: string;
   artist: string | null;
   coverImageUrl: string | null;
   youtubeUrl: string;
 }
 
-export type SyncSongResult =
-  | { ok: true; inserted: true; youtubeUrl: string }
+export type FetchLikedSongResult =
+  | ({ ok: true; skipped: false } & LikedSong)
   | { ok: true; skipped: true; reason: string };
 
 /**
- * 유튜브 "나중에 볼 동영상"이 아닌 좋아요 표시한 동영상 목록에서 최신 곡을 가져와
- * songs/daily_songs 테이블에 저장한다.
- * Cron·관리자 수동 실행 버튼 양쪽에서 동일한 동기화 로직을 쓰기 위한 공용 함수.
+ * 유튜브 "좋아요 표시한 동영상" 목록에서 가장 최근 곡 정보를 가져온다 (DB에 쓰지 않음).
+ * 관리자 등록 화면에서 입력칸을 자동으로 채우는 용도.
  *
  * YouTube API 호출 실패는 HttpError(502)를 throw한다.
- * songs/daily_songs insert 실패(23505 제외)는 HttpError(500)를 throw한다.
  */
-export async function syncSong(): Promise<SyncSongResult> {
-  let likedSong: LikedSong | null;
-
+export async function fetchLikedSong(): Promise<FetchLikedSongResult> {
   try {
     const accessToken = await getAccessToken();
     const authHeaders = { Authorization: `Bearer ${accessToken}` };
@@ -90,7 +86,9 @@ export async function syncSong(): Promise<SyncSongResult> {
       (snippet.thumbnails?.default?.url as string | undefined) ??
       null;
 
-    likedSong = {
+    return {
+      ok: true,
+      skipped: false,
       title,
       artist,
       coverImageUrl,
@@ -101,7 +99,27 @@ export async function syncSong(): Promise<SyncSongResult> {
     const message = error instanceof Error ? error.message : "유튜브 좋아요 목록 동기화에 실패했어요.";
     throw new HttpError(message, 502);
   }
+}
 
+export type SyncSongResult =
+  | { ok: true; inserted: true; youtubeUrl: string }
+  | { ok: true; skipped: true; reason: string };
+
+/**
+ * 유튜브 좋아요 표시한 동영상 목록에서 최신 곡을 가져와 songs/daily_songs 테이블에 저장한다.
+ * Cron·관리자 수동 실행 버튼 양쪽에서 동일한 동기화 로직을 쓰기 위한 공용 함수.
+ *
+ * YouTube API 호출 실패는 HttpError(502)를 throw한다.
+ * songs/daily_songs insert 실패(23505 제외)는 HttpError(500)를 throw한다.
+ */
+export async function syncSong(): Promise<SyncSongResult> {
+  const fetched = await fetchLikedSong();
+
+  if (fetched.skipped) {
+    return fetched;
+  }
+
+  const likedSong: LikedSong = fetched;
   const supabase = createServiceClient();
 
   const { data: existingSong } = await supabase

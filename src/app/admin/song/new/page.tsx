@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { Download } from "lucide-react";
 import { AdminFormTopBar } from "@/components/admin/AdminFormTopBar";
 import {
   fieldGroup,
@@ -12,11 +13,14 @@ import {
   submitButton,
 } from "@/components/admin/adminFormStyles";
 import { useCreateSong } from "@/hooks/useCreateSong";
+import { useFetchSongSource } from "@/hooks/useFetchSongSource";
 import { toDateString } from "@/lib/supabase/queries/utils";
 
 export default function NewSongPage() {
   const router = useRouter();
   const { mutateAsync, isPending } = useCreateSong();
+  const { mutateAsync: fetchSource, isPending: isFetchingSource } =
+    useFetchSongSource();
 
   const [songDate, setSongDate] = useState(toDateString(new Date()));
   const [title, setTitle] = useState("");
@@ -26,6 +30,19 @@ export default function NewSongPage() {
   const [lyrics, setLyrics] = useState("");
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  async function handleFetchSource() {
+    setError(null);
+    try {
+      const source = await fetchSource();
+      setTitle(source.title);
+      setArtist(source.artist);
+      setCoverImageUrl(source.coverImageUrl);
+      setYoutubeUrl(source.youtubeUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "유튜브 좋아요 목록을 가져오지 못했어요.");
+    }
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -56,6 +73,16 @@ export default function NewSongPage() {
     <div className="relative mx-auto min-h-screen w-full max-w-[480px] bg-background pb-[104px]">
       <AdminFormTopBar title="찬양 등록" listHref="/admin/song" />
       <main className="px-margin-main pt-stack-sm">
+        <button
+          type="button"
+          onClick={handleFetchSource}
+          disabled={isFetchingSource}
+          className="mb-stack-md flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-3 text-label-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+        >
+          <Download className="h-4 w-4" />
+          {isFetchingSource ? "가져오는 중..." : "유튜브 좋아요 목록에서 가져와 자동 입력"}
+        </button>
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-stack-md">
           <div className={fieldGroup}>
             <label htmlFor="songDate" className={fieldLabel}>

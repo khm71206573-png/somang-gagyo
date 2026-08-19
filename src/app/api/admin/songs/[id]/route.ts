@@ -174,10 +174,30 @@ export async function DELETE(
   const { supabase, errorResponse } = await requireAdmin();
   if (errorResponse) return errorResponse;
 
+  const { data: existing } = await supabase
+    .from("daily_songs")
+    .select("song_id")
+    .eq("id", id)
+    .maybeSingle();
+
   const { error } = await supabase.from("daily_songs").delete().eq("id", id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // daily_songs 삭제 후 이 곡을 참조하는 다른 daily_songs가 없으면
+  // songs 행도 함께 지운다 (그대로 두면 고아 행이 되어, syncSong의
+  // youtube_url 중복 체크에 계속 걸려 같은 영상을 다시는 못 가져오게 됨).
+  if (existing?.song_id) {
+    const { count } = await supabase
+      .from("daily_songs")
+      .select("id", { count: "exact", head: true })
+      .eq("song_id", existing.song_id);
+
+    if (!count) {
+      await supabase.from("songs").delete().eq("id", existing.song_id);
+    }
   }
 
   return NextResponse.json({ ok: true });
