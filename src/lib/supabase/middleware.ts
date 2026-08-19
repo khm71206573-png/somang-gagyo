@@ -45,20 +45,48 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const { data: member } = await supabase
-    .from("members")
-    .select("status")
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("status, role, name, gyogyo")
     .eq("id", user.id)
     .maybeSingle();
 
-  const isApproved = member?.status === "approved";
+  if (profileError) {
+    console.error(
+      `[middleware] profiles 조회 실패 (user=${user.id}, path=${pathname}):`,
+      profileError.message,
+    );
+  }
 
-  if (!isApproved) {
+  // profiles 행이 아직 없는 극히 드문 경우(가입 트리거 지연 등)도 pending으로 취급
+  const status = profile?.status ?? "pending";
+
+  // profiles.status에는 별도의 "온보딩 전" 값이 없으므로, 실명/소속 가교가
+  // 아직 채워지지 않은 상태를 "온보딩 필요"로 취급한다. 이미 승인되었거나
+  // 거절된 계정은 (관리자가 임의로 값 없이 처리했더라도) 다시 온보딩으로
+  // 되돌리지 않는다.
+  const needsOnboarding = status === "pending" && (!profile?.name || !profile?.gyogyo);
+
+  if (needsOnboarding) {
+    if (pathname === "/onboarding") return response;
+    return NextResponse.redirect(new URL("/onboarding", request.url));
+  }
+
+  if (status !== "approved") {
+    // pending(온보딩 완료)/rejected는 /pending 페이지가 상태에 따라 다른 문구를 보여준다
     if (pathname === "/pending") return response;
     return NextResponse.redirect(new URL("/pending", request.url));
   }
 
-  if (pathname === "/login" || pathname === "/pending") {
+  if (pathname.startsWith("/admin") && profile?.role !== "admin") {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  if (
+    pathname === "/login" ||
+    pathname === "/pending" ||
+    pathname === "/onboarding"
+  ) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 

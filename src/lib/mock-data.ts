@@ -715,10 +715,10 @@ export interface QuickManagementAction {
 }
 
 export const quickManagementActions: QuickManagementAction[] = [
-  { id: "devotion", label: "묵상 등록", icon: "devotion", href: "/devotion" },
-  { id: "song", label: "찬양 등록", icon: "song", href: "/song" },
-  { id: "sermon", label: "설교 등록", icon: "sermon" },
-  { id: "calendar", label: "일정 등록", icon: "calendar", href: "/calendar" },
+  { id: "devotion", label: "묵상 등록", icon: "devotion", href: "/admin/devotion/new" },
+  { id: "song", label: "찬양 등록", icon: "song", href: "/admin/song/new" },
+  { id: "sermon", label: "설교 등록", icon: "sermon", href: "/admin/sermon/new" },
+  { id: "calendar", label: "일정 등록", icon: "calendar", href: "/admin/event/new" },
   {
     id: "memberApproval",
     label: "교인 승인",
@@ -736,12 +736,26 @@ export const quickManagementActions: QuickManagementAction[] = [
 export interface PendingMember {
   id: string;
   name: string;
+  groupName: string;
+  phone: string;
   appliedLabel: string;
 }
 
 export const pendingMembers: PendingMember[] = [
-  { id: "1", name: "이하은", appliedLabel: "오늘 09:12 신청" },
-  { id: "2", name: "박지훈", appliedLabel: "어제 18:45 신청" },
+  {
+    id: "1",
+    name: "이하은",
+    groupName: "1가교",
+    phone: "010-1234-5678",
+    appliedLabel: "오늘 09:12 신청",
+  },
+  {
+    id: "2",
+    name: "박지훈",
+    groupName: "은혜가교",
+    phone: "010-2345-6789",
+    appliedLabel: "어제 18:45 신청",
+  },
 ];
 
 export interface ScheduledNotification {

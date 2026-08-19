@@ -23,18 +23,12 @@ async function fetchMonthDots(
   const nextMonth = month === 12 ? { y: year + 1, m: 1 } : { y: year, m: month + 1 };
   const monthEnd = `${nextMonth.y}-${String(nextMonth.m).padStart(2, "0")}-01`;
 
-  const [{ data: events }, { data: members }] = await Promise.all([
-    supabase
-      .from("events")
-      .select("event_date, type")
-      .gte("event_date", monthStart)
-      .lt("event_date", monthEnd),
-    supabase
-      .from("members")
-      .select("birth_date")
-      .eq("status", "approved")
-      .not("birth_date", "is", null),
-  ]);
+  // 생일은 profiles에 birth_date 컬럼이 없어 events(type='birthday')로만 표시한다.
+  const { data: events } = await supabase
+    .from("events")
+    .select("event_date, type")
+    .gte("event_date", monthStart)
+    .lt("event_date", monthEnd);
 
   const dotMap = new Map<number, Set<CalendarEventDot>>();
 
@@ -43,14 +37,6 @@ async function fetchMonthDots(
     const dot: CalendarEventDot = event.type === "birthday" ? "birthday" : "church";
     if (!dotMap.has(day)) dotMap.set(day, new Set());
     dotMap.get(day)!.add(dot);
-  }
-
-  for (const member of members ?? []) {
-    if (!member.birth_date) continue;
-    const { month: birthMonth, day } = monthDayOf(member.birth_date);
-    if (birthMonth !== month) continue;
-    if (!dotMap.has(day)) dotMap.set(day, new Set());
-    dotMap.get(day)!.add("birthday");
   }
 
   return dotMap;
@@ -100,44 +86,19 @@ async function fetchTodaySchedule(
   supabase: SupabaseClient,
   todayStr: string,
 ): Promise<ScheduleEvent[]> {
-  const { month: todayMonth, day: todayDay } = monthDayOf(todayStr);
+  const { data: events } = await supabase
+    .from("events")
+    .select("id, title, description, location, start_time, type")
+    .eq("event_date", todayStr)
+    .order("start_time", { ascending: true });
 
-  const [{ data: events }, { data: members }] = await Promise.all([
-    supabase
-      .from("events")
-      .select("id, title, description, location, start_time, type")
-      .eq("event_date", todayStr)
-      .order("start_time", { ascending: true }),
-    supabase
-      .from("members")
-      .select("id, name, profile_image_url, birth_date")
-      .eq("status", "approved")
-      .not("birth_date", "is", null),
-  ]);
-
-  const churchEvents: ScheduleEvent[] = (events ?? []).map((event) => ({
+  return (events ?? []).map((event) => ({
     id: event.id,
     type: event.type === "birthday" ? "birthday" : "church",
     title: event.title,
     subtitle: event.location ?? event.description ?? "",
     time: event.start_time ? event.start_time.slice(0, 5) : undefined,
   }));
-
-  const birthdayEvents: ScheduleEvent[] = (members ?? [])
-    .filter((member) => {
-      if (!member.birth_date) return false;
-      const { month, day } = monthDayOf(member.birth_date);
-      return month === todayMonth && day === todayDay;
-    })
-    .map((member) => ({
-      id: `birthday-${member.id}`,
-      type: "birthday" as const,
-      title: `${member.name}님 생일`,
-      subtitle: "축하 메시지를 보내보세요",
-      avatarUrl: member.profile_image_url ?? avatarFallback(member.name),
-    }));
-
-  return [...churchEvents, ...birthdayEvents];
 }
 
 export async function fetchCalendarPageData(
@@ -156,10 +117,10 @@ export async function fetchCalendarPageData(
   const month = now.getMonth() + 1;
   const todayStr = toDateString(now);
 
-  const [{ data: member }, dotMap, scheduleEvents] = await Promise.all([
+  const [{ data: profile }, dotMap, scheduleEvents] = await Promise.all([
     supabase
-      .from("members")
-      .select("name, profile_image_url")
+      .from("profiles")
+      .select("name, avatar_url")
       .eq("id", user.id)
       .maybeSingle(),
     fetchMonthDots(supabase, year, month),
@@ -168,7 +129,7 @@ export async function fetchCalendarPageData(
 
   return {
     profileImageUrl:
-      member?.profile_image_url ?? avatarFallback(member?.name ?? "성도"),
+      profile?.avatar_url ?? avatarFallback(profile?.name ?? "성도"),
     calendarMonth: buildCalendarMonth(year, month, dotMap, now.getDate()),
     selectedDateLabel: `${month}월 ${now.getDate()}일 일정`,
     scheduleEvents,

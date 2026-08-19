@@ -23,7 +23,7 @@ export async function fetchDevotionPageData(
   const { data: noteRows } = await supabase
     .from("devotion_notes")
     .select(
-      "id, content, created_at, member_id, member:members(name, profile_image_url)",
+      "id, content, created_at, member_id, member:profiles(name, avatar_url)",
     )
     .eq("devotion_id", devotionRow.id)
     .order("created_at", { ascending: false });
@@ -43,15 +43,15 @@ export async function fetchDevotionPageData(
   const sharedReflections: SharedReflection[] = (noteRows ?? []).map((row) => {
     const member = unwrapRelation(
       row.member as
-        | { name: string; profile_image_url: string | null }
-        | { name: string; profile_image_url: string | null }[]
+        | { name: string; avatar_url: string | null }
+        | { name: string; avatar_url: string | null }[]
         | null,
     );
 
     return {
       id: row.id,
       author: member?.name ?? "성도",
-      avatarUrl: member?.profile_image_url ?? undefined,
+      avatarUrl: member?.avatar_url ?? undefined,
       timeAgo: formatTimeAgo(row.created_at),
       content: row.content,
       isLiked: false,

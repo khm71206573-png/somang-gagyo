@@ -1,4 +1,4 @@
-import { KakaoLoginButton } from "@/components/auth/KakaoLoginButton";
+import { OAuthLoginButton } from "@/components/auth/OAuthLoginButton";
 
 export default function LoginPage() {
   return (
@@ -11,7 +11,7 @@ export default function LoginPage() {
           말씀과 기도로 함께 잇는 공동체
         </p>
       </div>
-      <KakaoLoginButton />
+      <OAuthLoginButton />
       <p className="mt-6 text-center text-label-sm text-muted-foreground">
         로그인 후 관리자 승인이 완료되면 이용하실 수 있어요.
       </p>

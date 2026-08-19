@@ -8,15 +8,15 @@ export default async function PendingPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: member } = user
+  const { data: profile } = user
     ? await supabase
-        .from("members")
+        .from("profiles")
         .select("status")
         .eq("id", user.id)
         .maybeSingle()
     : { data: null };
 
-  const isRejected = member?.status === "rejected";
+  const isRejected = profile?.status === "rejected";
 
   return (
     <div className="relative mx-auto flex min-h-screen w-full max-w-[480px] flex-col items-center justify-center gap-4 bg-background px-margin-main text-center">

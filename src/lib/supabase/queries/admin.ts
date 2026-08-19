@@ -38,11 +38,15 @@ export async function fetchAdminPageData(
       supabase.from("daily_songs").select("id").eq("song_date", todayStr).maybeSingle(),
       supabase.from("sermons").select("id").eq("sermon_date", todayStr).maybeSingle(),
       supabase
-        .from("members")
-        .select("id, name, applied_at")
+        .from("profiles")
+        .select("id, name, gyogyo, phone, created_at")
         .eq("status", "pending")
-        .order("applied_at", { ascending: true }),
+        .order("created_at", { ascending: true }),
     ]);
+
+  // profiles.status에는 "온보딩 전" 상태가 따로 없어서, 실명/소속 가교를
+  // 아직 입력하지 않은(온보딩 미완료) 행은 관리자 승인 목록에서 제외한다.
+  const completedProfiles = (pending ?? []).filter((p) => p.name && p.gyogyo);
 
   return {
     registrationStatus: {
@@ -50,10 +54,12 @@ export async function fetchAdminPageData(
       song: Boolean(dailySong),
       sermon: Boolean(sermon),
     },
-    pendingMembers: (pending ?? []).map((member) => ({
-      id: member.id,
-      name: member.name,
-      appliedLabel: formatAppliedLabel(new Date(member.applied_at)),
+    pendingMembers: completedProfiles.map((profile) => ({
+      id: profile.id,
+      name: profile.name,
+      groupName: profile.gyogyo ?? "",
+      phone: profile.phone ?? "",
+      appliedLabel: formatAppliedLabel(new Date(profile.created_at)),
     })),
   };
 }

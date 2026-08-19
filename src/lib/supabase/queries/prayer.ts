@@ -8,15 +8,15 @@ export async function fetchPrayerRequestList(
   const { data } = await supabase
     .from("prayer_requests")
     .select(
-      "id, display_name, content, status, category, created_at, member:members(name, profile_image_url), prayer_reactions(count)",
+      "id, display_name, content, status, category, created_at, member:profiles(name, avatar_url), prayer_reactions(count)",
     )
     .order("created_at", { ascending: false });
 
   return (data ?? []).map((row) => {
     const member = unwrapRelation(
       row.member as
-        | { name: string; profile_image_url: string | null }
-        | { name: string; profile_image_url: string | null }[]
+        | { name: string; avatar_url: string | null }
+        | { name: string; avatar_url: string | null }[]
         | null,
     );
     const reactions = unwrapRelation(
@@ -27,7 +27,7 @@ export async function fetchPrayerRequestList(
     return {
       id: row.id,
       author,
-      avatarUrl: member?.profile_image_url ?? avatarFallback(author),
+      avatarUrl: member?.avatar_url ?? avatarFallback(author),
       timeAgo: formatTimeAgo(row.created_at),
       category: row.category ?? "일반",
       content: row.content,

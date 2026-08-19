@@ -104,13 +104,13 @@ async function buildReadingTogether(
   if (activePlanMembers.length === 0) return null;
 
   const memberIds = activePlanMembers.map((m) => m.member_id);
-  const { data: members } = await supabase
-    .from("members")
-    .select("id, name, profile_image_url")
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, name, avatar_url")
     .in("id", memberIds);
 
-  const shown = (members ?? []).slice(0, 5);
-  const avatarUrls = shown.map((m) => m.profile_image_url ?? avatarFallback(m.name));
+  const shown = (profiles ?? []).slice(0, 5);
+  const avatarUrls = shown.map((p) => p.avatar_url ?? avatarFallback(p.name));
 
   const completedToday = planDayId
     ? await countReadingLogsForPlanDay(
@@ -122,7 +122,7 @@ async function buildReadingTogether(
 
   return {
     avatarUrls,
-    extraCount: Math.max((members ?? []).length - shown.length, 0),
+    extraCount: Math.max((profiles ?? []).length - shown.length, 0),
     message: `오늘 ${completedToday}명이 완독했어요`,
     ctaLabel: "응원 보내기",
   };

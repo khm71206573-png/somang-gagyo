@@ -45,20 +45,20 @@ async function fetchGreeting(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<GreetingInfo> {
-  const { data: member } = await supabase
-    .from("members")
-    .select("name, profile_image_url")
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("name, avatar_url")
     .eq("id", userId)
     .maybeSingle();
 
   const now = new Date();
-  const name = member?.name ?? "성도";
+  const name = profile?.name ?? "성도";
 
   return {
     dateLabel: formatDateLabel(now),
     userName: name,
     greetingMessage: greetingMessageFor(now.getHours()),
-    profileImageUrl: member?.profile_image_url ?? avatarFallback(name),
+    profileImageUrl: profile?.avatar_url ?? avatarFallback(name),
   };
 }
 
@@ -152,39 +152,13 @@ async function fetchSong(
   };
 }
 
-async function fetchBirthday(
-  supabase: SupabaseClient,
-  todayStr: string,
-): Promise<BirthdayInfo | null> {
-  const { month: todayMonth, day: todayDay } = monthDayOf(todayStr);
-
-  const { data } = await supabase
-    .from("members")
-    .select("name, profile_image_url, birth_date")
-    .eq("status", "approved")
-    .not("birth_date", "is", null);
-
-  const matches = (data ?? []).filter((m) => {
-    if (!m.birth_date) return false;
-    const { month, day } = monthDayOf(m.birth_date);
-    return month === todayMonth && day === todayDay;
-  });
-
-  if (matches.length === 0) return null;
-
-  return {
-    names: matches.map((m) => m.name),
-    avatarUrls: matches.map((m) => m.profile_image_url ?? avatarFallback(m.name)),
-  };
-}
-
 async function fetchPrayerRequests(
   supabase: SupabaseClient,
 ): Promise<PrayerRequest[]> {
   const { data } = await supabase
     .from("prayer_requests")
     .select(
-      "display_name, content, created_at, member:members(name), prayer_reactions(count)",
+      "display_name, content, created_at, member:profiles(name), prayer_reactions(count)",
     )
     .order("created_at", { ascending: false })
     .limit(3);
@@ -246,7 +220,6 @@ export async function fetchDashboardData(
     devotion,
     bibleReading,
     song,
-    birthday,
     prayerRequests,
     upcomingEvents,
     streakDays,
@@ -255,7 +228,6 @@ export async function fetchDashboardData(
     fetchDevotion(supabase, todayStr),
     fetchBibleReading(supabase, memberPlan),
     fetchSong(supabase, todayStr),
-    fetchBirthday(supabase, todayStr),
     fetchPrayerRequests(supabase),
     fetchUpcomingEvents(supabase, todayStr),
     fetchStreakDays(supabase, memberPlan?.id ?? null),
@@ -267,7 +239,8 @@ export async function fetchDashboardData(
     devotion,
     bibleReading,
     song,
-    birthday,
+    // profiles에는 birth_date가 없어 생일 카드는 당분간 비활성화 상태
+    birthday: null,
     prayerRequests,
     upcomingEvents,
   };

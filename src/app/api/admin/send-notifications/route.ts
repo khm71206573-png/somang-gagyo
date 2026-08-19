@@ -14,13 +14,13 @@ export async function POST() {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }
 
-  const { data: member } = await supabase
-    .from("members")
+  const { data: profile } = await supabase
+    .from("profiles")
     .select("role, status")
     .eq("id", user.id)
     .maybeSingle();
 
-  if (member?.role !== "admin" || member?.status !== "approved") {
+  if (profile?.role !== "admin" || profile?.status !== "approved") {
     return NextResponse.json({ error: "관리자만 사용할 수 있어요." }, { status: 403 });
   }
 

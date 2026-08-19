@@ -39,12 +39,12 @@ export async function GET(request: Request) {
     return NextResponse.json({ processed: 0, sent: 0, failed: 0 });
   }
 
-  const [{ data: approvedMembers }, { data: subscriptions }] = await Promise.all([
-    supabase.from("members").select("id").eq("status", "approved"),
+  const [{ data: approvedProfiles }, { data: subscriptions }] = await Promise.all([
+    supabase.from("profiles").select("id").eq("status", "approved"),
     supabase.from("push_subscriptions").select("id, member_id, endpoint, p256dh, auth"),
   ]);
 
-  const approvedIds = new Set((approvedMembers ?? []).map((m) => m.id));
+  const approvedIds = new Set((approvedProfiles ?? []).map((p) => p.id));
   const targets = (subscriptions ?? []).filter((sub) => approvedIds.has(sub.member_id));
 
   let sentCount = 0;
