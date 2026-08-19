@@ -26,24 +26,24 @@ interface Verse {
   text: string;
 }
 
-export type ScrapeDevotionResult =
-  | { ok: true; inserted: true; devotionDate: string }
+export interface ParsedDevotion {
+  devotionDate: string;
+  title: string;
+  reference: string;
+  verses: Verse[];
+}
+
+export type ParseDevotionResult =
+  | ({ ok: true; skipped: false } & ParsedDevotion)
   | { ok: true; skipped: true; reason: string };
 
 /**
- * "오늘의 묵상" 페이지를 스크랩해 devotions 테이블에 저장한다.
- * Cron·관리자 수동 실행 버튼 양쪽에서 동일한 스크랩 로직을 쓰기 위한 공용 함수.
+ * "오늘의 묵상" 페이지를 스크랩해 파싱 결과만 반환한다 (DB에 쓰지 않음).
+ * 관리자 등록 화면에서 입력칸을 자동으로 채우는 용도.
  *
- * fetch/파싱 실패는 Error를 throw한다 (호출부에서 502로 매핑).
- * 필수 항목 누락, 중복(23505)은 throw하지 않고 skipped 결과를 반환한다.
- * 그 외 DB insert 오류는 Error를 throw한다 (호출부에서 500으로 매핑).
+ * fetch/파싱 실패는 HttpError(502)를 throw한다. 필수 항목 누락은 skipped를 반환한다.
  */
-export async function scrapeDevotion(): Promise<ScrapeDevotionResult> {
-  let devotionDate: string;
-  let title: string;
-  let reference: string;
-  let verses: Verse[];
-
+export async function parseTodayDevotion(): Promise<ParseDevotionResult> {
   try {
     const response = await fetch(DEVOTION_URL, {
       headers: { "User-Agent": USER_AGENT },
@@ -90,15 +90,41 @@ export async function scrapeDevotion(): Promise<ScrapeDevotionResult> {
       };
     }
 
-    devotionDate = parsedDate;
-    title = titleText;
-    reference = parsedReference;
-    verses = parsedVerses;
+    return {
+      ok: true,
+      skipped: false,
+      devotionDate: parsedDate,
+      title: titleText,
+      reference: parsedReference,
+      verses: parsedVerses,
+    };
   } catch (error) {
     if (error instanceof HttpError) throw error;
     const message = error instanceof Error ? error.message : "오늘의 묵상 스크랩에 실패했어요.";
     throw new HttpError(message, 502);
   }
+}
+
+export type ScrapeDevotionResult =
+  | { ok: true; inserted: true; devotionDate: string }
+  | { ok: true; skipped: true; reason: string };
+
+/**
+ * "오늘의 묵상" 페이지를 스크랩해 devotions 테이블에 저장한다 (질문 자동 생성 포함).
+ * Cron·관리자 수동 실행 버튼 양쪽에서 동일한 스크랩 로직을 쓰기 위한 공용 함수.
+ *
+ * fetch/파싱 실패는 Error를 throw한다 (호출부에서 502로 매핑).
+ * 필수 항목 누락, 중복(23505)은 throw하지 않고 skipped 결과를 반환한다.
+ * 그 외 DB insert 오류는 Error를 throw한다 (호출부에서 500으로 매핑).
+ */
+export async function scrapeDevotion(): Promise<ScrapeDevotionResult> {
+  const parsed = await parseTodayDevotion();
+
+  if (parsed.skipped) {
+    return parsed;
+  }
+
+  const { devotionDate, title, reference, verses } = parsed;
 
   let questions: { id: number; question: string }[] = [];
   try {

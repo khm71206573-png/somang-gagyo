@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { Download } from "lucide-react";
 import { AdminFormTopBar } from "@/components/admin/AdminFormTopBar";
 import {
   fieldGroup,
@@ -13,6 +14,7 @@ import {
 } from "@/components/admin/adminFormStyles";
 import { useCreateDevotion } from "@/hooks/useCreateDevotion";
 import { useGenerateDevotionQuestions } from "@/hooks/useGenerateDevotionQuestions";
+import { useFetchDevotionSource } from "@/hooks/useFetchDevotionSource";
 import { toDateString } from "@/lib/supabase/queries/utils";
 
 export default function NewDevotionPage() {
@@ -20,6 +22,8 @@ export default function NewDevotionPage() {
   const { mutateAsync, isPending } = useCreateDevotion();
   const { mutateAsync: generateQuestions, isPending: isGenerating } =
     useGenerateDevotionQuestions();
+  const { mutateAsync: fetchSource, isPending: isFetchingSource } =
+    useFetchDevotionSource();
 
   const [devotionDate, setDevotionDate] = useState(toDateString(new Date()));
   const [tag, setTag] = useState("");
@@ -28,6 +32,39 @@ export default function NewDevotionPage() {
   const [verses, setVerses] = useState("");
   const [questions, setQuestions] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
+
+  async function handleFetchSource() {
+    setError(null);
+    setIsAutoFilling(true);
+    try {
+      const source = await fetchSource();
+      setDevotionDate(source.devotionDate);
+      setTag("매일성경");
+      setTitle(source.title);
+      setReference(source.reference);
+      const versesText = source.verses.join("\n");
+      setVerses(versesText);
+
+      try {
+        const generated = await generateQuestions({
+          reference: source.reference,
+          verses: versesText,
+        });
+        setQuestions(generated.join("\n"));
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? `본문은 가져왔지만 질문 자동 생성에 실패했어요: ${err.message}`
+            : "본문은 가져왔지만 질문 자동 생성에 실패했어요.",
+        );
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "오늘의 묵상을 가져오지 못했어요.");
+    } finally {
+      setIsAutoFilling(false);
+    }
+  }
 
   async function handleGenerateQuestions() {
     setError(null);
@@ -64,6 +101,20 @@ export default function NewDevotionPage() {
     <div className="relative mx-auto min-h-screen w-full max-w-[480px] bg-background pb-[104px]">
       <AdminFormTopBar title="묵상 등록" listHref="/admin/devotion" />
       <main className="px-margin-main pt-stack-sm">
+        <button
+          type="button"
+          onClick={handleFetchSource}
+          disabled={isAutoFilling}
+          className="mb-stack-md flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-3 text-label-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+        >
+          <Download className="h-4 w-4" />
+          {isAutoFilling
+            ? isFetchingSource
+              ? "가져오는 중..."
+              : "질문 생성 중..."
+            : "오늘의 묵상 가져와서 자동 입력"}
+        </button>
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-stack-md">
           <div className={fieldGroup}>
             <label htmlFor="devotionDate" className={fieldLabel}>
