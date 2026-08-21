@@ -5,6 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 export interface ProfileData {
   id: string;
   name: string;
+  avatar_url: string | null;
+  gyogyo: string | null;
+  phone: string | null;
   role: string;
   status: string;
 }

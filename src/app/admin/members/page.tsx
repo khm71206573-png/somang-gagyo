@@ -7,6 +7,8 @@ import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { useMemberList } from "@/hooks/useMemberList";
 import { useMemberApproval } from "@/hooks/useMemberApproval";
+import { useSetMemberRole } from "@/hooks/useSetMemberRole";
+import { useProfile } from "@/hooks/useProfile";
 import type { MemberStatus } from "@/lib/supabase/queries/members";
 
 const STATUS_FILTERS: { id: MemberStatus | "all"; label: string }[] = [
@@ -37,6 +39,9 @@ export default function MemberListPage() {
   const { data, isLoading, isError, error, refetch, isFetching } = useMemberList();
   const { mutate: decideMember, isPending: isDeciding, variables: decidingVars } =
     useMemberApproval();
+  const { mutate: setRole, isPending: isSettingRole, variables: settingRoleVars } =
+    useSetMemberRole();
+  const { data: me } = useProfile();
   const [statusFilter, setStatusFilter] = useState<MemberStatus | "all">("all");
   const [keyword, setKeyword] = useState("");
 
@@ -176,6 +181,28 @@ export default function MemberListPage() {
                           승인
                         </button>
                       </div>
+                    )}
+                    {member.status === "approved" &&
+                      !(member.id === me?.id && member.role === "admin") && (
+                      <button
+                        type="button"
+                        disabled={
+                          isSettingRole && settingRoleVars?.memberId === member.id
+                        }
+                        onClick={() => {
+                          const nextRole = member.role === "admin" ? "member" : "admin";
+                          const confirmMessage =
+                            nextRole === "admin"
+                              ? `${member.name ?? "이 멤버"}님을 관리자로 지정할까요?`
+                              : `${member.name ?? "이 멤버"}님의 관리자 권한을 해제할까요?`;
+                          if (window.confirm(confirmMessage)) {
+                            setRole({ memberId: member.id, role: nextRole });
+                          }
+                        }}
+                        className="rounded-md border border-outline-variant px-2.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-surface-container-low disabled:opacity-50"
+                      >
+                        {member.role === "admin" ? "관리자 해제" : "관리자 지정"}
+                      </button>
                     )}
                   </div>
                 </div>

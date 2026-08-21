@@ -2,18 +2,18 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-export type MemberDecision = "approved" | "rejected";
+export type MemberRole = "member" | "admin";
 
-interface DecideMemberInput {
+interface SetMemberRoleInput {
   memberId: string;
-  status: MemberDecision;
+  role: MemberRole;
 }
 
-async function decideMember({ memberId, status }: DecideMemberInput) {
+async function setMemberRole({ memberId, role }: SetMemberRoleInput) {
   const response = await fetch(`/api/admin/members/${memberId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({ role }),
   });
 
   if (!response.ok) {
@@ -24,11 +24,11 @@ async function decideMember({ memberId, status }: DecideMemberInput) {
   return response.json();
 }
 
-export function useMemberApproval() {
+export function useSetMemberRole() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: decideMember,
+    mutationFn: setMemberRole,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin"] });
       queryClient.invalidateQueries({ queryKey: ["members"] });

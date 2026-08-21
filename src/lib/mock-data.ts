@@ -805,7 +805,7 @@ export const praiseSheets: PraiseSheet[] = [
   { id: "2", key: "F Key", title: "예배합니다", sheetUrl: null },
 ];
 
-export type MoreMenuIcon = "admin" | "biblePlan";
+export type MoreMenuIcon = "admin" | "biblePlan" | "profile" | "members";
 
 export interface MoreMenuItem {
   id: string;
@@ -816,6 +816,20 @@ export interface MoreMenuItem {
 }
 
 export const moreMenuItems: MoreMenuItem[] = [
+  {
+    id: "profile",
+    label: "내 프로필",
+    description: "프로필 사진과 이름을 관리해요",
+    icon: "profile",
+    href: "/profile",
+  },
+  {
+    id: "members",
+    label: "멤버 목록",
+    description: "함께하는 멤버들을 둘러보세요",
+    icon: "members",
+    href: "/members",
+  },
   {
     id: "admin",
     label: "콘텐츠 관리",
