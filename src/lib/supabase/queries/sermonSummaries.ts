@@ -19,6 +19,12 @@ export async function fetchSermonSummaries(
     .order("created_at", { ascending: false });
 
   if (error) {
+    // 42P01 = 테이블 없음. sermon_summaries 마이그레이션 적용 전이면 여기로 온다.
+    if (error.code === "42P01") {
+      throw new Error(
+        "설교요약 기능 설정이 아직 끝나지 않았어요. 관리자에게 알려주세요.",
+      );
+    }
     throw new Error(error.message ?? "설교요약을 불러오지 못했어요.");
   }
 

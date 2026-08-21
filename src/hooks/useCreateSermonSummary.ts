@@ -19,6 +19,11 @@ async function createSermonSummary(content: string) {
   });
 
   if (error) {
+    if (error.code === "42P01") {
+      throw new Error(
+        "설교요약 기능 설정이 아직 끝나지 않았어요. 관리자에게 알려주세요.",
+      );
+    }
     throw new Error(error.message ?? "등록하지 못했어요.");
   }
 }

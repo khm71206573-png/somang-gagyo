@@ -1,14 +1,18 @@
 -- ============================================================
 -- avatars 스토리지 버킷 : 멤버 프로필 사진
 -- 본인 폴더(자신의 uid 하위)에만 올리고 지울 수 있고, 조회는 전체 공개.
+--
+-- 여러 번 실행해도 안전하도록 drop policy if exists 를 함께 쓴다.
 -- ============================================================
 insert into storage.buckets (id, name, public)
 values ('avatars', 'avatars', true)
-on conflict (id) do nothing;
+on conflict (id) do update set public = true;
 
+drop policy if exists "avatars_select_all" on storage.objects;
 create policy "avatars_select_all" on storage.objects
 for select to authenticated using (bucket_id = 'avatars');
 
+drop policy if exists "avatars_insert_own" on storage.objects;
 create policy "avatars_insert_own" on storage.objects
 for insert to authenticated
 with check (
@@ -16,6 +20,7 @@ with check (
   and (storage.foldername(name))[1] = auth.uid()::text
 );
 
+drop policy if exists "avatars_update_own" on storage.objects;
 create policy "avatars_update_own" on storage.objects
 for update to authenticated
 using (
@@ -27,6 +32,7 @@ with check (
   and (storage.foldername(name))[1] = auth.uid()::text
 );
 
+drop policy if exists "avatars_delete_own" on storage.objects;
 create policy "avatars_delete_own" on storage.objects
 for delete to authenticated
 using (
