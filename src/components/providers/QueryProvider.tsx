@@ -9,6 +9,12 @@ import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persist
 // (대시보드 = 오늘의 묵상/통독 분량 요약, devotion = 묵상 상세, bible-progress = 통독 분량 상세)
 const OFFLINE_QUERY_KEYS = ["dashboard", "devotion", "bible-progress"];
 
+// 영속 캐시에 담기는 데이터 모양이 바뀌면 이 값을 올린다.
+// 값이 달라지면 예전 캐시는 복원되지 않고 버려지므로, 배포 직후 옛 모양의
+// 캐시가 새 화면으로 흘러드는 것을 막을 수 있다.
+// v2 : 통독 전체 진행표(oldTestament/newTestament) 추가
+const CACHE_BUSTER = "v2";
+
 const noopStorage: Storage = {
   getItem: () => null,
   setItem: () => {},
@@ -43,6 +49,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       client={queryClient}
       persistOptions={{
         persister,
+        buster: CACHE_BUSTER,
         maxAge: 1000 * 60 * 60 * 24 * 7,
         dehydrateOptions: {
           shouldDehydrateQuery: (query) =>
