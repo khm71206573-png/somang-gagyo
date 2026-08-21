@@ -11,6 +11,7 @@ import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { EmptyState } from "@/components/common/EmptyState";
 import { useDevotionPageData } from "@/hooks/useDevotionPageData";
+import { defaultDevotionQuestions } from "@/lib/devotionQuestions";
 
 export default function DevotionDetailPage() {
   const { data, isLoading, isError, error, refetch, isFetching } =
@@ -45,9 +46,13 @@ export default function DevotionDetailPage() {
       <main className="flex flex-col gap-stack-lg px-margin-main pt-stack-sm">
         <ScriptureHeading devotion={devotion} />
         <ScriptureCard verses={devotion.verses} />
-        {devotion.questions.length > 0 && (
-          <ReflectionQuestions questions={devotion.questions} />
-        )}
+        <ReflectionQuestions
+          questions={
+            devotion.questions.length > 0
+              ? devotion.questions
+              : defaultDevotionQuestions()
+          }
+        />
         <ReflectionInput />
         <SharedReflections
           reflections={sharedReflections}

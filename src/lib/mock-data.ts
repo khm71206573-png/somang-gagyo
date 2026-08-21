@@ -270,7 +270,7 @@ export const prayerRequestList: PrayerRequestItem[] = [
   },
 ];
 
-export type CalendarEventDot = "church" | "birthday";
+export type CalendarEventDot = "church" | "gagyo" | "birthday" | "other";
 
 export interface CalendarDay {
   date: number;
@@ -285,7 +285,7 @@ export interface CalendarMonthData {
   days: CalendarDay[];
 }
 
-export type ScheduleEventType = "church" | "birthday";
+export type ScheduleEventType = "church" | "gagyo" | "birthday" | "other";
 
 export interface ScheduleEvent {
   id: string;
@@ -449,6 +449,8 @@ export interface BiblePlan {
   title: string;
   description: string;
   durationLabel: string;
+  /** 필터링에 쓰는 원본 값 */
+  totalDays: number;
   isFeatured?: boolean;
   minutesPerDay: string;
   chaptersPerDay: string;
@@ -464,6 +466,7 @@ export const biblePlans: BiblePlan[] = [
     title: "1년 1독",
     description: "창세기부터 요한계시록까지 차례대로",
     durationLabel: "365일",
+    totalDays: 365,
     isFeatured: true,
     minutesPerDay: "하루 약 15분",
     chaptersPerDay: "하루 3-4장",
@@ -477,6 +480,7 @@ export const biblePlans: BiblePlan[] = [
     title: "맥체인 성경읽기",
     description: "구약·신약·시편 함께 읽기",
     durationLabel: "365일",
+    totalDays: 365,
     minutesPerDay: "하루 약 20분",
     chaptersPerDay: "하루 4장",
     participantCount: 12,
@@ -488,6 +492,7 @@ export const biblePlans: BiblePlan[] = [
     title: "90일 속독",
     description: "빠른 속도로 성경 전체 흐름 파악하기",
     durationLabel: "90일",
+    totalDays: 90,
     minutesPerDay: "하루 약 45분",
     chaptersPerDay: "하루 12장",
     participantCount: 8,
@@ -499,6 +504,7 @@ export const biblePlans: BiblePlan[] = [
     title: "6개월 통독",
     description: "하루 두 번, 꾸준한 성취감을 위해",
     durationLabel: "180일",
+    totalDays: 180,
     minutesPerDay: "하루 약 30분",
     chaptersPerDay: "하루 6-7장",
     participantCount: 15,
@@ -510,6 +516,7 @@ export const biblePlans: BiblePlan[] = [
     title: "2년 천천히",
     description: "매일 한 장씩, 깊이 있는 묵상과 함께",
     durationLabel: "730일",
+    totalDays: 730,
     minutesPerDay: "하루 약 5분",
     chaptersPerDay: "하루 1장",
     participantCount: 31,
@@ -522,6 +529,7 @@ export const biblePlans: BiblePlan[] = [
     title: "신약 100일",
     description: "예수님의 생애와 서신서 집중 통독",
     durationLabel: "100일",
+    totalDays: 100,
     minutesPerDay: "하루 약 15분",
     chaptersPerDay: "하루 3장",
     participantCount: 42,

@@ -9,7 +9,7 @@ export interface EventDetailData {
   event_date: string;
   start_time: string | null;
   location: string | null;
-  type: "church" | "birthday" | "other";
+  type: "church" | "gagyo" | "birthday" | "other";
 }
 
 async function fetchEvent(id: string): Promise<EventDetailData> {

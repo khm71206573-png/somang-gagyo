@@ -37,6 +37,7 @@ export async function fetchBiblePlanList(
     title: plan.title,
     description: plan.description ?? "",
     durationLabel: `${plan.total_days}일`,
+    totalDays: plan.total_days,
     isFeatured: plan.is_featured,
     minutesPerDay: plan.minutes_per_day ?? "",
     chaptersPerDay: plan.chapters_per_day ?? "",

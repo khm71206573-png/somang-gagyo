@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 export interface CreateEventInput {
   eventDate: string;
   title: string;
-  type: "church" | "birthday" | "other";
+  type: "church" | "gagyo" | "birthday" | "other";
   startTime: string;
   location: string;
   description: string;

@@ -38,7 +38,7 @@ create extension if not exists "pgcrypto";
 -- ENUM 타입
 -- ============================================================
 create type prayer_status as enum ('open', 'praying', 'answered');
-create type event_type as enum ('church', 'birthday', 'other');
+create type event_type as enum ('church', 'gagyo', 'birthday', 'other');
 
 -- updated_at 자동 갱신 트리거 함수
 create or replace function public.set_updated_at()

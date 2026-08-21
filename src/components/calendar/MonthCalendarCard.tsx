@@ -1,17 +1,29 @@
+"use client";
+
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { CalendarMonthData } from "@/lib/mock-data";
+import { EVENT_CATEGORIES, eventCategory } from "@/lib/eventCategories";
 
 interface MonthCalendarCardProps {
   month: CalendarMonthData;
+  onSelectDate: (date: number) => void;
+  onPrevMonth: () => void;
+  onNextMonth: () => void;
 }
 
-export function MonthCalendarCard({ month }: MonthCalendarCardProps) {
+export function MonthCalendarCard({
+  month,
+  onSelectDate,
+  onPrevMonth,
+  onNextMonth,
+}: MonthCalendarCardProps) {
   return (
     <section className="rounded-lg bg-card p-4 shadow-[0_4px_24px_rgba(44,44,44,0.04)]">
       <div className="mb-6 flex items-center justify-between">
         <button
           type="button"
           aria-label="이전 달"
+          onClick={onPrevMonth}
           className="flex items-center justify-center rounded-full p-2 text-muted-foreground transition-colors hover:bg-surface-container-low"
         >
           <ChevronLeft className="h-5 w-5" />
@@ -20,6 +32,7 @@ export function MonthCalendarCard({ month }: MonthCalendarCardProps) {
         <button
           type="button"
           aria-label="다음 달"
+          onClick={onNextMonth}
           className="flex items-center justify-center rounded-full p-2 text-muted-foreground transition-colors hover:bg-surface-container-low"
         >
           <ChevronRight className="h-5 w-5" />
@@ -64,8 +77,10 @@ export function MonthCalendarCard({ month }: MonthCalendarCardProps) {
 
           if (day.isSelected) {
             return (
-              <div
+              <button
                 key={`${index}-${day.date}`}
+                type="button"
+                onClick={() => onSelectDate(day.date)}
                 className="relative z-10 flex flex-col items-center py-2 text-body-md text-primary-foreground"
               >
                 <div className="absolute inset-0 -z-10 m-auto h-8 w-8 rounded-full bg-primary shadow-sm" />
@@ -74,22 +89,20 @@ export function MonthCalendarCard({ month }: MonthCalendarCardProps) {
                   {day.dots?.map((dot) => (
                     <div
                       key={dot}
-                      className={
-                        dot === "church"
-                          ? "h-1 w-1 rounded-full bg-primary-foreground"
-                          : "h-1 w-1 rounded-full bg-success-container"
-                      }
+                      className="h-1 w-1 rounded-full bg-primary-foreground"
                     />
                   ))}
                 </div>
-              </div>
+              </button>
             );
           }
 
           return (
-            <div
+            <button
               key={`${index}-${day.date}`}
-              className={`relative flex flex-col items-center py-2 text-body-md ${weekendClassName}`}
+              type="button"
+              onClick={() => onSelectDate(day.date)}
+              className={`relative flex flex-col items-center rounded-lg py-2 text-body-md transition-colors hover:bg-surface-container-low ${weekendClassName}`}
             >
               <span>{day.date}</span>
               {day.dots && day.dots.length > 0 && (
@@ -97,31 +110,25 @@ export function MonthCalendarCard({ month }: MonthCalendarCardProps) {
                   {day.dots.map((dot) => (
                     <div
                       key={dot}
-                      className={
-                        dot === "church"
-                          ? "h-1 w-1 rounded-full bg-primary"
-                          : "h-1 w-1 rounded-full bg-secondary"
-                      }
+                      className={`h-1 w-1 rounded-full ${eventCategory(dot).dotClassName}`}
                     />
                   ))}
                 </div>
               )}
-            </div>
+            </button>
           );
         })}
       </div>
 
-      <div className="mt-6 flex justify-end gap-4">
-        <div className="flex items-center gap-2">
-          <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-          <span className="text-label-sm text-muted-foreground">
-            교회 일정
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="h-1.5 w-1.5 rounded-full bg-secondary" />
-          <span className="text-label-sm text-muted-foreground">생일</span>
-        </div>
+      <div className="mt-6 flex flex-wrap justify-end gap-x-4 gap-y-2">
+        {EVENT_CATEGORIES.map((category) => (
+          <div key={category.value} className="flex items-center gap-2">
+            <div className={`h-1.5 w-1.5 rounded-full ${category.dotClassName}`} />
+            <span className="text-label-sm text-muted-foreground">
+              {category.label}
+            </span>
+          </div>
+        ))}
       </div>
     </section>
   );
