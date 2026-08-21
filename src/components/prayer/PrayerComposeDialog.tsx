@@ -67,7 +67,8 @@ export function PrayerComposeDialog({ open, onClose }: PrayerComposeDialogProps)
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+    // BottomNav가 z-50이라 같은 층에서는 등록 버튼이 탭에 가린다. 한 단계 위로 띄운다.
+    <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center">
       <button
         type="button"
         aria-label="닫기"
@@ -78,7 +79,8 @@ export function PrayerComposeDialog({ open, onClose }: PrayerComposeDialogProps)
         role="dialog"
         aria-modal="true"
         aria-labelledby="prayer-compose-title"
-        className="relative w-full max-w-[480px] rounded-t-2xl bg-background p-margin-main pb-8 shadow-[0_-4px_24px_rgba(44,44,44,0.12)] sm:rounded-2xl sm:pb-margin-main"
+        style={{ paddingBottom: "calc(2rem + env(safe-area-inset-bottom))" }}
+        className="relative max-h-[85vh] w-full max-w-[480px] overflow-y-auto rounded-t-2xl bg-background p-margin-main shadow-[0_-4px_24px_rgba(44,44,44,0.12)] sm:rounded-2xl"
       >
         <header className="mb-stack-md flex items-center justify-between">
           <h2
