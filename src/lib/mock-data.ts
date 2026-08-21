@@ -402,12 +402,17 @@ export const scheduleEvents: ScheduleEvent[] = [
   },
 ];
 
+export interface SongLyricsStanza {
+  lines: string[];
+}
+
 export interface SongDetail {
   title: string;
   artist: string;
   coverImageUrl: string;
   youtubeUrl: string;
   listenLabel: string;
+  lyrics: SongLyricsStanza[];
 }
 
 export interface PastSong {
@@ -423,6 +428,7 @@ export const songDetail: SongDetail = {
     "https://lh3.googleusercontent.com/aida-public/AB6AXuAlIGPdhjpQO5fiROpJMN_FdlOW_XSU2OzBB7CJNcQSi7XXM_b2KVLrDa1OrJMUgv8-wPUcKf7OW2LaZ0oB4NFzDGfqUkMLd-ptob8sznx8PBHiY-q4SzZ-o4pnGgVLAJaIafOniZDXVjeSMjXVX_wLDXT3Vb5LnlRM81t2nA5ZsOm9wfynnQebAibUiumoxpf3wLylF0A_zCc9r-HcgTgvY6evoWIlIs7PbOCbraRryjTWjMmnZ9n_",
   youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
   listenLabel: "유튜브로 듣기",
+  lyrics: [],
 };
 
 const pastSongCoverImageUrl =
