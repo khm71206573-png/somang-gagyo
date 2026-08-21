@@ -33,6 +33,7 @@ export default function EditSongPage({
   const [coverImageUrl, setCoverImageUrl] = useState("");
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [lyrics, setLyrics] = useState("");
+  // "추천 이유"는 UI에서 뺐지만, 이미 등록된 곡의 값은 그대로 보존해 같이 보낸다.
   const [reason, setReason] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -157,23 +158,21 @@ export default function EditSongPage({
           </div>
 
           <div className={fieldGroup}>
-            <label htmlFor="reason" className={fieldLabel}>
-              추천 이유 <span className="text-muted-foreground">(선택)</span>
-            </label>
-            <textarea
-              id="reason"
-              rows={2}
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-              placeholder="오늘 이 곡을 추천하는 이유"
-              className={fieldTextarea}
-            />
-          </div>
-
-          <div className={fieldGroup}>
-            <label htmlFor="lyrics" className={fieldLabel}>
-              가사 <span className="text-muted-foreground">(선택, 구간은 빈 줄로 구분)</span>
-            </label>
+            <div className="flex items-center justify-between">
+              <label htmlFor="lyrics" className={fieldLabel}>
+                가사 <span className="text-muted-foreground">(선택, 구간은 빈 줄로 구분)</span>
+              </label>
+              {title.trim() && (
+                <a
+                  href={`https://www.google.com/search?q=${encodeURIComponent(`${title} ${artist} 가사`.trim())}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-label-sm text-primary hover:underline"
+                >
+                  가사 검색하기
+                </a>
+              )}
+            </div>
             <textarea
               id="lyrics"
               rows={8}

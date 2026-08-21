@@ -15,7 +15,8 @@ const OFFLINE_QUERY_KEYS = ["dashboard", "devotion", "bible-progress"];
 // v2 : 통독 전체 진행표(oldTestament/newTestament) 추가
 // v3 : 홈 화면 기도제목 요약(prayerSummary) 추가, 기도제목 목록 제거
 // v4 : 통독 응원 현황(cheerCount/hasCheeredToday) 추가
-const CACHE_BUSTER = "v4";
+// v5 : 묵상 나눔에 devotionId/isMine 추가
+const CACHE_BUSTER = "v5";
 
 const noopStorage: Storage = {
   getItem: () => null,

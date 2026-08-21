@@ -35,7 +35,7 @@ export default function DevotionDetailPage() {
     return <EmptyState message="등록된 묵상이 아직 없어요." />;
   }
 
-  const { devotion, sharedReflections, participantCount } = data;
+  const { devotionId, devotion, sharedReflections, participantCount } = data;
 
   return (
     <div className="relative mx-auto min-h-screen w-full max-w-[480px] bg-background pb-[104px]">
@@ -53,7 +53,7 @@ export default function DevotionDetailPage() {
               : defaultDevotionQuestions()
           }
         />
-        <ReflectionInput />
+        <ReflectionInput devotionId={devotionId} />
         <SharedReflections
           reflections={sharedReflections}
           participantCount={participantCount}

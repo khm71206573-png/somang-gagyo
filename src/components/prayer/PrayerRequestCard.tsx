@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { Hand } from "lucide-react";
+import { Hand, Trash2 } from "lucide-react";
 import type { PrayerRequestItem } from "@/lib/mock-data";
 import { useTogglePrayerReaction } from "@/hooks/useTogglePrayerReaction";
+import { useDeletePrayerRequest } from "@/hooks/useDeletePrayerRequest";
 
 interface PrayerRequestCardProps {
   item: PrayerRequestItem;
@@ -11,6 +12,8 @@ interface PrayerRequestCardProps {
 
 export function PrayerRequestCard({ item }: PrayerRequestCardProps) {
   const { mutate, isPending } = useTogglePrayerReaction();
+  const { mutate: deletePrayerRequest, isPending: isDeleting } =
+    useDeletePrayerRequest();
 
   return (
     <article className="flex flex-col gap-3 rounded-lg border border-outline-variant/20 bg-card p-5 shadow-[0_2px_10px_rgba(44,44,44,0.04)]">
@@ -30,6 +33,21 @@ export function PrayerRequestCard({ item }: PrayerRequestCardProps) {
             <p className="text-[11px] text-muted-foreground">{item.timeAgo}</p>
           </div>
         </div>
+        {item.isMine && (
+          <button
+            type="button"
+            aria-label="기도제목 삭제"
+            disabled={isDeleting}
+            onClick={() => {
+              if (window.confirm("이 기도제목을 삭제할까요?")) {
+                deletePrayerRequest(item.id);
+              }
+            }}
+            className="text-outline transition-colors hover:text-destructive disabled:opacity-50"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        )}
       </header>
 
       <div className="mt-1 flex flex-col gap-2">

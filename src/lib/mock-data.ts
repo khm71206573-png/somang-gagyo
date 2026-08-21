@@ -137,6 +137,8 @@ export interface SharedReflection {
   timeAgo: string;
   content: string;
   isLiked: boolean;
+  /** 로그인한 사용자 본인이 남긴 나눔인지 (삭제 버튼 노출에 쓴다) */
+  isMine: boolean;
 }
 
 export const devotionDetail: DevotionDetail = {
@@ -171,6 +173,7 @@ export const sharedReflections: SharedReflection[] = [
     content:
       "지치고 힘든 일상 속에서 주님이 나의 목자 되심을 다시 한번 기억합니다. 늘 좋은 곳으로 인도하시는 주님을 신뢰합니다.",
     isLiked: false,
+    isMine: false,
   },
   {
     id: "2",
@@ -179,6 +182,7 @@ export const sharedReflections: SharedReflection[] = [
     content:
       "부족함이 없다는 고백이 참 감동적입니다. 세상의 기준이 아닌 주님의 은혜 안에서 자족하는 삶을 살고 싶습니다.",
     isLiked: true,
+    isMine: false,
   },
   {
     id: "3",
@@ -189,6 +193,7 @@ export const sharedReflections: SharedReflection[] = [
     content:
       "내 영혼을 소생시키시는 주님, 오늘 하루도 주님의 이름으로 의의 길을 걷게 하소서. 아멘.",
     isLiked: false,
+    isMine: false,
   },
 ];
 

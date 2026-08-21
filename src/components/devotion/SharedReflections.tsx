@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
-import { Heart } from "lucide-react";
+import { Heart, Trash2 } from "lucide-react";
 import type { SharedReflection } from "@/lib/mock-data";
+import { useDeleteDevotionNote } from "@/hooks/useDeleteDevotionNote";
 
 interface SharedReflectionsProps {
   reflections: SharedReflection[];
@@ -11,6 +14,9 @@ export function SharedReflections({
   reflections,
   participantCount,
 }: SharedReflectionsProps) {
+  const { mutate: deleteNote, isPending, variables: deletingId } =
+    useDeleteDevotionNote();
+
   return (
     <section className="mb-8 flex flex-col gap-stack-md">
       <div className="flex items-end justify-between">
@@ -49,20 +55,37 @@ export function SharedReflections({
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
-                aria-label={reflection.isLiked ? "좋아요 취소" : "좋아요"}
-                className={
-                  reflection.isLiked
-                    ? "text-primary"
-                    : "text-outline transition-colors hover:text-primary"
-                }
-              >
-                <Heart
-                  className="h-5 w-5"
-                  fill={reflection.isLiked ? "currentColor" : "none"}
-                />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  aria-label={reflection.isLiked ? "좋아요 취소" : "좋아요"}
+                  className={
+                    reflection.isLiked
+                      ? "text-primary"
+                      : "text-outline transition-colors hover:text-primary"
+                  }
+                >
+                  <Heart
+                    className="h-5 w-5"
+                    fill={reflection.isLiked ? "currentColor" : "none"}
+                  />
+                </button>
+                {reflection.isMine && (
+                  <button
+                    type="button"
+                    aria-label="나눔 삭제"
+                    disabled={isPending && deletingId === reflection.id}
+                    onClick={() => {
+                      if (window.confirm("이 나눔을 삭제할까요?")) {
+                        deleteNote(reflection.id);
+                      }
+                    }}
+                    className="text-outline transition-colors hover:text-destructive disabled:opacity-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             </div>
             <p className="text-body-md text-foreground">
               {reflection.content}

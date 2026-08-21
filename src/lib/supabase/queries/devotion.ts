@@ -3,6 +3,8 @@ import type { DevotionDetail, SharedReflection } from "@/lib/mock-data";
 import { formatDateLabel, formatTimeAgo, unwrapRelation } from "./utils";
 
 export interface DevotionPageData {
+  /** 나눔을 남길 때 devotion_notes.devotion_id로 쓴다. */
+  devotionId: string;
   devotion: DevotionDetail;
   sharedReflections: SharedReflection[];
   participantCount: number;
@@ -11,6 +13,10 @@ export interface DevotionPageData {
 export async function fetchDevotionPageData(
   supabase: SupabaseClient,
 ): Promise<DevotionPageData | null> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const { data: devotionRow } = await supabase
     .from("devotions")
     .select("id, devotion_date, title, reference, verses, questions")
@@ -61,6 +67,7 @@ export async function fetchDevotionPageData(
       timeAgo: formatTimeAgo(row.created_at),
       content: row.content,
       isLiked: false,
+      isMine: Boolean(user) && row.member_id === user?.id,
     };
   });
 
@@ -68,5 +75,5 @@ export async function fetchDevotionPageData(
     (noteRows ?? []).map((row) => row.member_id),
   ).size;
 
-  return { devotion, sharedReflections, participantCount };
+  return { devotionId: devotionRow.id, devotion, sharedReflections, participantCount };
 }
