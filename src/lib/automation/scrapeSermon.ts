@@ -1,69 +1,11 @@
-import * as cheerio from "cheerio";
 import { createServiceClient } from "@/lib/supabase/service";
 import { HttpError } from "./HttpError";
-
-const BOARD_LIST_URL =
-  "http://nadulmokheaven.org/bbs/board.php?bo_table=board1";
-const BOARD_DETAIL_URL =
-  "http://nadulmokheaven.org/bbs/board.php?bo_table=board1&wr_id=";
-const USER_AGENT =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
-
-function extractWrId(href: string): number | null {
-  try {
-    const url = new URL(href);
-    const wrId = url.searchParams.get("wr_id");
-    return wrId ? Number.parseInt(wrId, 10) : null;
-  } catch {
-    return null;
-  }
-}
-
-function parseSermonDate(title: string): string | null {
-  const match = title.match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);
-  if (!match) return null;
-  const [, year, month, day] = match;
-  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-}
-
-const SERMON_IMAGES_BUCKET = "sermon-images";
-
-/**
- * 원본 이미지를 다운로드해 sermon-images 버킷에 재호스팅하고 우리 쪽 public URL을 반환한다.
- * 원본 교회 홈페이지가 HTTPS를 지원하지 않아(https 요청이 http로 리다이렉트됨) 그대로 쓰면
- * 브라우저가 혼합 콘텐츠로 이미지를 차단하기 때문에, 스크랩 시점에 우리 Storage로 옮겨온다.
- * 다운로드/업로드 실패는 해당 이미지만 건너뛴다 (전체 스크랩을 막지 않음).
- */
-async function rehostImage(
-  supabase: ReturnType<typeof createServiceClient>,
-  sourceImageUrl: string,
-  wrId: number,
-  index: number,
-): Promise<string | null> {
-  try {
-    const response = await fetch(sourceImageUrl, {
-      headers: { "User-Agent": USER_AGENT },
-    });
-    if (!response.ok) return null;
-
-    const contentType = response.headers.get("content-type") ?? "image/png";
-    const buffer = await response.arrayBuffer();
-    const ext = contentType.split("/")[1]?.split(";")[0] ?? "png";
-    const path = `${wrId}/${index}.${ext}`;
-
-    const { error } = await supabase.storage
-      .from(SERMON_IMAGES_BUCKET)
-      .upload(path, buffer, { contentType, upsert: true });
-    if (error) return null;
-
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from(SERMON_IMAGES_BUCKET).getPublicUrl(path);
-    return publicUrl;
-  } catch {
-    return null;
-  }
-}
+import {
+  SERMON_BOARD_TABLE,
+  fetchPostImageUrls,
+  findLatestPost,
+  parsePostDate,
+} from "./scrapeBoard";
 
 export type ScrapeSermonResult =
   | { ok: true; inserted: true; draftId: string }
@@ -78,61 +20,13 @@ export type ScrapeSermonResult =
  * sermon_drafts insert 실패는 기존 라우트의 동작을 그대로 보존해 HttpError(502)를 throw한다.
  */
 export async function scrapeSermon(): Promise<ScrapeSermonResult> {
-  let wrId: number;
-  let title: string;
+  const post = await findLatestPost(SERMON_BOARD_TABLE, "설교안");
 
-  try {
-    const listResponse = await fetch(BOARD_LIST_URL, {
-      headers: { "User-Agent": USER_AGENT },
-    });
-
-    if (!listResponse.ok) {
-      throw new HttpError(`게시판 목록을 불러오지 못했어요. (status ${listResponse.status})`, 502);
-    }
-
-    const listHtml = await listResponse.text();
-    const $list = cheerio.load(listHtml);
-
-    let foundWrId: number | null = null;
-    let foundTitle: string | null = null;
-
-    $list("tbody tr").each((_, row) => {
-      if (foundWrId !== null) return;
-
-      const $row = $list(row);
-      if ($row.hasClass("bo_notice")) return;
-
-      const $link = $row.find("td.td_subject a").first();
-      const linkText = $link.text().trim();
-      if (!linkText.includes("설교안")) return;
-
-      const href = $link.attr("href");
-      if (!href) return;
-
-      const parsedWrId = extractWrId(href);
-      if (parsedWrId === null) return;
-
-      foundWrId = parsedWrId;
-      foundTitle = linkText;
-    });
-
-    if (foundWrId === null || foundTitle === null) {
-      return {
-        ok: true,
-        skipped: true,
-        reason: "설교안 게시글을 찾지 못했어요.",
-      };
-    }
-
-    wrId = foundWrId;
-    title = foundTitle;
-  } catch (error) {
-    if (error instanceof HttpError) throw error;
-    const message = error instanceof Error ? error.message : "게시판 목록 스크랩에 실패했어요.";
-    throw new HttpError(message, 502);
+  if (!post) {
+    return { ok: true, skipped: true, reason: "설교안 게시글을 찾지 못했어요." };
   }
 
-  const sermonDate = parseSermonDate(title);
+  const sermonDate = parsePostDate(post.title);
   if (!sermonDate) {
     return { ok: true, skipped: true, reason: "date not found in title" };
   }
@@ -142,53 +36,21 @@ export async function scrapeSermon(): Promise<ScrapeSermonResult> {
   const { data: existing } = await supabase
     .from("sermon_drafts")
     .select("id")
-    .eq("source_wr_id", wrId)
+    .eq("source_wr_id", post.wrId)
     .maybeSingle();
 
   if (existing) {
     return { ok: true, skipped: true, reason: "already scraped" };
   }
 
-  const sourceUrl = `${BOARD_DETAIL_URL}${wrId}`;
-  let imageUrls: string[] = [];
-
-  try {
-    const detailResponse = await fetch(sourceUrl, {
-      headers: { "User-Agent": USER_AGENT },
-    });
-
-    if (!detailResponse.ok) {
-      throw new HttpError(`게시글 상세를 불러오지 못했어요. (status ${detailResponse.status})`, 502);
-    }
-
-    const detailHtml = await detailResponse.text();
-    const $detail = cheerio.load(detailHtml);
-
-    // NOTE: #bo_v_con a.view_image의 href는 실제 이미지가 아니라 "크게보기" HTML 뷰어
-    // 페이지 URL이라 <img> 태그로 못 그린다. 실제 이미지 파일은 항상 #bo_v_con img의
-    // src 속성에 있으므로 그것만 사용한다.
-    const rawImageUrls = $detail("#bo_v_con img")
-      .map((_, el) => $detail(el).attr("src"))
-      .get()
-      .filter((src): src is string => Boolean(src))
-      .map((src) => new URL(src, sourceUrl).toString());
-
-    const rehosted = await Promise.all(
-      rawImageUrls.map((url, index) => rehostImage(supabase, url, wrId, index)),
-    );
-    imageUrls = rehosted.filter((url): url is string => Boolean(url));
-  } catch (error) {
-    if (error instanceof HttpError) throw error;
-    const message = error instanceof Error ? error.message : "게시글 상세 스크랩에 실패했어요.";
-    throw new HttpError(message, 502);
-  }
+  const imageUrls = await fetchPostImageUrls(supabase, post, `${post.wrId}/`);
 
   const { data: inserted, error: insertError } = await supabase
     .from("sermon_drafts")
     .insert({
-      source_wr_id: wrId,
-      source_url: sourceUrl,
-      title,
+      source_wr_id: post.wrId,
+      source_url: post.sourceUrl,
+      title: post.title,
       sermon_date: sermonDate,
       image_urls: imageUrls,
     })

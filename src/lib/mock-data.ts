@@ -672,8 +672,7 @@ export const todayRegistrationStatus: RegistrationStatusItem[] = [
 export type QuickManagementIcon =
   | "devotion"
   | "song"
-  | "sermon"
-  | "bulletin"
+  | "groupMaterial"
   | "calendar"
   | "memberApproval"
   | "notification";
@@ -689,8 +688,12 @@ export interface QuickManagementAction {
 export const quickManagementActions: QuickManagementAction[] = [
   { id: "devotion", label: "묵상 등록", icon: "devotion", href: "/admin/devotion/new" },
   { id: "song", label: "찬양 등록", icon: "song", href: "/admin/song/new" },
-  { id: "sermon", label: "설교 등록", icon: "sermon", href: "/admin/sermon/new" },
-  { id: "bulletin", label: "주보 등록", icon: "bulletin", href: "/admin/bulletin/new" },
+  {
+    id: "groupMaterial",
+    label: "교제 자료 등록",
+    icon: "groupMaterial",
+    href: "/admin/group-material",
+  },
   { id: "calendar", label: "일정 등록", icon: "calendar", href: "/admin/event/new" },
   {
     id: "memberApproval",

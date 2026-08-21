@@ -2,7 +2,6 @@ import Link from "next/link";
 import {
   FileEdit,
   Library,
-  Podcast,
   Newspaper,
   CalendarDays,
   UserPlus,
@@ -20,8 +19,7 @@ interface QuickManagementGridProps {
 const iconMap: Record<QuickManagementIcon, typeof FileEdit> = {
   devotion: FileEdit,
   song: Library,
-  sermon: Podcast,
-  bulletin: Newspaper,
+  groupMaterial: Newspaper,
   calendar: CalendarDays,
   memberApproval: UserPlus,
   notification: Megaphone,
