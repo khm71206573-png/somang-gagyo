@@ -93,12 +93,6 @@ export function SharedReflections({
           </article>
         ))}
       </div>
-      <button
-        type="button"
-        className="mt-2 w-full rounded-md border border-outline-variant py-3 text-label-sm text-muted-foreground transition-colors hover:bg-surface-container-low"
-      >
-        더보기
-      </button>
     </section>
   );
 }

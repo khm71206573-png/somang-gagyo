@@ -53,7 +53,12 @@ export default function BibleProgressPage() {
       <main className="flex flex-col gap-stack-lg px-margin-main pt-stack-lg">
         <PlanSelectorChip label={data.planLabel} />
         <ProgressSummaryCard summary={data.summary} />
-        {data.missedAlert && <MissedPortionAlert alert={data.missedAlert} />}
+        {data.missedAlert && (
+          <MissedPortionAlert
+            alert={data.missedAlert}
+            memberPlanId={data.memberPlanId}
+          />
+        )}
         {data.todayPortion && (
           <TodayPortionCard
             portion={data.todayPortion}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { CalendarMonthData } from "@/lib/mock-data";
 import { EVENT_CATEGORIES, eventCategory } from "@/lib/eventCategories";
@@ -11,12 +12,41 @@ interface MonthCalendarCardProps {
   onNextMonth: () => void;
 }
 
+/** 스와이프로 인식할 최소 이동 거리(px). 날짜 탭과 헷갈리지 않을 정도로 잡는다. */
+const SWIPE_THRESHOLD = 48;
+
 export function MonthCalendarCard({
   month,
   onSelectDate,
   onPrevMonth,
   onNextMonth,
 }: MonthCalendarCardProps) {
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+
+  function handleTouchStart(event: React.TouchEvent) {
+    const touch = event.touches[0];
+    touchStart.current = { x: touch.clientX, y: touch.clientY };
+  }
+
+  function handleTouchEnd(event: React.TouchEvent) {
+    const start = touchStart.current;
+    touchStart.current = null;
+    if (!start) return;
+
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+
+    // 세로 스크롤과 헷갈리지 않도록 가로로 뚜렷하게 움직였을 때만 반응한다.
+    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+
+    if (dx < 0) {
+      onNextMonth();
+    } else {
+      onPrevMonth();
+    }
+  }
+
   return (
     <section className="rounded-lg bg-card p-4 shadow-[0_4px_24px_rgba(44,44,44,0.04)]">
       <div className="mb-6 flex items-center justify-between">
@@ -39,7 +69,11 @@ export function MonthCalendarCard({
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-y-4 text-center">
+      <div
+        className="grid grid-cols-7 gap-y-4 text-center"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {month.weekdayLabels.map((label, index) => (
           <div
             key={label}

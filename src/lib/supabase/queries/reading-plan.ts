@@ -1,4 +1,48 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { toMidnight, unwrapRelation } from "./utils";
+
+export interface ExpectedDayInfo {
+  planId: string;
+  currentDay: number;
+  /** 시작일 기준으로 오늘이 며칠차인지 (1~totalDays로 clamp) */
+  expectedDay: number;
+  totalDays: number;
+}
+
+/**
+ * 시작일과 오늘 날짜로 "오늘 몇 일차여야 하는지"를 계산한다.
+ * 밀린 분량 몰아 읽기·오늘부터 다시 시작 기능에서 공용으로 쓴다.
+ */
+export async function fetchExpectedDayInfo(
+  supabase: SupabaseClient,
+  memberPlanId: string,
+): Promise<ExpectedDayInfo | null> {
+  const { data: memberPlan } = await supabase
+    .from("member_plans")
+    .select("plan_id, current_day, started_at, bible_plans(total_days)")
+    .eq("id", memberPlanId)
+    .maybeSingle();
+
+  if (!memberPlan) return null;
+
+  const plan = unwrapRelation(memberPlan.bible_plans);
+  const totalDays = plan?.total_days ?? 0;
+  const startedAt = new Date(`${memberPlan.started_at}T00:00:00`);
+  const today = new Date();
+
+  const daysSinceStart =
+    Math.floor(
+      (toMidnight(today).getTime() - toMidnight(startedAt).getTime()) / 86400000,
+    ) + 1;
+  const expectedDay = Math.min(Math.max(daysSinceStart, 1), Math.max(totalDays, 1));
+
+  return {
+    planId: memberPlan.plan_id,
+    currentDay: memberPlan.current_day,
+    expectedDay,
+    totalDays,
+  };
+}
 
 export async function fetchActiveMemberPlan(
   supabase: SupabaseClient,
