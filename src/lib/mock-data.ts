@@ -793,20 +793,6 @@ export const activeGroupTabId: GroupTabId = "bulletin";
 
 export const groupMeetingTitle = "가교모임 (2월 11일)";
 
-export interface SermonSharingQuestion {
-  id: number;
-  question: string;
-}
-
-export interface SermonSummary {
-  categoryLabel: string | null;
-  title: string;
-  preacher: string | null;
-  quote: string | null;
-  paragraphs: string[];
-  sharingQuestions: SermonSharingQuestion[];
-}
-
 export interface PraiseSheet {
   id: string;
   key: string;

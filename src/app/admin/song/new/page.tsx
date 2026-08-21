@@ -15,6 +15,7 @@ import {
 import { useCreateSong } from "@/hooks/useCreateSong";
 import { useFetchSongSource } from "@/hooks/useFetchSongSource";
 import type { SongSource } from "@/lib/youtube/resolvePlaylist";
+import { buildLyricsSearchUrl } from "@/lib/cleanSearchQuery";
 import { toDateString } from "@/lib/supabase/queries/utils";
 
 export default function NewSongPage() {
@@ -181,7 +182,7 @@ export default function NewSongPage() {
               </label>
               {title.trim() && (
                 <a
-                  href={`https://search.naver.com/search.naver?query=${encodeURIComponent(`${title} ${artist} 가사`.trim())}`}
+                  href={buildLyricsSearchUrl(title, artist)}
                   target="_blank"
                   rel="noreferrer"
                   className="text-label-sm text-primary hover:underline"

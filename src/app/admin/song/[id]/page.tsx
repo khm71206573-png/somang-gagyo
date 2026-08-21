@@ -16,6 +16,7 @@ import { ErrorState } from "@/components/common/ErrorState";
 import { useSong } from "@/hooks/useSong";
 import { useUpdateSong } from "@/hooks/useUpdateSong";
 import { linesToBlocks } from "@/lib/adminFormParsing";
+import { buildLyricsSearchUrl } from "@/lib/cleanSearchQuery";
 
 export default function EditSongPage({
   params,
@@ -164,7 +165,7 @@ export default function EditSongPage({
               </label>
               {title.trim() && (
                 <a
-                  href={`https://search.naver.com/search.naver?query=${encodeURIComponent(`${title} ${artist} 가사`.trim())}`}
+                  href={buildLyricsSearchUrl(title, artist)}
                   target="_blank"
                   rel="noreferrer"
                   className="text-label-sm text-primary hover:underline"

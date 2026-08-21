@@ -2,7 +2,8 @@ name: Sync Today's Song
 
 on:
   schedule:
-    - cron: "0 22 * * 0,2,4,6"
+    # 매일 자정(한국 시간) 실행. cron은 UTC 기준이라 15:00 UTC = 00:00 KST.
+    - cron: "0 15 * * *"
   workflow_dispatch: {}
 
 jobs:

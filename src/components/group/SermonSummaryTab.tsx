@@ -1,98 +1,125 @@
-import Link from "next/link";
-import { Pencil, Plus } from "lucide-react";
-import type { SermonSummary } from "@/lib/mock-data";
+"use client";
+
+import { useState, type FormEvent } from "react";
+import { Trash2 } from "lucide-react";
+import { RotateCw } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useProfile";
+import { useSermonSummaries } from "@/hooks/useSermonSummaries";
+import { useCreateSermonSummary } from "@/hooks/useCreateSermonSummary";
+import { useDeleteSermonSummary } from "@/hooks/useDeleteSermonSummary";
 
-interface SermonSummaryTabProps {
-  summary: SermonSummary | null;
-  sermonId: string | null;
-}
-
-export function SermonSummaryTab({ summary, sermonId }: SermonSummaryTabProps) {
+export function SermonSummaryTab() {
   const isAdmin = useIsAdmin();
+  const { data, isLoading, isError, error, refetch, isFetching } =
+    useSermonSummaries();
+  const { mutate: createSummary, isPending: isCreating, error: createError } =
+    useCreateSermonSummary();
+  const { mutate: deleteSummary, isPending: isDeleting, variables: deletingId } =
+    useDeleteSermonSummary();
 
-  if (!summary) {
-    return (
-      <section className="flex flex-col items-center gap-3 py-stack-lg">
-        <p className="text-center text-body-md text-muted-foreground">
-          등록된 설교요약이 아직 없어요.
-        </p>
-        {isAdmin && (
-          <Link
-            href="/admin/sermon/new"
-            className="flex items-center gap-1.5 rounded-md border border-primary px-4 py-2 text-label-sm font-medium text-primary transition-colors hover:bg-primary/10"
-          >
-            <Plus className="h-4 w-4" />
-            설교요약 작성하기
-          </Link>
-        )}
-      </section>
-    );
+  const [content, setContent] = useState("");
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setLocalError(null);
+
+    if (!content.trim()) {
+      setLocalError("내용을 입력해주세요.");
+      return;
+    }
+
+    createSummary(content, { onSuccess: () => setContent("") });
   }
+
+  const submitErrorMessage =
+    localError ?? (createError instanceof Error ? createError.message : null);
 
   return (
     <section className="flex flex-col gap-stack-md">
-      <div className="flex flex-col gap-4 rounded-lg border border-outline-variant/30 bg-card p-5 shadow-[0px_4px_20px_rgba(44,44,44,0.04)]">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            {summary.categoryLabel && (
-              <span className="mb-1 inline-block rounded-sm bg-primary/10 px-2 py-1 text-label-sm text-primary">
-                {summary.categoryLabel}
-              </span>
-            )}
-            <h3 className="text-title-lg text-foreground">{summary.title}</h3>
-            {summary.preacher && (
-              <p className="mt-0.5 text-label-sm text-muted-foreground">
-                {summary.preacher} 목사
-              </p>
-            )}
-          </div>
-          {isAdmin && sermonId && (
-            <Link
-              href={`/admin/sermon/${sermonId}`}
-              aria-label="설교요약 수정"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-container text-muted-foreground transition-colors hover:bg-surface-dim"
-            >
-              <Pencil className="h-4 w-4" />
-            </Link>
+      {isAdmin && (
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-3 rounded-lg border border-outline-variant/30 bg-card p-4 shadow-[0px_4px_20px_rgba(44,44,44,0.04)]"
+        >
+          <textarea
+            rows={5}
+            value={content}
+            onChange={(event) => {
+              setContent(event.target.value);
+              setLocalError(null);
+            }}
+            placeholder="이번 주 설교요약을 입력해주세요..."
+            className="w-full resize-none rounded-md border border-border bg-background p-3 text-body-md text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+          />
+          {submitErrorMessage && (
+            <p className="text-label-sm text-destructive">{submitErrorMessage}</p>
           )}
+          <button
+            type="submit"
+            disabled={isCreating}
+            className="self-end rounded-md bg-primary px-4 py-2 text-label-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+          >
+            {isCreating ? "등록하는 중..." : "등록"}
+          </button>
+        </form>
+      )}
+
+      {isLoading ? (
+        <div className="flex justify-center py-stack-lg">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
-
-        {summary.quote && (
-          <blockquote className="border-l-2 border-primary/40 pl-3 text-body-md italic text-foreground">
-            {summary.quote}
-          </blockquote>
-        )}
-
-        {summary.paragraphs.length > 0 && (
-          <div className="flex flex-col gap-3">
-            {summary.paragraphs.map((paragraph, index) => (
-              <p
-                key={index}
-                className="text-body-md leading-relaxed text-foreground"
-              >
-                {paragraph}
+      ) : isError ? (
+        <div className="flex flex-col items-center gap-3 py-stack-lg text-center">
+          <p className="text-body-md text-muted-foreground">
+            {error instanceof Error ? error.message : "설교요약을 불러오지 못했어요."}
+          </p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="flex items-center gap-2 rounded-md border border-border px-4 py-2 text-label-sm text-foreground transition-colors hover:bg-surface-container-low disabled:opacity-50"
+          >
+            <RotateCw className="h-4 w-4" />
+            다시 시도
+          </button>
+        </div>
+      ) : !data || data.length === 0 ? (
+        <p className="py-stack-lg text-center text-body-md text-muted-foreground">
+          등록된 설교요약이 아직 없어요.
+        </p>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {data.map((post) => (
+            <article
+              key={post.id}
+              className="flex flex-col gap-2 rounded-lg border border-outline-variant/30 bg-card p-4 shadow-[0px_4px_20px_rgba(44,44,44,0.04)]"
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-label-sm text-muted-foreground">
+                  {post.authorName} · {post.timeAgo}
+                </p>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    aria-label="설교요약 삭제"
+                    disabled={isDeleting && deletingId === post.id}
+                    onClick={() => {
+                      if (window.confirm("이 설교요약을 삭제할까요?")) {
+                        deleteSummary(post.id);
+                      }
+                    }}
+                    className="text-outline transition-colors hover:text-destructive disabled:opacity-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              <p className="whitespace-pre-wrap text-body-md leading-relaxed text-foreground">
+                {post.content}
               </p>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {summary.sharingQuestions.length > 0 && (
-        <div className="flex flex-col gap-3 rounded-lg border border-outline-variant/30 bg-card p-5 shadow-[0px_4px_20px_rgba(44,44,44,0.04)]">
-          <h4 className="text-body-lg font-semibold text-foreground">
-            함께 나눌 질문
-          </h4>
-          <ol className="flex flex-col gap-2">
-            {summary.sharingQuestions.map((item) => (
-              <li key={item.id} className="flex gap-2 text-body-md text-foreground">
-                <span className="shrink-0 font-semibold text-primary">
-                  {item.id}.
-                </span>
-                <span>{item.question}</span>
-              </li>
-            ))}
-          </ol>
+            </article>
+          ))}
         </div>
       )}
     </section>

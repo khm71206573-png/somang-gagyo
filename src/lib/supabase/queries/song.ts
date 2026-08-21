@@ -12,10 +12,15 @@ export async function fetchSongPageData(
 ): Promise<SongPageData> {
   const todayStr = toDateString(new Date());
 
-  const { data: todayRow } = await supabase
+  // 오늘 날짜로 정확히 등록된 곡이 없어도, 다음 곡이 등록되기 전까지는
+  // 가장 최근에 등록된 곡을 계속 보여준다. (매일 자정 새 곡이 등록되지
+  // 않는 날도 있을 수 있어서 "오늘 것만" 찾으면 화면이 비어 보였다.)
+  const { data: currentRow } = await supabase
     .from("daily_songs")
-    .select("songs(title, artist, cover_image_url, youtube_url, lyrics)")
-    .eq("song_date", todayStr)
+    .select("song_date, songs(title, artist, cover_image_url, youtube_url, lyrics)")
+    .lte("song_date", todayStr)
+    .order("song_date", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   type SongRow = {
@@ -27,7 +32,7 @@ export async function fetchSongPageData(
   };
 
   const song = unwrapRelation(
-    todayRow?.songs as SongRow | SongRow[] | null,
+    currentRow?.songs as SongRow | SongRow[] | null,
   );
 
   const songDetail: SongDetail | null = song
@@ -43,10 +48,13 @@ export async function fetchSongPageData(
       }
     : null;
 
+  // 현재 보여주는 곡보다 이전 곡들만 "지난 찬양"에 나오게 한다.
+  const currentSongDate = currentRow?.song_date ?? todayStr;
+
   const { data: pastRows } = await supabase
     .from("daily_songs")
     .select("song_date, songs(id, title, cover_image_url)")
-    .lt("song_date", todayStr)
+    .lt("song_date", currentSongDate)
     .order("song_date", { ascending: false })
     .limit(5);
 
