@@ -39,6 +39,7 @@ export default function GroupPage() {
             bulletinImageUrls={data.bulletinImageUrls}
             sermonImageUrls={data.sermonImageUrls}
             sermonId={data.sermonId}
+            sermonSummary={data.sermonSummary}
             sheets={data.praiseSheets}
           />
         </main>

@@ -181,7 +181,7 @@ export default function NewSongPage() {
               </label>
               {title.trim() && (
                 <a
-                  href={`https://www.google.com/search?q=${encodeURIComponent(`${title} ${artist} 가사`.trim())}`}
+                  href={`https://search.naver.com/search.naver?query=${encodeURIComponent(`${title} ${artist} 가사`.trim())}`}
                   target="_blank"
                   rel="noreferrer"
                   className="text-label-sm text-primary hover:underline"

@@ -4,8 +4,9 @@ import { useState } from "react";
 import { GroupTabBar } from "@/components/group/GroupTabBar";
 import { BulletinTab } from "@/components/group/BulletinTab";
 import { SermonManuscriptTab } from "@/components/group/SermonManuscriptTab";
+import { SermonSummaryTab } from "@/components/group/SermonSummaryTab";
 import { PraiseSheetsTab } from "@/components/group/PraiseSheetsTab";
-import type { GroupTab, GroupTabId, PraiseSheet } from "@/lib/mock-data";
+import type { GroupTab, GroupTabId, PraiseSheet, SermonSummary } from "@/lib/mock-data";
 
 interface GroupTabsSectionProps {
   tabs: GroupTab[];
@@ -13,6 +14,7 @@ interface GroupTabsSectionProps {
   bulletinImageUrls: string[];
   sermonImageUrls: string[];
   sermonId: string | null;
+  sermonSummary: SermonSummary | null;
   sheets: PraiseSheet[];
 }
 
@@ -22,6 +24,7 @@ export function GroupTabsSection({
   bulletinImageUrls,
   sermonImageUrls,
   sermonId,
+  sermonSummary,
   sheets,
 }: GroupTabsSectionProps) {
   const [activeTabId, setActiveTabId] = useState<GroupTabId>(defaultTabId);
@@ -38,6 +41,9 @@ export function GroupTabsSection({
       )}
       {activeTabId === "manuscript" && (
         <SermonManuscriptTab imageUrls={sermonImageUrls} />
+      )}
+      {activeTabId === "summary" && (
+        <SermonSummaryTab summary={sermonSummary} sermonId={sermonId} />
       )}
       {activeTabId === "praise" && (
         <PraiseSheetsTab sheets={sheets} sermonId={sermonId} />

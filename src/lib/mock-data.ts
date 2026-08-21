@@ -768,7 +768,7 @@ export const scheduledNotification: ScheduledNotification = {
   scheduleLabel: "오늘 오후 6:00 발송 예정",
 };
 
-export type GroupTabId = "bulletin" | "manuscript" | "praise";
+export type GroupTabId = "bulletin" | "manuscript" | "summary" | "praise";
 
 export interface GroupTab {
   id: GroupTabId;
@@ -778,12 +778,27 @@ export interface GroupTab {
 export const groupTabs: GroupTab[] = [
   { id: "bulletin", label: "주보" },
   { id: "manuscript", label: "설교안" },
+  { id: "summary", label: "설교요약" },
   { id: "praise", label: "찬양악보" },
 ];
 
 export const activeGroupTabId: GroupTabId = "bulletin";
 
 export const groupMeetingTitle = "가교모임 (2월 11일)";
+
+export interface SermonSharingQuestion {
+  id: number;
+  question: string;
+}
+
+export interface SermonSummary {
+  categoryLabel: string | null;
+  title: string;
+  preacher: string | null;
+  quote: string | null;
+  paragraphs: string[];
+  sharingQuestions: SermonSharingQuestion[];
+}
 
 export interface PraiseSheet {
   id: string;
