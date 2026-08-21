@@ -4,6 +4,7 @@ import type {
   CalendarEventDot,
   CalendarMonthData,
   ScheduleEvent,
+  ScheduleEventType,
 } from "@/lib/mock-data";
 import { WEEKDAY_LABELS, avatarFallback, monthDayOf, toDateString } from "./utils";
 
@@ -12,6 +13,14 @@ export interface CalendarPageData {
   calendarMonth: CalendarMonthData;
   selectedDateLabel: string;
   scheduleEvents: ScheduleEvent[];
+}
+
+const VALID_TYPES: ScheduleEventType[] = ["church", "gagyo", "birthday", "other"];
+
+function toEventType(value: unknown): ScheduleEventType {
+  return VALID_TYPES.includes(value as ScheduleEventType)
+    ? (value as ScheduleEventType)
+    : "church";
 }
 
 async function fetchMonthDots(
@@ -34,9 +43,8 @@ async function fetchMonthDots(
 
   for (const event of events ?? []) {
     const { day } = monthDayOf(event.event_date);
-    const dot: CalendarEventDot = event.type === "birthday" ? "birthday" : "church";
     if (!dotMap.has(day)) dotMap.set(day, new Set());
-    dotMap.get(day)!.add(dot);
+    dotMap.get(day)!.add(toEventType(event.type));
   }
 
   return dotMap;
@@ -46,7 +54,7 @@ function buildCalendarMonth(
   year: number,
   month: number,
   dotMap: Map<number, Set<CalendarEventDot>>,
-  todayDate: number,
+  selectedDate: number | null,
 ): CalendarMonthData {
   const firstWeekday = new Date(year, month - 1, 1).getDay();
   const daysInMonth = new Date(year, month, 0).getDate();
@@ -63,7 +71,7 @@ function buildCalendarMonth(
     days.push({
       date: d,
       isCurrentMonth: true,
-      isSelected: d === todayDate,
+      isSelected: d === selectedDate,
       dots: dots && dots.size > 0 ? Array.from(dots) : undefined,
     });
   }
@@ -82,27 +90,32 @@ function buildCalendarMonth(
   };
 }
 
-async function fetchTodaySchedule(
+async function fetchScheduleFor(
   supabase: SupabaseClient,
-  todayStr: string,
+  dateStr: string,
 ): Promise<ScheduleEvent[]> {
   const { data: events } = await supabase
     .from("events")
     .select("id, title, description, location, start_time, type")
-    .eq("event_date", todayStr)
+    .eq("event_date", dateStr)
     .order("start_time", { ascending: true });
 
   return (events ?? []).map((event) => ({
     id: event.id,
-    type: event.type === "birthday" ? "birthday" : "church",
+    type: toEventType(event.type),
     title: event.title,
     subtitle: event.location ?? event.description ?? "",
     time: event.start_time ? event.start_time.slice(0, 5) : undefined,
   }));
 }
 
+/**
+ * 달력 화면 데이터를 가져온다.
+ * selectedDate(yyyy-mm-dd)를 주면 그 날짜가 속한 달을 보여주고 그 날의 일정을 반환한다.
+ */
 export async function fetchCalendarPageData(
   supabase: SupabaseClient,
+  selectedDate?: string,
 ): Promise<CalendarPageData> {
   const {
     data: { user },
@@ -112,10 +125,12 @@ export async function fetchCalendarPageData(
     throw new Error("로그인이 필요합니다.");
   }
 
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
-  const todayStr = toDateString(now);
+  const target = selectedDate
+    ? new Date(`${selectedDate}T00:00:00`)
+    : new Date();
+  const year = target.getFullYear();
+  const month = target.getMonth() + 1;
+  const dateStr = toDateString(target);
 
   const [{ data: profile }, dotMap, scheduleEvents] = await Promise.all([
     supabase
@@ -124,14 +139,14 @@ export async function fetchCalendarPageData(
       .eq("id", user.id)
       .maybeSingle(),
     fetchMonthDots(supabase, year, month),
-    fetchTodaySchedule(supabase, todayStr),
+    fetchScheduleFor(supabase, dateStr),
   ]);
 
   return {
     profileImageUrl:
       profile?.avatar_url ?? avatarFallback(profile?.name ?? "성도"),
-    calendarMonth: buildCalendarMonth(year, month, dotMap, now.getDate()),
-    selectedDateLabel: `${month}월 ${now.getDate()}일 일정`,
+    calendarMonth: buildCalendarMonth(year, month, dotMap, target.getDate()),
+    selectedDateLabel: `${month}월 ${target.getDate()}일 일정`,
     scheduleEvents,
   };
 }

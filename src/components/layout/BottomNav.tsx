@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, BookOpen, Music, Hand, Users, MoreHorizontal } from "lucide-react";
+import {
+  Home,
+  BookOpen,
+  BookMarked,
+  Music,
+  Hand,
+  Users,
+  MoreHorizontal,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface NavItem {
@@ -13,8 +21,9 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: "홈", icon: Home, href: "/" },
-  { label: "묵상", icon: BookOpen, href: "/devotion" },
   { label: "찬양", icon: Music, href: "/song" },
+  { label: "묵상", icon: BookOpen, href: "/devotion" },
+  { label: "통독", icon: BookMarked, href: "/bible-progress" },
   { label: "기도", icon: Hand, href: "/prayer" },
   { label: "교제", icon: Users, href: "/group" },
   { label: "더보기", icon: MoreHorizontal, href: "/more" },
@@ -32,17 +41,18 @@ export function BottomNav({ active = "홈" }: BottomNavProps) {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 left-1/2 z-50 flex h-[84px] w-full max-w-[480px] -translate-x-1/2 items-center justify-around bg-background px-4 shadow-[0_-2px_10px_0_rgba(44,44,44,0.04)]"
+      className="fixed inset-x-0 bottom-0 left-1/2 z-50 flex h-[84px] w-full max-w-[480px] -translate-x-1/2 items-center justify-around bg-background px-1 shadow-[0_-2px_10px_0_rgba(44,44,44,0.04)]"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       {navItems.map(({ label, icon: Icon, href }) => {
         const isActive = label === activeLabel;
-        const className = `flex h-full w-16 flex-col items-center justify-center text-label-sm transition-transform duration-200 active:scale-90 ${
+        // 탭이 7개라 항목 폭을 좁혀야 480px 안에서 잘리지 않는다.
+        const className = `flex h-full min-w-0 flex-1 flex-col items-center justify-center text-[11px] transition-transform duration-200 active:scale-90 ${
           isActive ? "font-bold text-primary" : "text-muted-foreground"
         }`;
         const content = (
           <>
-            <Icon className="mb-1 h-6 w-6" fill={isActive ? "currentColor" : "none"} />
+            <Icon className="mb-1 h-[22px] w-[22px]" fill={isActive ? "currentColor" : "none"} />
             <span>{label}</span>
           </>
         );

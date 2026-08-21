@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-type EventType = "church" | "birthday" | "other";
+type EventType = "church" | "gagyo" | "birthday" | "other";
 
 interface UpdateEventBody {
   eventDate?: string;
@@ -12,7 +12,7 @@ interface UpdateEventBody {
   description?: string;
 }
 
-const VALID_TYPES: EventType[] = ["church", "birthday", "other"];
+const VALID_TYPES: EventType[] = ["church", "gagyo", "birthday", "other"];
 
 async function requireAdmin() {
   const supabase = await createClient();

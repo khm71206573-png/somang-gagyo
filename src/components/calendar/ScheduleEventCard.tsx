@@ -1,32 +1,22 @@
 import Image from "next/image";
 import { Cake } from "lucide-react";
 import type { ScheduleEvent } from "@/lib/mock-data";
+import { eventCategory } from "@/lib/eventCategories";
 
 interface ScheduleEventCardProps {
   event: ScheduleEvent;
 }
 
 export function ScheduleEventCard({ event }: ScheduleEventCardProps) {
+  const category = eventCategory(event.type);
   const isBirthday = event.type === "birthday";
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-surface-container-highest/50 bg-card p-4 shadow-[0_2px_10px_rgba(44,44,44,0.02)]">
       <div className="flex items-center gap-2">
-        <div
-          className={
-            isBirthday
-              ? "h-2 w-2 rounded-full bg-secondary"
-              : "h-2 w-2 rounded-full bg-primary"
-          }
-        />
-        <span
-          className={
-            isBirthday
-              ? "text-label-sm text-secondary"
-              : "text-label-sm text-primary"
-          }
-        >
-          {isBirthday ? "생일" : "교회 일정"}
+        <div className={`h-2 w-2 rounded-full ${category.dotClassName}`} />
+        <span className={`text-label-sm ${category.textClassName}`}>
+          {category.label}
         </span>
       </div>
 
@@ -58,18 +48,22 @@ export function ScheduleEventCard({ event }: ScheduleEventCardProps) {
           </div>
         </div>
       ) : (
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-3">
           <div>
             <h4 className="text-body-lg font-semibold text-foreground">
               {event.title}
             </h4>
-            <p className="mt-1 text-body-md text-muted-foreground">
-              {event.subtitle}
-            </p>
+            {event.subtitle && (
+              <p className="mt-1 text-body-md text-muted-foreground">
+                {event.subtitle}
+              </p>
+            )}
           </div>
-          <span className="text-body-md text-muted-foreground">
-            {event.time}
-          </span>
+          {event.time && (
+            <span className="shrink-0 text-body-md text-muted-foreground">
+              {event.time}
+            </span>
+          )}
         </div>
       )}
     </div>

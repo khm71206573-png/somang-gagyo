@@ -1,13 +1,17 @@
+"use client";
+
 import type { BiblePlanFilterChip } from "@/lib/mock-data";
 
 interface BiblePlanFilterChipsProps {
   chips: BiblePlanFilterChip[];
   activeChipId: string;
+  onChipChange: (chipId: string) => void;
 }
 
 export function BiblePlanFilterChips({
   chips,
   activeChipId,
+  onChipChange,
 }: BiblePlanFilterChipsProps) {
   return (
     <div className="mt-stack-md px-margin-main">
@@ -18,6 +22,8 @@ export function BiblePlanFilterChips({
             <button
               key={chip.id}
               type="button"
+              aria-pressed={isActive}
+              onClick={() => onChipChange(chip.id)}
               className={
                 isActive
                   ? "shrink-0 snap-start rounded-full bg-primary px-4 py-2 text-label-sm text-primary-foreground shadow-[0_2px_8px_rgba(145,71,35,0.2)] transition-transform active:scale-95"

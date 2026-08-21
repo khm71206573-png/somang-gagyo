@@ -1,7 +1,7 @@
 import * as cheerio from "cheerio";
 import { createServiceClient } from "@/lib/supabase/service";
 import { HttpError } from "./HttpError";
-import { generateDevotionQuestions } from "./generateDevotionQuestions";
+import { defaultDevotionQuestions } from "@/lib/devotionQuestions";
 
 const DEVOTION_URL = "https://sum.su.or.kr:8888/bible/today";
 const USER_AGENT =
@@ -126,13 +126,9 @@ export async function scrapeDevotion(): Promise<ScrapeDevotionResult> {
 
   const { devotionDate, title, reference, verses } = parsed;
 
-  let questions: { id: number; question: string }[] = [];
-  try {
-    questions = await generateDevotionQuestions(reference, verses);
-  } catch (error) {
-    // 질문 자동 생성 실패는 묵상 등록 자체를 막지 않는다 (빈 배열로 대체).
-    console.error("묵상 질문 자동 생성 실패:", error);
-  }
+  // 매일 같은 기본 질문으로 묵상한다. 본문에 맞춘 질문이 필요하면
+  // 관리자 화면의 "질문 자동 생성"으로 따로 덮어쓸 수 있다.
+  const questions = defaultDevotionQuestions();
 
   const supabase = createServiceClient();
 

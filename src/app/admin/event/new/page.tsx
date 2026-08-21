@@ -14,10 +14,11 @@ import {
 import { useCreateEvent } from "@/hooks/useCreateEvent";
 import { toDateString } from "@/lib/supabase/queries/utils";
 
-type EventType = "church" | "birthday" | "other";
+type EventType = "church" | "gagyo" | "birthday" | "other";
 
 const TYPE_OPTIONS: { value: EventType; label: string }[] = [
-  { value: "church", label: "교회 일정" },
+  { value: "church", label: "교회일정" },
+  { value: "gagyo", label: "가교일정" },
   { value: "birthday", label: "생일" },
   { value: "other", label: "기타" },
 ];

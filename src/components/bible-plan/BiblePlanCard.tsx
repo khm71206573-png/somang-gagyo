@@ -1,8 +1,12 @@
-import { ChevronRight, Clock, BookOpen, Users } from "lucide-react";
+"use client";
+
+import { Check, Clock, BookOpen, Users } from "lucide-react";
 import type { BiblePlan } from "@/lib/mock-data";
 
 interface BiblePlanCardProps {
   plan: BiblePlan;
+  isSelected: boolean;
+  onSelect: (planId: string) => void;
 }
 
 const ribbonClassMap = {
@@ -17,9 +21,25 @@ const dotColorClassMap = {
   secondary: "text-secondary",
 };
 
-export function BiblePlanCard({ plan }: BiblePlanCardProps) {
+export function BiblePlanCard({ plan, isSelected, onSelect }: BiblePlanCardProps) {
   return (
-    <article className="group relative flex cursor-pointer flex-col gap-3 rounded-lg border border-surface-container-highest/50 bg-card p-5 shadow-[0_4px_12px_rgba(44,44,44,0.03)] transition-colors hover:bg-surface-container-low/50">
+    <article
+      role="button"
+      tabIndex={0}
+      aria-pressed={isSelected}
+      onClick={() => onSelect(plan.id)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect(plan.id);
+        }
+      }}
+      className={
+        isSelected
+          ? "group relative flex cursor-pointer flex-col gap-3 rounded-lg border-2 border-primary bg-primary/5 p-5 shadow-[0_4px_12px_rgba(145,71,35,0.08)] transition-colors"
+          : "group relative flex cursor-pointer flex-col gap-3 rounded-lg border border-surface-container-highest/50 bg-card p-5 shadow-[0_4px_12px_rgba(44,44,44,0.03)] transition-colors hover:bg-surface-container-low/50"
+      }
+    >
       {plan.ribbon && (
         <div
           className={
@@ -85,9 +105,11 @@ export function BiblePlanCard({ plan }: BiblePlanCardProps) {
         </div>
       </div>
 
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 text-primary opacity-0 transition-opacity group-hover:opacity-100">
-        <ChevronRight className="h-5 w-5" />
-      </div>
+      {isSelected && (
+        <div className="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          <Check className="h-4 w-4" strokeWidth={3} />
+        </div>
+      )}
     </article>
   );
 }
