@@ -22,6 +22,11 @@ export interface BibleReadingInfo {
   isCompleted: boolean;
   communityProgressLabel: string;
   progressPercent: number;
+  /** 완독 체크에 필요한 값 */
+  memberPlanId: string;
+  planDayId: string;
+  currentDay: number;
+  totalDays: number;
 }
 
 export interface SongInfo {
@@ -74,6 +79,10 @@ export const bibleReading: BibleReadingInfo = {
   isCompleted: false,
   communityProgressLabel: "우리 교회 32/48명 완독",
   progressPercent: 66,
+  memberPlanId: "",
+  planDayId: "",
+  currentDay: 1,
+  totalDays: 365,
 };
 
 export const song: SongInfo = {
@@ -572,9 +581,15 @@ export interface TodayPortion {
   passage: string;
   durationLabel: string;
   actionLabel: string;
+  /** 완독 체크를 기록할 plan_days 행 */
+  planDayId: string;
+  /** 이 분량을 이미 읽음으로 표시했는지 */
+  isCompleted: boolean;
 }
 
 export const todayPortion: TodayPortion = {
+  planDayId: "",
+  isCompleted: false,
   tag: "오늘의 분량",
   passage: "창세기 12-14장",
   durationLabel: "약 12분",

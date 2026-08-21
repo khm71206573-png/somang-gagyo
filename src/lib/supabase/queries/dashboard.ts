@@ -127,6 +127,10 @@ async function fetchBibleReading(
     planName: plan?.title ?? "",
     passage: planDay.passage,
     isCompleted,
+    memberPlanId: memberPlan.id,
+    planDayId: planDay.id,
+    currentDay: memberPlan.current_day,
+    totalDays,
     communityProgressLabel: `우리 교회 ${completedToday}/${activePlanIds.length}명 완독`,
     progressPercent,
   };

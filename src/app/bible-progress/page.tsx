@@ -12,12 +12,16 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { EmptyState } from "@/components/common/EmptyState";
+import { useState } from "react";
 import { oldTestamentProgress, newTestamentProgress } from "@/lib/mock-data";
 import { useBibleProgressData } from "@/hooks/useBibleProgressData";
+import { useCompleteReading } from "@/hooks/useCompleteReading";
 
 export default function BibleProgressPage() {
   const { data, isLoading, isError, error, refetch, isFetching } =
     useBibleProgressData();
+  const { mutate: completeReading, isPending } = useCompleteReading();
+  const [completeError, setCompleteError] = useState<string | null>(null);
 
   if (isLoading) {
     return <LoadingState />;
@@ -51,7 +55,30 @@ export default function BibleProgressPage() {
         <ProgressSummaryCard summary={data.summary} />
         {data.missedAlert && <MissedPortionAlert alert={data.missedAlert} />}
         {data.todayPortion && (
-          <TodayPortionCard portion={data.todayPortion} />
+          <TodayPortionCard
+            portion={data.todayPortion}
+            completedToday={data.completedToday}
+            isPending={isPending}
+            error={completeError}
+            onToggleComplete={() => {
+              setCompleteError(null);
+              completeReading(
+                {
+                  memberPlanId: data.memberPlanId,
+                  planDayId: data.todayPortion!.planDayId,
+                  currentDay: data.currentDay,
+                  totalDays: data.totalDays,
+                  isCompleted: data.todayPortion!.isCompleted,
+                },
+                {
+                  onError: (err) =>
+                    setCompleteError(
+                      err instanceof Error ? err.message : "저장하지 못했어요.",
+                    ),
+                },
+              );
+            }}
+          />
         )}
         <WeekTracker days={data.weekTracker} />
         {data.readingTogether && (
@@ -62,7 +89,7 @@ export default function BibleProgressPage() {
           newTestament={newTestamentProgress}
         />
       </main>
-      <BottomNav active="묵상" />
+      <BottomNav active="통독" />
     </div>
   );
 }
