@@ -58,6 +58,7 @@ export default function CalendarPage() {
         />
         <ScheduleList
           dateLabel={data.selectedDateLabel}
+          holidayName={data.selectedHolidayName}
           events={data.scheduleEvents}
         />
       </main>

@@ -286,6 +286,8 @@ export interface CalendarDay {
   isCurrentMonth: boolean;
   isSelected?: boolean;
   dots?: CalendarEventDot[];
+  /** 공휴일이면 이름 (예: "삼일절", "대체공휴일") */
+  holidayName?: string;
 }
 
 export interface CalendarMonthData {

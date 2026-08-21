@@ -6,12 +6,15 @@ import type {
   ScheduleEvent,
   ScheduleEventType,
 } from "@/lib/mock-data";
+import { holidayName, holidaysInMonth } from "@/lib/holidays";
 import { WEEKDAY_LABELS, avatarFallback, monthDayOf, toDateString } from "./utils";
 
 export interface CalendarPageData {
   profileImageUrl: string;
   calendarMonth: CalendarMonthData;
   selectedDateLabel: string;
+  /** 선택한 날짜가 공휴일이면 이름 */
+  selectedHolidayName: string | null;
   scheduleEvents: ScheduleEvent[];
 }
 
@@ -56,6 +59,7 @@ function buildCalendarMonth(
   dotMap: Map<number, Set<CalendarEventDot>>,
   selectedDate: number | null,
 ): CalendarMonthData {
+  const holidayMap = holidaysInMonth(year, month);
   const firstWeekday = new Date(year, month - 1, 1).getDay();
   const daysInMonth = new Date(year, month, 0).getDate();
   const daysInPrevMonth = new Date(year, month - 1, 0).getDate();
@@ -73,6 +77,7 @@ function buildCalendarMonth(
       isCurrentMonth: true,
       isSelected: d === selectedDate,
       dots: dots && dots.size > 0 ? Array.from(dots) : undefined,
+      holidayName: holidayMap.get(d),
     });
   }
 
@@ -147,6 +152,7 @@ export async function fetchCalendarPageData(
       profile?.avatar_url ?? avatarFallback(profile?.name ?? "성도"),
     calendarMonth: buildCalendarMonth(year, month, dotMap, target.getDate()),
     selectedDateLabel: `${month}월 ${target.getDate()}일 일정`,
+    selectedHolidayName: holidayName(dateStr),
     scheduleEvents,
   };
 }
