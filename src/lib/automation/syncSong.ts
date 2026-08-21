@@ -18,13 +18,40 @@ export type FetchLikedSongResult =
   | ({ ok: true; skipped: false } & LikedSong)
   | { ok: true; skipped: true; reason: string };
 
+const PLAYLIST_PAGE_SIZE = 25;
+
+interface PlaylistSnippet {
+  title?: string;
+  channelTitle?: string;
+  videoOwnerChannelTitle?: string;
+  resourceId?: { videoId?: string };
+  thumbnails?: { high?: { url?: string }; default?: { url?: string } };
+}
+
+function toLikedSong(snippet: PlaylistSnippet | undefined): LikedSong | null {
+  const videoId = snippet?.resourceId?.videoId;
+  const title = snippet?.title?.trim();
+
+  if (!videoId || !title) return null;
+
+  return {
+    title,
+    artist: snippet.videoOwnerChannelTitle ?? snippet.channelTitle ?? null,
+    coverImageUrl:
+      snippet.thumbnails?.high?.url ?? snippet.thumbnails?.default?.url ?? null,
+    youtubeUrl: `https://www.youtube.com/watch?v=${videoId}`,
+  };
+}
+
 /**
- * 유튜브 "좋아요 표시한 동영상" 목록에서 가장 최근 곡 정보를 가져온다 (DB에 쓰지 않음).
- * 관리자 등록 화면에서 입력칸을 자동으로 채우는 용도.
+ * 유튜브 "좋아요 표시한 동영상" 목록에서 아직 등록되지 않은 가장 최근 곡을 가져온다 (DB에 쓰지 않음).
+ * 이미 songs 테이블에 있는 곡은 건너뛰므로, 맨 위 곡이 등록된 상태여도 그 다음 새 곡을 찾아온다.
  *
  * YouTube API 호출 실패는 HttpError(502)를 throw한다.
  */
 export async function fetchLikedSong(): Promise<FetchLikedSongResult> {
+  let candidates: LikedSong[];
+
   try {
     const accessToken = await getAccessToken();
     const authHeaders = { Authorization: `Bearer ${accessToken}` };
@@ -50,7 +77,7 @@ export async function fetchLikedSong(): Promise<FetchLikedSongResult> {
       };
     }
 
-    const playlistUrl = `${PLAYLIST_ITEMS_URL}?part=snippet&playlistId=${likesPlaylistId}&maxResults=5`;
+    const playlistUrl = `${PLAYLIST_ITEMS_URL}?part=snippet&playlistId=${likesPlaylistId}&maxResults=${PLAYLIST_PAGE_SIZE}`;
     const playlistResponse = await fetch(playlistUrl, { headers: authHeaders });
     if (!playlistResponse.ok) {
       throw new HttpError(
@@ -60,45 +87,48 @@ export async function fetchLikedSong(): Promise<FetchLikedSongResult> {
     }
 
     const playlistData = await playlistResponse.json();
-    const snippet = playlistData?.items?.[0]?.snippet;
+    const items = (playlistData?.items ?? []) as { snippet?: PlaylistSnippet }[];
 
-    if (!snippet) {
-      return { ok: true, skipped: true, reason: "좋아요 표시한 동영상이 없어요." };
-    }
-
-    const videoId = snippet?.resourceId?.videoId as string | undefined;
-    if (!videoId) {
-      return { ok: true, skipped: true, reason: "동영상 ID를 찾지 못했어요." };
-    }
-
-    const title = (snippet.title as string | undefined)?.trim();
-    if (!title) {
-      return { ok: true, skipped: true, reason: "동영상 제목을 찾지 못했어요." };
-    }
-
-    const artist =
-      (snippet.videoOwnerChannelTitle as string | undefined) ??
-      (snippet.channelTitle as string | undefined) ??
-      null;
-
-    const coverImageUrl =
-      (snippet.thumbnails?.high?.url as string | undefined) ??
-      (snippet.thumbnails?.default?.url as string | undefined) ??
-      null;
-
-    return {
-      ok: true,
-      skipped: false,
-      title,
-      artist,
-      coverImageUrl,
-      youtubeUrl: `https://www.youtube.com/watch?v=${videoId}`,
-    };
+    candidates = items
+      .map((item) => toLikedSong(item.snippet))
+      .filter((song): song is LikedSong => song !== null);
   } catch (error) {
     if (error instanceof HttpError) throw error;
     const message = error instanceof Error ? error.message : "유튜브 좋아요 목록 동기화에 실패했어요.";
     throw new HttpError(message, 502);
   }
+
+  if (candidates.length === 0) {
+    return { ok: true, skipped: true, reason: "좋아요 표시한 동영상이 없어요." };
+  }
+
+  const supabase = createServiceClient();
+  const { data: registered, error: registeredError } = await supabase
+    .from("songs")
+    .select("youtube_url")
+    .in(
+      "youtube_url",
+      candidates.map((song) => song.youtubeUrl),
+    );
+
+  if (registeredError) {
+    throw new HttpError(registeredError.message, 500);
+  }
+
+  const registeredUrls = new Set(
+    (registered ?? []).map((row) => row.youtube_url as string),
+  );
+  const nextSong = candidates.find((song) => !registeredUrls.has(song.youtubeUrl));
+
+  if (!nextSong) {
+    return {
+      ok: true,
+      skipped: true,
+      reason: "좋아요 목록의 곡이 모두 이미 등록되어 있어요.",
+    };
+  }
+
+  return { ok: true, skipped: false, ...nextSong };
 }
 
 export type SyncSongResult =
@@ -121,16 +151,6 @@ export async function syncSong(): Promise<SyncSongResult> {
 
   const likedSong: LikedSong = fetched;
   const supabase = createServiceClient();
-
-  const { data: existingSong } = await supabase
-    .from("songs")
-    .select("id")
-    .eq("youtube_url", likedSong.youtubeUrl)
-    .maybeSingle();
-
-  if (existingSong) {
-    return { ok: true, skipped: true, reason: "no new liked song" };
-  }
 
   const { data: song, error: songError } = await supabase
     .from("songs")
