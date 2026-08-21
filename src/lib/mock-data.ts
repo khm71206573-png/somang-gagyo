@@ -618,6 +618,10 @@ export interface ReadingTogether {
   extraCount: number;
   message: string;
   ctaLabel: string;
+  /** 오늘 응원을 보낸 사람 수 */
+  cheerCount: number;
+  /** 로그인한 사용자가 오늘 이미 응원을 보냈는지 */
+  hasCheeredToday: boolean;
 }
 
 export const readingTogether: ReadingTogether = {
@@ -631,6 +635,8 @@ export const readingTogether: ReadingTogether = {
   extraCount: 12,
   message: "오늘 32명이 완독했어요",
   ctaLabel: "응원 보내기",
+  cheerCount: 0,
+  hasCheeredToday: false,
 };
 
 export type BookReadStatus = "completed" | "reading" | "unread";

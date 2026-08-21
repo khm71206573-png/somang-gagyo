@@ -21,7 +21,13 @@ import {
   fetchActivePlanMembers,
   fetchStreakDays,
 } from "./reading-plan";
-import { avatarFallback, isSameDate, toMidnight, unwrapRelation } from "./utils";
+import {
+  avatarFallback,
+  isSameDate,
+  toDateString,
+  toMidnight,
+  unwrapRelation,
+} from "./utils";
 
 export interface BibleProgressPageData {
   planLabel: string;
@@ -166,10 +172,42 @@ async function computeOverallProgress(
   };
 }
 
+/**
+ * 오늘 이 플랜에 올라온 응원 수와, 내가 이미 응원했는지 확인한다.
+ * reading_cheers 마이그레이션 적용 전이면 조회가 실패하는데, 통독 화면 전체가
+ * 막히지 않도록 "응원 없음"으로 보고 넘어간다.
+ */
+async function fetchCheerStatus(
+  supabase: SupabaseClient,
+  planId: string,
+  userId: string,
+): Promise<{ cheerCount: number; hasCheeredToday: boolean }> {
+  const todayStr = toDateString(new Date());
+
+  const { data, error } = await supabase
+    .from("reading_cheers")
+    .select("from_member_id")
+    .eq("plan_id", planId)
+    .eq("cheer_date", todayStr);
+
+  if (error) {
+    return { cheerCount: 0, hasCheeredToday: false };
+  }
+
+  const rows = data ?? [];
+
+  return {
+    cheerCount: rows.length,
+    hasCheeredToday: rows.some((row) => row.from_member_id === userId),
+  };
+}
+
 async function buildReadingTogether(
   supabase: SupabaseClient,
   planDayId: string | null,
   activePlanMembers: { id: string; member_id: string }[],
+  planId: string,
+  userId: string,
 ): Promise<ReadingTogether | null> {
   if (activePlanMembers.length === 0) return null;
 
@@ -182,19 +220,24 @@ async function buildReadingTogether(
   const shown = (profiles ?? []).slice(0, 5);
   const avatarUrls = shown.map((p) => p.avatar_url ?? avatarFallback(p.name));
 
-  const completedToday = planDayId
-    ? await countReadingLogsForPlanDay(
-        supabase,
-        planDayId,
-        activePlanMembers.map((m) => m.id),
-      )
-    : 0;
+  const [completedToday, cheerStatus] = await Promise.all([
+    planDayId
+      ? countReadingLogsForPlanDay(
+          supabase,
+          planDayId,
+          activePlanMembers.map((m) => m.id),
+        )
+      : Promise.resolve(0),
+    fetchCheerStatus(supabase, planId, userId),
+  ]);
 
   return {
     avatarUrls,
     extraCount: Math.max((profiles ?? []).length - shown.length, 0),
     message: `오늘 ${completedToday}명이 완독했어요`,
     ctaLabel: "응원 보내기",
+    cheerCount: cheerStatus.cheerCount,
+    hasCheeredToday: cheerStatus.hasCheeredToday,
   };
 }
 
@@ -301,7 +344,13 @@ export async function fetchBibleProgressData(
   const [weekTracker, readingTogether, completedToday, overallProgress] =
     await Promise.all([
       computeWeekTracker(supabase, memberPlan.id, memberPlan.plan_id, startedAt, totalDays),
-      buildReadingTogether(supabase, planDay?.id ?? null, activePlanMembers),
+      buildReadingTogether(
+      supabase,
+      planDay?.id ?? null,
+      activePlanMembers,
+      memberPlan.plan_id,
+      user.id,
+    ),
       hasReadingLogToday(supabase, memberPlan.id),
       computeOverallProgress(supabase, memberPlan.id),
     ]);

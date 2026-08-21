@@ -14,7 +14,8 @@ const OFFLINE_QUERY_KEYS = ["dashboard", "devotion", "bible-progress"];
 // 캐시가 새 화면으로 흘러드는 것을 막을 수 있다.
 // v2 : 통독 전체 진행표(oldTestament/newTestament) 추가
 // v3 : 홈 화면 기도제목 요약(prayerSummary) 추가, 기도제목 목록 제거
-const CACHE_BUSTER = "v3";
+// v4 : 통독 응원 현황(cheerCount/hasCheeredToday) 추가
+const CACHE_BUSTER = "v4";
 
 const noopStorage: Storage = {
   getItem: () => null,
