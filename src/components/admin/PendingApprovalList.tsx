@@ -76,14 +76,14 @@ export function PendingApprovalList({ members }: PendingApprovalListProps) {
       className="flex scroll-mt-20 flex-col gap-stack-sm"
     >
       <div className="flex items-end justify-between">
-        <h2 className="text-title-lg text-foreground">승인 대기 중인 교인</h2>
+        <h2 className="text-title-lg text-foreground">승인 대기 중인 멤버</h2>
         <span className="text-label-sm font-medium text-primary">
           {members.length}명
         </span>
       </div>
       {members.length === 0 ? (
         <p className="rounded-md border border-outline-variant/40 bg-card p-4 text-center text-label-sm text-muted-foreground">
-          승인 대기 중인 교인이 없어요.
+          승인 대기 중인 멤버가 없어요.
         </p>
       ) : (
         <div className="overflow-hidden rounded-md border border-outline-variant/40 bg-card shadow-[0px_4px_14px_rgba(44,44,44,0.03)]">

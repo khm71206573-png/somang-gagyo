@@ -5,6 +5,7 @@ import {
   Newspaper,
   CalendarDays,
   UserPlus,
+  Users,
   Megaphone,
 } from "lucide-react";
 import type {
@@ -22,6 +23,7 @@ const iconMap: Record<QuickManagementIcon, typeof FileEdit> = {
   groupMaterial: Newspaper,
   calendar: CalendarDays,
   memberApproval: UserPlus,
+  memberList: Users,
   notification: Megaphone,
 };
 

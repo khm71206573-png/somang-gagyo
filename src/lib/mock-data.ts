@@ -705,6 +705,7 @@ export type QuickManagementIcon =
   | "groupMaterial"
   | "calendar"
   | "memberApproval"
+  | "memberList"
   | "notification";
 
 export interface QuickManagementAction {
@@ -727,9 +728,15 @@ export const quickManagementActions: QuickManagementAction[] = [
   { id: "calendar", label: "일정 등록", icon: "calendar", href: "/admin/event/new" },
   {
     id: "memberApproval",
-    label: "교인 승인",
+    label: "멤버 승인",
     icon: "memberApproval",
     href: "#pending-approval",
+  },
+  {
+    id: "memberList",
+    label: "멤버 목록",
+    icon: "memberList",
+    href: "/admin/members",
   },
 ];
 
