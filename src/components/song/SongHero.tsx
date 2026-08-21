@@ -24,7 +24,13 @@ export function SongHero({ song }: SongHeroProps) {
       <p className="mb-6 text-body-lg text-muted-foreground">{song.artist}</p>
       <button
         type="button"
-        className="flex w-full items-center justify-center gap-2 rounded-md bg-primary py-4 text-primary-foreground shadow-[0px_2px_8px_rgba(145,71,35,0.2)] transition-all duration-200 hover:bg-primary/90 active:scale-95"
+        disabled={!song.youtubeUrl}
+        onClick={() => {
+          if (song.youtubeUrl) {
+            window.open(song.youtubeUrl, "_blank", "noopener,noreferrer");
+          }
+        }}
+        className="flex w-full items-center justify-center gap-2 rounded-md bg-primary py-4 text-primary-foreground shadow-[0px_2px_8px_rgba(145,71,35,0.2)] transition-all duration-200 hover:bg-primary/90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Play className="h-5 w-5" fill="currentColor" />
         <span className="text-title-lg">{song.listenLabel}</span>

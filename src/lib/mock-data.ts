@@ -388,6 +388,7 @@ export interface SongDetail {
   title: string;
   artist: string;
   coverImageUrl: string;
+  youtubeUrl: string;
   listenLabel: string;
   reason: string;
   lyrics: LyricStanza[];
@@ -404,6 +405,7 @@ export const songDetail: SongDetail = {
   artist: "온기 워십",
   coverImageUrl:
     "https://lh3.googleusercontent.com/aida-public/AB6AXuAlIGPdhjpQO5fiROpJMN_FdlOW_XSU2OzBB7CJNcQSi7XXM_b2KVLrDa1OrJMUgv8-wPUcKf7OW2LaZ0oB4NFzDGfqUkMLd-ptob8sznx8PBHiY-q4SzZ-o4pnGgVLAJaIafOniZDXVjeSMjXVX_wLDXT3Vb5LnlRM81t2nA5ZsOm9wfynnQebAibUiumoxpf3wLylF0A_zCc9r-HcgTgvY6evoWIlIs7PbOCbraRryjTWjMmnZ9n_",
+  youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
   listenLabel: "유튜브로 듣기",
   reason:
     "때로는 우리의 계획대로 되지 않아 낙심될 때가 있습니다.\n하지만 모든 것을 합력하여 선을 이루시는 하나님의 더 크고 선하신 계획을 신뢰하며 나아가기를 소망하는 마음으로 이 찬양을 추천합니다.",

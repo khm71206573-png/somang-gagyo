@@ -14,7 +14,7 @@ export async function fetchSongPageData(
 
   const { data: todayRow } = await supabase
     .from("daily_songs")
-    .select("reason, songs(title, artist, cover_image_url, lyrics)")
+    .select("reason, songs(title, artist, cover_image_url, youtube_url, lyrics)")
     .eq("song_date", todayStr)
     .maybeSingle();
 
@@ -22,6 +22,7 @@ export async function fetchSongPageData(
     title: string;
     artist: string | null;
     cover_image_url: string | null;
+    youtube_url: string | null;
     lyrics: unknown;
   };
 
@@ -34,6 +35,7 @@ export async function fetchSongPageData(
         title: song.title,
         artist: song.artist ?? "",
         coverImageUrl: song.cover_image_url ?? "",
+        youtubeUrl: song.youtube_url ?? "",
         listenLabel: "유튜브로 듣기",
         reason: todayRow?.reason ?? "",
         lyrics: (song.lyrics ?? []) as LyricStanza[],
