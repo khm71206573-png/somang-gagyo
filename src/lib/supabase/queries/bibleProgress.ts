@@ -1,12 +1,20 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   BibleProgressSummary,
+  BookProgressCell,
   MissedPortionAlert as MissedPortionAlertData,
   ReadingTogether,
+  TestamentProgress,
   TodayPortion,
   WeekDay,
   WeekDayStatus,
 } from "@/lib/mock-data";
+import {
+  NEW_TESTAMENT_BOOKS,
+  OLD_TESTAMENT_BOOKS,
+  collectReadChapters,
+  type BibleBook,
+} from "@/lib/bibleBooks";
 import {
   countReadingLogsForPlanDay,
   fetchActiveMemberPlan,
@@ -29,6 +37,8 @@ export interface BibleProgressPageData {
   todayPortion: TodayPortion | null;
   weekTracker: WeekDay[];
   readingTogether: ReadingTogether | null;
+  oldTestament: TestamentProgress;
+  newTestament: TestamentProgress;
 }
 
 const WEEK_LABELS = ["월", "화", "수", "목", "금", "토", "일"];
@@ -101,6 +111,59 @@ async function computeWeekTracker(
 
     return { label: WEEK_LABELS[i], status };
   });
+}
+
+/** 읽은 장 정보를 책별 진행 셀로 변환한다. */
+function toBookCells(
+  books: BibleBook[],
+  readChapters: Map<string, Set<number>>,
+): BookProgressCell[] {
+  return books.map((book) => {
+    const readCount = Math.min(
+      readChapters.get(book.name)?.size ?? 0,
+      book.chapters,
+    );
+
+    if (readCount === 0) {
+      return { name: book.name, status: "unread" as const };
+    }
+    if (readCount >= book.chapters) {
+      return { name: book.name, status: "completed" as const };
+    }
+    return {
+      name: book.name,
+      status: "reading" as const,
+      readingPercent: Math.round((readCount / book.chapters) * 100),
+    };
+  });
+}
+
+/** 완독 기록에 담긴 분량을 파싱해 구약/신약 진행표를 만든다. */
+async function computeOverallProgress(
+  supabase: SupabaseClient,
+  memberPlanId: string,
+): Promise<{ oldTestament: TestamentProgress; newTestament: TestamentProgress }> {
+  const { data: logs } = await supabase
+    .from("reading_logs")
+    .select("plan_days(passage)")
+    .eq("member_plan_id", memberPlanId);
+
+  const passages = (logs ?? [])
+    .map((log) => unwrapRelation<{ passage: string }>(log.plan_days)?.passage)
+    .filter((passage): passage is string => Boolean(passage));
+
+  const readChapters = collectReadChapters(passages);
+
+  return {
+    oldTestament: {
+      label: "구약 (Old Testament)",
+      books: toBookCells(OLD_TESTAMENT_BOOKS, readChapters),
+    },
+    newTestament: {
+      label: "신약 (New Testament)",
+      books: toBookCells(NEW_TESTAMENT_BOOKS, readChapters),
+    },
+  };
 }
 
 async function buildReadingTogether(
@@ -235,11 +298,13 @@ export async function fetchBibleProgressData(
 
   const activePlanMembers = await fetchActivePlanMembers(supabase, memberPlan.plan_id);
 
-  const [weekTracker, readingTogether, completedToday] = await Promise.all([
-    computeWeekTracker(supabase, memberPlan.id, memberPlan.plan_id, startedAt, totalDays),
-    buildReadingTogether(supabase, planDay?.id ?? null, activePlanMembers),
-    hasReadingLogToday(supabase, memberPlan.id),
-  ]);
+  const [weekTracker, readingTogether, completedToday, overallProgress] =
+    await Promise.all([
+      computeWeekTracker(supabase, memberPlan.id, memberPlan.plan_id, startedAt, totalDays),
+      buildReadingTogether(supabase, planDay?.id ?? null, activePlanMembers),
+      hasReadingLogToday(supabase, memberPlan.id),
+      computeOverallProgress(supabase, memberPlan.id),
+    ]);
 
   return {
     planLabel: plan?.title ?? "",
@@ -252,5 +317,7 @@ export async function fetchBibleProgressData(
     todayPortion,
     weekTracker,
     readingTogether,
+    oldTestament: overallProgress.oldTestament,
+    newTestament: overallProgress.newTestament,
   };
 }

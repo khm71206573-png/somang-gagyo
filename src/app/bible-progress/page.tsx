@@ -13,7 +13,6 @@ import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { EmptyState } from "@/components/common/EmptyState";
 import { useState } from "react";
-import { oldTestamentProgress, newTestamentProgress } from "@/lib/mock-data";
 import { useBibleProgressData } from "@/hooks/useBibleProgressData";
 import { useCompleteReading } from "@/hooks/useCompleteReading";
 
@@ -85,8 +84,8 @@ export default function BibleProgressPage() {
           <ReadingTogetherCard data={data.readingTogether} />
         )}
         <OverallProgressSection
-          oldTestament={oldTestamentProgress}
-          newTestament={newTestamentProgress}
+          oldTestament={data.oldTestament}
+          newTestament={data.newTestament}
         />
       </main>
       <BottomNav active="통독" />

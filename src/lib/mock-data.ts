@@ -646,24 +646,6 @@ export interface TestamentProgress {
   books: BookProgressCell[];
 }
 
-export const oldTestamentProgress: TestamentProgress = {
-  label: "구약 (Old Testament)",
-  books: [
-    { name: "창세기", status: "completed" },
-    { name: "출애굽기", status: "completed" },
-    { name: "레위기", status: "completed" },
-    { name: "민수기", status: "completed" },
-    { name: "신명기", status: "completed" },
-    { name: "여호수아", status: "reading", readingPercent: 50 },
-    ...Array.from({ length: 18 }, () => ({ status: "unread" as const })),
-  ],
-};
-
-export const newTestamentProgress: TestamentProgress = {
-  label: "신약 (New Testament)",
-  books: Array.from({ length: 12 }, () => ({ status: "unread" as const })),
-};
-
 export type RegistrationStatusIcon = "devotion" | "song" | "groupMaterial";
 
 export interface RegistrationStatusItem {
