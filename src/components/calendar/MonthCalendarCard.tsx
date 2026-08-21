@@ -32,9 +32,9 @@ export function MonthCalendarCard({ month }: MonthCalendarCardProps) {
             key={label}
             className={
               index === 0
-                ? "pb-2 text-label-sm text-destructive/80"
+                ? "pb-2 text-label-sm text-sunday"
                 : index === 6
-                  ? "pb-2 text-label-sm text-primary/80"
+                  ? "pb-2 text-label-sm text-saturday"
                   : "pb-2 text-label-sm text-muted-foreground"
             }
           >
@@ -43,9 +43,13 @@ export function MonthCalendarCard({ month }: MonthCalendarCardProps) {
         ))}
 
         {month.days.map((day, index) => {
-          const isSunday = index % 7 === 0;
-          const hasSundayAccent =
-            isSunday && !day.isSelected && day.dots?.includes("church");
+          const weekday = index % 7;
+          const weekendClassName =
+            weekday === 0
+              ? "text-sunday"
+              : weekday === 6
+                ? "text-saturday"
+                : "text-foreground";
 
           if (!day.isCurrentMonth) {
             return (
@@ -85,11 +89,7 @@ export function MonthCalendarCard({ month }: MonthCalendarCardProps) {
           return (
             <div
               key={`${index}-${day.date}`}
-              className={
-                hasSundayAccent
-                  ? "relative flex flex-col items-center py-2 text-body-md text-destructive/90"
-                  : "relative flex flex-col items-center py-2 text-body-md text-foreground"
-              }
+              className={`relative flex flex-col items-center py-2 text-body-md ${weekendClassName}`}
             >
               <span>{day.date}</span>
               {day.dots && day.dots.length > 0 && (

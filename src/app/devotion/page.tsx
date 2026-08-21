@@ -38,7 +38,10 @@ export default function DevotionDetailPage() {
 
   return (
     <div className="relative mx-auto min-h-screen w-full max-w-[480px] bg-background pb-[104px]">
-      <DevotionTopBar />
+      <DevotionTopBar
+        shareTitle={devotion.reference}
+        shareText={`[오늘의 묵상] ${devotion.title}\n${devotion.reference}`}
+      />
       <main className="flex flex-col gap-stack-lg px-margin-main pt-stack-sm">
         <ScriptureHeading devotion={devotion} />
         <ScriptureCard verses={devotion.verses} />

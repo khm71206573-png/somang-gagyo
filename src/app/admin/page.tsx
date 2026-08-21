@@ -46,9 +46,10 @@ export default function AdminPage() {
       isRegistered: data.registrationStatus.song,
     },
     {
-      id: "sermon",
-      label: "설교",
-      icon: "sermon",
+      id: "groupMaterial",
+      label: "교제자료",
+      icon: "groupMaterial",
+      href: "/admin/group-material",
       isRegistered: data.registrationStatus.sermon,
     },
   ];

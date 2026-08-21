@@ -5,9 +5,10 @@ import { ArrowLeft, CalendarDays } from "lucide-react";
 
 interface GroupTopBarProps {
   title: string;
+  onCalendarClick: () => void;
 }
 
-export function GroupTopBar({ title }: GroupTopBarProps) {
+export function GroupTopBar({ title, onCalendarClick }: GroupTopBarProps) {
   const router = useRouter();
 
   return (
@@ -25,7 +26,8 @@ export function GroupTopBar({ title }: GroupTopBarProps) {
       </h1>
       <button
         type="button"
-        aria-label="캘린더"
+        aria-label="날짜 선택"
+        onClick={onCalendarClick}
         className="-mr-2 flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-opacity hover:opacity-80"
       >
         <CalendarDays className="h-5 w-5" />

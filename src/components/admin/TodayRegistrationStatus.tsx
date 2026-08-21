@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Music, Mic, Check } from "lucide-react";
+import { BookOpen, Music, Newspaper, Check } from "lucide-react";
 import type {
   RegistrationStatusItem,
   RegistrationStatusIcon,
@@ -12,7 +12,7 @@ interface TodayRegistrationStatusProps {
 const iconMap: Record<RegistrationStatusIcon, typeof BookOpen> = {
   devotion: BookOpen,
   song: Music,
-  sermon: Mic,
+  groupMaterial: Newspaper,
 };
 
 export function TodayRegistrationStatus({
