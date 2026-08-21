@@ -641,7 +641,7 @@ export const newTestamentProgress: TestamentProgress = {
   books: Array.from({ length: 12 }, () => ({ status: "unread" as const })),
 };
 
-export type RegistrationStatusIcon = "devotion" | "song" | "sermon";
+export type RegistrationStatusIcon = "devotion" | "song" | "groupMaterial";
 
 export interface RegistrationStatusItem {
   id: string;
@@ -666,7 +666,13 @@ export const todayRegistrationStatus: RegistrationStatusItem[] = [
     isRegistered: true,
     href: "/song",
   },
-  { id: "sermon", label: "설교", icon: "sermon", isRegistered: false },
+  {
+    id: "groupMaterial",
+    label: "교제자료",
+    icon: "groupMaterial",
+    isRegistered: false,
+    href: "/admin/group-material",
+  },
 ];
 
 export type QuickManagementIcon =
@@ -760,20 +766,6 @@ export const groupTabs: GroupTab[] = [
 export const activeGroupTabId: GroupTabId = "bulletin";
 
 export const groupMeetingTitle = "가교모임 (2월 11일)";
-
-export interface SermonInfo {
-  categoryLabel: string;
-  title: string;
-  reference: string;
-  preacher: string;
-}
-
-export const sermonInfo: SermonInfo = {
-  categoryLabel: "주일 예배",
-  title: "참된 예배자의 삶",
-  reference: "요한복음 4:23-24",
-  preacher: "김하온 목사",
-};
 
 export interface PraiseSheet {
   id: string;

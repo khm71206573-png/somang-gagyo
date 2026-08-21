@@ -1,25 +1,30 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { PraiseSheet, SermonInfo } from "@/lib/mock-data";
+import type { PraiseSheet } from "@/lib/mock-data";
 import { monthDayOf, toDateString } from "./utils";
 
 export interface GroupPageData {
   meetingTitle: string;
-  sermonInfo: SermonInfo | null;
   bulletinImageUrls: string[];
   sermonImageUrls: string[];
   sermonId: string | null;
   praiseSheets: PraiseSheet[];
 }
 
+/**
+ * 선택한 날짜(없으면 오늘) 기준으로 그 날짜까지 올라온 가장 최근 설교안·주보를 가져온다.
+ * 가교모임 자료가 주 단위로 올라오기 때문에, 주중 아무 날짜를 골라도
+ * 그 주에 해당하는 자료가 보이도록 "선택일 이전 중 최신"으로 찾는다.
+ */
 export async function fetchGroupPageData(
   supabase: SupabaseClient,
+  selectedDate?: string,
 ): Promise<GroupPageData> {
-  const todayStr = toDateString(new Date());
+  const todayStr = selectedDate ?? toDateString(new Date());
 
   const [{ data: sermon }, { data: bulletin }] = await Promise.all([
     supabase
       .from("sermons")
-      .select("id, category_label, title, reference, preacher, sermon_date, image_urls")
+      .select("id, sermon_date, image_urls")
       .lte("sermon_date", todayStr)
       .order("sermon_date", { ascending: false })
       .limit(1)
@@ -47,14 +52,6 @@ export async function fetchGroupPageData(
 
   return {
     meetingTitle: `가교모임 (${month}월 ${day}일)`,
-    sermonInfo: sermon
-      ? {
-          categoryLabel: sermon.category_label ?? "",
-          title: sermon.title,
-          reference: sermon.reference ?? "",
-          preacher: sermon.preacher ?? "",
-        }
-      : null,
     bulletinImageUrls: (bulletin?.image_urls ?? []) as string[],
     sermonImageUrls: (sermon?.image_urls ?? []) as string[],
     sermonId: sermon?.id ?? null,

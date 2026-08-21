@@ -58,6 +58,8 @@
   --color-tertiary-foreground: var(--tertiary-foreground);
   --color-tertiary-container: var(--tertiary-container);
   --color-tertiary-container-foreground: var(--tertiary-container-foreground);
+  --color-saturday: var(--saturday);
+  --color-sunday: var(--sunday);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
   --color-warning-container: var(--warning-container);
@@ -169,6 +171,10 @@
   --tertiary-container: #78746f;
   --tertiary-container-foreground: #fffbff;
 
+  /* 달력 주말 색: 일요일 빨강, 토요일 파랑 */
+  --sunday: #d32f2f;
+  --saturday: #1565c0;
+
   /* Warning: 성경통독 진행 상황 화면의 "밀린 분량" 경고 배너 */
   --warning: #f57c00;
   --warning-foreground: #ffffff;
@@ -243,6 +249,10 @@
   --warning-foreground: #ffffff;
   --warning-container: oklch(0.3 0.05 60);
   --warning-container-foreground: #ffb74d;
+
+  /* 어두운 배경에서도 읽히도록 주말 색을 밝게 */
+  --sunday: #ef5350;
+  --saturday: #64b5f6;
   --secondary-fixed-dim: #4c6545;
   --outline: oklch(0.553 0.013 58.071);
   --outline-variant: oklch(0.374 0.01 67.558);
