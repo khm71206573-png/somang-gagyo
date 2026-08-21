@@ -9,11 +9,13 @@ jobs:
   trigger-cron:
     runs-on: ubuntu-latest
     steps:
+      # 추천찬양 재생목록에서 아직 등록되지 않은 곡을 가져온다.
+      # 좋아요 목록으로 되돌리려면 ?source=recommended 를 지우면 된다.
       - name: Call /api/cron/sync-song
         run: |
           status=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "${{ secrets.APP_URL }}/api/cron/sync-song")
+            "${{ secrets.APP_URL }}/api/cron/sync-song?source=recommended")
           echo "HTTP status: $status"
           cat /tmp/response.txt
           if [ "$status" -ge 300 ]; then
