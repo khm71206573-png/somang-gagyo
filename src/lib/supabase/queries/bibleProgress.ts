@@ -17,6 +17,13 @@ import { avatarFallback, isSameDate, toMidnight, unwrapRelation } from "./utils"
 
 export interface BibleProgressPageData {
   planLabel: string;
+  /** 완독 체크를 기록할 member_plans 행 */
+  memberPlanId: string;
+  /** 오늘 날짜에 완독 기록이 있는지 */
+  completedToday: boolean;
+  /** 완독 체크 시 진행 일차를 옮기기 위한 값 */
+  currentDay: number;
+  totalDays: number;
   summary: BibleProgressSummary;
   missedAlert: MissedPortionAlertData | null;
   todayPortion: TodayPortion | null;
@@ -128,6 +135,25 @@ async function buildReadingTogether(
   };
 }
 
+/** 오늘 날짜로 남긴 완독 기록이 있는지 확인한다. */
+async function hasReadingLogToday(
+  supabase: SupabaseClient,
+  memberPlanId: string,
+): Promise<boolean> {
+  const start = toMidnight(new Date());
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+
+  const { count } = await supabase
+    .from("reading_logs")
+    .select("id", { count: "exact", head: true })
+    .eq("member_plan_id", memberPlanId)
+    .gte("completed_at", start.toISOString())
+    .lt("completed_at", end.toISOString());
+
+  return (count ?? 0) > 0;
+}
+
 export async function fetchBibleProgressData(
   supabase: SupabaseClient,
 ): Promise<BibleProgressPageData | null> {
@@ -186,24 +212,41 @@ export async function fetchBibleProgressData(
     .eq("day_number", memberPlan.current_day)
     .maybeSingle();
 
+  // 현재 분량을 이미 읽음으로 표시했는지 (중복 체크 방지 + 버튼 상태 표시)
+  const { data: existingLog } = planDay
+    ? await supabase
+        .from("reading_logs")
+        .select("id")
+        .eq("member_plan_id", memberPlan.id)
+        .eq("plan_day_id", planDay.id)
+        .maybeSingle()
+    : { data: null };
+
   const todayPortion: TodayPortion | null = planDay
     ? {
         tag: "오늘의 분량",
         passage: planDay.passage,
         durationLabel: planDay.duration_label ?? "",
         actionLabel: "읽었어요",
+        planDayId: planDay.id,
+        isCompleted: Boolean(existingLog),
       }
     : null;
 
   const activePlanMembers = await fetchActivePlanMembers(supabase, memberPlan.plan_id);
 
-  const [weekTracker, readingTogether] = await Promise.all([
+  const [weekTracker, readingTogether, completedToday] = await Promise.all([
     computeWeekTracker(supabase, memberPlan.id, memberPlan.plan_id, startedAt, totalDays),
     buildReadingTogether(supabase, planDay?.id ?? null, activePlanMembers),
+    hasReadingLogToday(supabase, memberPlan.id),
   ]);
 
   return {
     planLabel: plan?.title ?? "",
+    memberPlanId: memberPlan.id,
+    completedToday,
+    currentDay: memberPlan.current_day,
+    totalDays,
     summary,
     missedAlert,
     todayPortion,
