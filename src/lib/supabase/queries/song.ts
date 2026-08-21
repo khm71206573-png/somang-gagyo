@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { LyricStanza, PastSong, SongDetail } from "@/lib/mock-data";
+import type { PastSong, SongDetail } from "@/lib/mock-data";
 import { toDateString, unwrapRelation } from "./utils";
 
 export interface SongPageData {
@@ -14,7 +14,7 @@ export async function fetchSongPageData(
 
   const { data: todayRow } = await supabase
     .from("daily_songs")
-    .select("reason, songs(title, artist, cover_image_url, youtube_url, lyrics)")
+    .select("songs(title, artist, cover_image_url, youtube_url)")
     .eq("song_date", todayStr)
     .maybeSingle();
 
@@ -23,7 +23,6 @@ export async function fetchSongPageData(
     artist: string | null;
     cover_image_url: string | null;
     youtube_url: string | null;
-    lyrics: unknown;
   };
 
   const song = unwrapRelation(
@@ -37,8 +36,6 @@ export async function fetchSongPageData(
         coverImageUrl: song.cover_image_url ?? "",
         youtubeUrl: song.youtube_url ?? "",
         listenLabel: "유튜브로 듣기",
-        reason: todayRow?.reason ?? "",
-        lyrics: (song.lyrics ?? []) as LyricStanza[],
       }
     : null;
 

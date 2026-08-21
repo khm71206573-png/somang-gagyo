@@ -185,8 +185,6 @@ export const sharedReflections: SharedReflection[] = [
 
 export const sharedReflectionParticipantCount = 12;
 
-export type PrayerRequestStatus = "open" | "praying" | "answered";
-
 export interface PrayerFilterTab {
   id: string;
   label: string;
@@ -200,14 +198,19 @@ export interface PrayerRequestItem {
   category: string;
   content: string;
   participantCount: number;
-  status: PrayerRequestStatus;
+  /** 로그인한 사용자가 올린 기도제목인지 ("나의 기도" 필터에 사용) */
+  isMine: boolean;
+  /** 로그인한 사용자가 이미 "함께 기도하기"를 눌렀는지 */
+  hasReacted: boolean;
 }
+
+export const PRAYER_SCOPE_COMMUNITY = "우리 가교";
+export const PRAYER_SCOPE_MINE = "나의 기도";
 
 export const prayerFilterTabs: PrayerFilterTab[] = [
   { id: "all", label: "전체" },
-  { id: "community", label: "우리 가교" },
-  { id: "mine", label: "나의 기도" },
-  { id: "answered", label: "응답됨" },
+  { id: "community", label: PRAYER_SCOPE_COMMUNITY },
+  { id: "mine", label: PRAYER_SCOPE_MINE },
 ];
 
 export const activePrayerFilterTabId = "all";
@@ -223,7 +226,8 @@ export const prayerRequestList: PrayerRequestItem[] = [
     content:
       "남편의 새로운 직장 적응을 위해 기도 부탁드립니다. 낯선 환경에서도 주님의 지혜로 잘 헤쳐나가고, 동료들과도 좋은 관계를 맺을 수 있도록 마음을 모아주세요.",
     participantCount: 12,
-    status: "open",
+    isMine: false,
+    hasReacted: false,
   },
   {
     id: "2",
@@ -235,7 +239,8 @@ export const prayerRequestList: PrayerRequestItem[] = [
     content:
       "어머니의 수술이 무사히 끝났습니다. 함께 기도해주신 모든 분들께 감사드립니다. 앞으로의 회복 과정에서도 주님의 평안이 함께하시길 계속해서 기도 부탁드립니다.",
     participantCount: 45,
-    status: "answered",
+    isMine: true,
+    hasReacted: true,
   },
   {
     id: "3",
@@ -247,7 +252,8 @@ export const prayerRequestList: PrayerRequestItem[] = [
     content:
       "새로운 프로젝트를 기획하며 방향성에 대해 고민이 많습니다. 이 길이 주님이 기뻐하시는 길인지 분별할 수 있는 지혜를 구합니다. 과정 속에서 평안을 잃지 않도록 기도해주세요.",
     participantCount: 8,
-    status: "open",
+    isMine: false,
+    hasReacted: false,
   },
   {
     id: "4",
@@ -259,7 +265,8 @@ export const prayerRequestList: PrayerRequestItem[] = [
     content:
       "청년부 아이들과의 소통에 지혜가 필요함을 느낍니다. 세대 차이를 넘어 그리스도의 사랑으로 교제할 수 있도록, 제 마음이 먼저 열리고 따뜻해지기를 기도합니다.",
     participantCount: 21,
-    status: "praying",
+    isMine: false,
+    hasReacted: true,
   },
 ];
 
@@ -379,19 +386,12 @@ export const scheduleEvents: ScheduleEvent[] = [
   },
 ];
 
-export interface LyricStanza {
-  lines: string[];
-  highlighted?: boolean;
-}
-
 export interface SongDetail {
   title: string;
   artist: string;
   coverImageUrl: string;
   youtubeUrl: string;
   listenLabel: string;
-  reason: string;
-  lyrics: LyricStanza[];
 }
 
 export interface PastSong {
@@ -407,35 +407,6 @@ export const songDetail: SongDetail = {
     "https://lh3.googleusercontent.com/aida-public/AB6AXuAlIGPdhjpQO5fiROpJMN_FdlOW_XSU2OzBB7CJNcQSi7XXM_b2KVLrDa1OrJMUgv8-wPUcKf7OW2LaZ0oB4NFzDGfqUkMLd-ptob8sznx8PBHiY-q4SzZ-o4pnGgVLAJaIafOniZDXVjeSMjXVX_wLDXT3Vb5LnlRM81t2nA5ZsOm9wfynnQebAibUiumoxpf3wLylF0A_zCc9r-HcgTgvY6evoWIlIs7PbOCbraRryjTWjMmnZ9n_",
   youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
   listenLabel: "유튜브로 듣기",
-  reason:
-    "때로는 우리의 계획대로 되지 않아 낙심될 때가 있습니다.\n하지만 모든 것을 합력하여 선을 이루시는 하나님의 더 크고 선하신 계획을 신뢰하며 나아가기를 소망하는 마음으로 이 찬양을 추천합니다.",
-  lyrics: [
-    {
-      lines: [
-        "내 뜻대로 되지 않는",
-        "막막한 현실 속에서",
-        "주님의 선하신 뜻을",
-        "구하며 나아갑니다",
-      ],
-    },
-    {
-      lines: [
-        "나의 연약함 아시고",
-        "나의 모든 것 아시는 주",
-        "주의 손에 내 삶을 맡기니",
-        "주 뜻대로 인도하소서",
-      ],
-    },
-    {
-      lines: [
-        "그 선하신 뜻대로",
-        "나를 이끌어 주소서",
-        "주의 영광 나타내실",
-        "그 날을 기대합니다",
-      ],
-      highlighted: true,
-    },
-  ],
 };
 
 const pastSongCoverImageUrl =

@@ -2,8 +2,6 @@
 
 import { SongTopBar } from "@/components/song/SongTopBar";
 import { SongHero } from "@/components/song/SongHero";
-import { SongReasonCard } from "@/components/song/SongReasonCard";
-import { SongLyrics } from "@/components/song/SongLyrics";
 import { PastSongsScroll } from "@/components/song/PastSongsScroll";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { LoadingState } from "@/components/common/LoadingState";
@@ -38,9 +36,9 @@ export default function SongPage() {
       <SongTopBar />
       <main className="flex flex-col gap-stack-lg px-margin-main pt-stack-lg">
         <SongHero song={data.songDetail} />
-        <SongReasonCard reason={data.songDetail.reason} />
-        <SongLyrics stanzas={data.songDetail.lyrics} />
-        <PastSongsScroll songs={data.pastSongs} />
+        {data.pastSongs.length > 0 && (
+          <PastSongsScroll songs={data.pastSongs} />
+        )}
       </main>
       <BottomNav />
     </div>
