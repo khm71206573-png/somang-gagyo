@@ -7,7 +7,6 @@ import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { useDevotionList } from "@/hooks/useDevotionList";
 import { useDeleteDevotion } from "@/hooks/useDeleteDevotion";
-import { TriggerDevotionScrapeButton } from "@/components/admin/TriggerDevotionScrapeButton";
 
 export default function DevotionListPage() {
   const { data, isLoading, isError, error, refetch, isFetching } = useDevotionList();
@@ -32,8 +31,6 @@ export default function DevotionListPage() {
     <div className="relative mx-auto min-h-screen w-full max-w-[480px] bg-background pb-stack-lg">
       <AdminFormTopBar title="묵상 관리" />
       <main className="flex flex-col gap-stack-md px-margin-main pt-stack-sm">
-        <TriggerDevotionScrapeButton />
-
         <div className="flex justify-end">
           <Link
             href="/admin/devotion/new"

@@ -16,7 +16,6 @@ export function DashboardSkeleton() {
           <div className="h-40 w-full rounded-md bg-surface-container-low" />
           <div className="h-40 w-full rounded-md bg-surface-container-low" />
         </div>
-        <div className="h-40 w-full rounded-md bg-surface-container-low" />
         <div className="h-32 w-full rounded-md bg-surface-container-low" />
       </main>
     </div>

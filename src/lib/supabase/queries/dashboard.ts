@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { PRAYER_SCOPE_COMMUNITY, PRAYER_SCOPE_MINE } from "@/lib/mock-data";
 import type {
   GreetingInfo,
   StreakInfo,
@@ -6,7 +7,6 @@ import type {
   BibleReadingInfo,
   SongInfo,
   BirthdayInfo,
-  PrayerRequest,
   EventItem,
 } from "@/lib/mock-data";
 import {
@@ -24,6 +24,18 @@ import {
   unwrapRelation,
 } from "./utils";
 
+/** 홈 화면 기도제목 카드에 쓰는 범위별 요약 */
+export interface PrayerScopeSummary {
+  label: string;
+  count: number;
+  latestContent: string | null;
+}
+
+export interface PrayerSummary {
+  community: PrayerScopeSummary;
+  mine: PrayerScopeSummary;
+}
+
 export interface DashboardData {
   greeting: GreetingInfo;
   streak: StreakInfo;
@@ -31,7 +43,7 @@ export interface DashboardData {
   bibleReading: BibleReadingInfo | null;
   song: SongInfo | null;
   birthday: BirthdayInfo | null;
-  prayerRequests: PrayerRequest[];
+  prayerSummary: PrayerSummary;
   upcomingEvents: EventItem[];
 }
 
@@ -156,29 +168,39 @@ async function fetchSong(
   };
 }
 
-async function fetchPrayerRequests(
+/** "우리 가교"·"나의 기도" 각각의 건수와 가장 최근 내용을 가져온다. */
+async function fetchPrayerSummary(
   supabase: SupabaseClient,
-): Promise<PrayerRequest[]> {
-  const { data } = await supabase
-    .from("prayer_requests")
-    .select(
-      "display_name, content, created_at, member:profiles(name), prayer_reactions(count)",
-    )
-    .order("created_at", { ascending: false })
-    .limit(3);
+  userId: string,
+): Promise<PrayerSummary> {
+  const [community, mine] = await Promise.all([
+    supabase
+      .from("prayer_requests")
+      .select("content", { count: "exact" })
+      .eq("category", PRAYER_SCOPE_COMMUNITY)
+      .order("created_at", { ascending: false })
+      .limit(1),
+    supabase
+      .from("prayer_requests")
+      .select("content", { count: "exact" })
+      .eq("category", PRAYER_SCOPE_MINE)
+      .eq("member_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1),
+  ]);
 
-  return (data ?? []).map((row) => {
-    const member = unwrapRelation(row.member as { name: string } | { name: string }[] | null);
-    const reactions = unwrapRelation(
-      row.prayer_reactions as { count: number } | { count: number }[] | null,
-    );
-
-    return {
-      author: row.display_name ?? member?.name ?? "성도",
-      content: row.content,
-      prayingCount: reactions?.count ?? 0,
-    };
-  });
+  return {
+    community: {
+      label: PRAYER_SCOPE_COMMUNITY,
+      count: community.count ?? 0,
+      latestContent: community.data?.[0]?.content ?? null,
+    },
+    mine: {
+      label: PRAYER_SCOPE_MINE,
+      count: mine.count ?? 0,
+      latestContent: mine.data?.[0]?.content ?? null,
+    },
+  };
 }
 
 async function fetchUpcomingEvents(
@@ -224,7 +246,7 @@ export async function fetchDashboardData(
     devotion,
     bibleReading,
     song,
-    prayerRequests,
+    prayerSummary,
     upcomingEvents,
     streakDays,
   ] = await Promise.all([
@@ -232,7 +254,7 @@ export async function fetchDashboardData(
     fetchDevotion(supabase, todayStr),
     fetchBibleReading(supabase, memberPlan),
     fetchSong(supabase, todayStr),
-    fetchPrayerRequests(supabase),
+    fetchPrayerSummary(supabase, user.id),
     fetchUpcomingEvents(supabase, todayStr),
     fetchStreakDays(supabase, memberPlan?.id ?? null),
   ]);
@@ -245,7 +267,7 @@ export async function fetchDashboardData(
     song,
     // profiles에는 birth_date가 없어 생일 카드는 당분간 비활성화 상태
     birthday: null,
-    prayerRequests,
+    prayerSummary,
     upcomingEvents,
   };
 }

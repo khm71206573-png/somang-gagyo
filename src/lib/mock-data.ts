@@ -712,12 +712,6 @@ export const quickManagementActions: QuickManagementAction[] = [
     icon: "memberApproval",
     href: "#pending-approval",
   },
-  {
-    id: "notification",
-    label: "알림 발송",
-    icon: "notification",
-    href: "#scheduled-notification",
-  },
 ];
 
 export interface PendingMember {

@@ -6,7 +6,7 @@ import { DevotionCard } from "@/components/dashboard/DevotionCard";
 import { BibleReadingCard } from "@/components/dashboard/BibleReadingCard";
 import { SongCard } from "@/components/dashboard/SongCard";
 import { BirthdayCard } from "@/components/dashboard/BirthdayCard";
-import { PrayerCard } from "@/components/dashboard/PrayerCard";
+import { PrayerSummaryCard } from "@/components/dashboard/PrayerSummaryCard";
 import { EventCard } from "@/components/dashboard/EventCard";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -38,7 +38,7 @@ export default function Home() {
     bibleReading,
     song,
     birthday,
-    prayerRequests,
+    prayerSummary,
     upcomingEvents,
   } = data;
 
@@ -47,20 +47,14 @@ export default function Home() {
       <GreetingHeader greeting={greeting} />
       <main className="space-y-stack-lg px-margin-main pt-stack-sm">
         <StreakBadge streak={streak} />
-        {devotion && <DevotionCard devotion={devotion} />}
-        {bibleReading && <BibleReadingCard reading={bibleReading} />}
-        {(song || birthday) && (
-          <section className="grid grid-cols-2 gap-gutter-card">
-            {song && <SongCard song={song} />}
-            {birthday && <BirthdayCard birthday={birthday} />}
-          </section>
-        )}
-        {prayerRequests.length > 0 && (
-          <PrayerCard requests={prayerRequests} />
-        )}
-        {upcomingEvents.length > 0 && (
-          <EventCard events={upcomingEvents} />
-        )}
+        <DevotionCard devotion={devotion} />
+        <BibleReadingCard reading={bibleReading} />
+        <section className="grid grid-cols-2 gap-gutter-card">
+          <SongCard song={song} />
+          <PrayerSummaryCard summary={prayerSummary} />
+        </section>
+        {birthday && <BirthdayCard birthday={birthday} />}
+        <EventCard events={upcomingEvents} />
       </main>
       <BottomNav />
     </div>

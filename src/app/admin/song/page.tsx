@@ -7,7 +7,6 @@ import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { useSongList } from "@/hooks/useSongList";
 import { useDeleteSong } from "@/hooks/useDeleteSong";
-import { TriggerSongSyncButton } from "@/components/admin/TriggerSongSyncButton";
 
 export default function SongListPage() {
   const { data, isLoading, isError, error, refetch, isFetching } = useSongList();
@@ -32,8 +31,6 @@ export default function SongListPage() {
     <div className="relative mx-auto min-h-screen w-full max-w-[480px] bg-background pb-stack-lg">
       <AdminFormTopBar title="찬양 관리" />
       <main className="flex flex-col gap-stack-md px-margin-main pt-stack-sm">
-        <TriggerSongSyncButton />
-
         <div className="flex justify-end">
           <Link
             href="/admin/song/new"

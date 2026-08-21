@@ -13,7 +13,8 @@ const OFFLINE_QUERY_KEYS = ["dashboard", "devotion", "bible-progress"];
 // 값이 달라지면 예전 캐시는 복원되지 않고 버려지므로, 배포 직후 옛 모양의
 // 캐시가 새 화면으로 흘러드는 것을 막을 수 있다.
 // v2 : 통독 전체 진행표(oldTestament/newTestament) 추가
-const CACHE_BUSTER = "v2";
+// v3 : 홈 화면 기도제목 요약(prayerSummary) 추가, 기도제목 목록 제거
+const CACHE_BUSTER = "v3";
 
 const noopStorage: Storage = {
   getItem: () => null,

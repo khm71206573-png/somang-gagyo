@@ -4,7 +4,6 @@ import { AdminTopBar } from "@/components/admin/AdminTopBar";
 import { TodayRegistrationStatus } from "@/components/admin/TodayRegistrationStatus";
 import { QuickManagementGrid } from "@/components/admin/QuickManagementGrid";
 import { PendingApprovalList } from "@/components/admin/PendingApprovalList";
-import { SendNotificationsButton } from "@/components/admin/SendNotificationsButton";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
@@ -50,7 +49,7 @@ export default function AdminPage() {
       label: "교제자료",
       icon: "groupMaterial",
       href: "/admin/group-material",
-      isRegistered: data.registrationStatus.sermon,
+      isRegistered: data.registrationStatus.groupMaterial,
     },
   ];
 
@@ -61,7 +60,6 @@ export default function AdminPage() {
         <TodayRegistrationStatus items={registrationItems} />
         <QuickManagementGrid actions={quickManagementActions} />
         <PendingApprovalList members={data.pendingMembers} />
-        <SendNotificationsButton />
       </main>
       <BottomNav active="더보기" />
     </div>

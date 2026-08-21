@@ -15,6 +15,11 @@ export function EventCard({ events }: EventCardProps) {
         다가오는 일정
       </h3>
       <div className="space-y-3">
+        {events.length === 0 && (
+          <p className="py-2 text-body-md text-muted-foreground">
+            다가오는 일정이 없어요.
+          </p>
+        )}
         {events.map((event, index) => (
           <div
             key={`${event.month}-${event.day}-${event.title}`}

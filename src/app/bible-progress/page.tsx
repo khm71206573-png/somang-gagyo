@@ -8,6 +8,7 @@ import { TodayPortionCard } from "@/components/bible-progress/TodayPortionCard";
 import { WeekTracker } from "@/components/bible-progress/WeekTracker";
 import { ReadingTogetherCard } from "@/components/bible-progress/ReadingTogetherCard";
 import { OverallProgressSection } from "@/components/bible-progress/OverallProgressSection";
+import { ResetProgressSection } from "@/components/bible-progress/ResetProgressSection";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
@@ -87,6 +88,7 @@ export default function BibleProgressPage() {
           oldTestament={data.oldTestament}
           newTestament={data.newTestament}
         />
+        <ResetProgressSection memberPlanId={data.memberPlanId} />
       </main>
       <BottomNav active="통독" />
     </div>
