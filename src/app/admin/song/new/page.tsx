@@ -14,13 +14,17 @@ import {
 } from "@/components/admin/adminFormStyles";
 import { useCreateSong } from "@/hooks/useCreateSong";
 import { useFetchSongSource } from "@/hooks/useFetchSongSource";
+import type { SongSource } from "@/lib/youtube/resolvePlaylist";
 import { toDateString } from "@/lib/supabase/queries/utils";
 
 export default function NewSongPage() {
   const router = useRouter();
   const { mutateAsync, isPending } = useCreateSong();
-  const { mutateAsync: fetchSource, isPending: isFetchingSource } =
-    useFetchSongSource();
+  const {
+    mutateAsync: fetchSource,
+    isPending: isFetchingSource,
+    variables: fetchingSource,
+  } = useFetchSongSource();
 
   const [songDate, setSongDate] = useState(toDateString(new Date()));
   const [title, setTitle] = useState("");
@@ -31,16 +35,16 @@ export default function NewSongPage() {
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  async function handleFetchSource() {
+  async function handleFetchSource(source: SongSource) {
     setError(null);
     try {
-      const source = await fetchSource();
-      setTitle(source.title);
-      setArtist(source.artist);
-      setCoverImageUrl(source.coverImageUrl);
-      setYoutubeUrl(source.youtubeUrl);
+      const fetched = await fetchSource(source);
+      setTitle(fetched.title);
+      setArtist(fetched.artist);
+      setCoverImageUrl(fetched.coverImageUrl);
+      setYoutubeUrl(fetched.youtubeUrl);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "유튜브 좋아요 목록을 가져오지 못했어요.");
+      setError(err instanceof Error ? err.message : "유튜브 목록을 가져오지 못했어요.");
     }
   }
 
@@ -73,15 +77,36 @@ export default function NewSongPage() {
     <div className="relative mx-auto min-h-screen w-full max-w-[480px] bg-background pb-[104px]">
       <AdminFormTopBar title="찬양 등록" listHref="/admin/song" />
       <main className="px-margin-main pt-stack-sm">
-        <button
-          type="button"
-          onClick={handleFetchSource}
-          disabled={isFetchingSource}
-          className="mb-stack-md flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-3 text-label-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-        >
-          <Download className="h-4 w-4" />
-          {isFetchingSource ? "가져오는 중..." : "유튜브 좋아요 목록에서 가져와 자동 입력"}
-        </button>
+        <div className="mb-stack-md flex flex-col gap-2">
+          <p className={fieldLabel}>유튜브에서 가져와 자동 입력</p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => handleFetchSource("recommended")}
+              disabled={isFetchingSource}
+              className="flex flex-1 items-center justify-center gap-2 rounded-md bg-primary px-4 py-3 text-label-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            >
+              <Download className="h-4 w-4" />
+              {isFetchingSource && fetchingSource === "recommended"
+                ? "가져오는 중..."
+                : "추천찬양"}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleFetchSource("liked")}
+              disabled={isFetchingSource}
+              className="flex flex-1 items-center justify-center gap-2 rounded-md border border-primary bg-card px-4 py-3 text-label-sm font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-50"
+            >
+              <Download className="h-4 w-4" />
+              {isFetchingSource && fetchingSource === "liked"
+                ? "가져오는 중..."
+                : "좋아요 목록"}
+            </button>
+          </div>
+          <p className="text-label-sm text-muted-foreground">
+            재생목록에서 아직 등록되지 않은 가장 최근 곡을 불러옵니다.
+          </p>
+        </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-stack-md">
           <div className={fieldGroup}>
