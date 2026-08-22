@@ -3,6 +3,7 @@ import { MoreMenuList } from "@/components/more/MoreMenuList";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { PushSubscribeButton } from "@/components/push/PushSubscribeButton";
+import { ShareAppButton } from "@/components/more/ShareAppButton";
 import { moreMenuItems } from "@/lib/mock-data";
 
 export default function MorePage() {
@@ -12,6 +13,7 @@ export default function MorePage() {
       <main className="flex flex-col gap-stack-lg px-margin-main pt-stack-md">
         <MoreMenuList items={moreMenuItems} />
         <PushSubscribeButton />
+        <ShareAppButton />
         <LogoutButton className="self-center text-label-sm text-muted-foreground underline" />
       </main>
       <BottomNav />

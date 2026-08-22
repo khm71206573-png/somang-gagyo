@@ -9,6 +9,7 @@ import { WeekTracker } from "@/components/bible-progress/WeekTracker";
 import { ReadingTogetherCard } from "@/components/bible-progress/ReadingTogetherCard";
 import { OverallProgressSection } from "@/components/bible-progress/OverallProgressSection";
 import { ResetProgressSection } from "@/components/bible-progress/ResetProgressSection";
+import { DeletePlanSection } from "@/components/bible-progress/DeletePlanSection";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
@@ -94,6 +95,10 @@ export default function BibleProgressPage() {
           newTestament={data.newTestament}
         />
         <ResetProgressSection memberPlanId={data.memberPlanId} />
+        <DeletePlanSection
+          memberPlanId={data.memberPlanId}
+          planLabel={data.planLabel}
+        />
       </main>
       <BottomNav active="통독" />
     </div>

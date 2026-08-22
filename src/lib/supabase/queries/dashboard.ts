@@ -13,11 +13,11 @@ import {
   fetchActiveMemberPlan,
   fetchActivePlanMembers,
   countReadingLogsForPlanDay,
-  fetchStreakDays,
 } from "./reading-plan";
 import {
   WEEKDAY_LABELS,
   toDateString,
+  toMidnight,
   monthDayOf,
   formatDateLabel,
   avatarFallback,
@@ -54,16 +54,26 @@ function greetingMessageFor(hour: number) {
   return "편안한 저녁 되세요";
 }
 
-async function fetchGreeting(
+interface DashboardProfile {
+  name: string | null;
+  avatar_url: string | null;
+  created_at: string | null;
+}
+
+async function fetchProfile(
   supabase: SupabaseClient,
   userId: string,
-): Promise<GreetingInfo> {
-  const { data: profile } = await supabase
+): Promise<DashboardProfile | null> {
+  const { data } = await supabase
     .from("profiles")
-    .select("name, avatar_url")
+    .select("name, avatar_url, created_at")
     .eq("id", userId)
     .maybeSingle();
 
+  return (data as DashboardProfile | null) ?? null;
+}
+
+function buildGreeting(profile: DashboardProfile | null): GreetingInfo {
   const now = new Date();
   const name = profile?.name ?? "성도";
 
@@ -73,6 +83,23 @@ async function fetchGreeting(
     greetingMessage: greetingMessageFor(now.getHours()),
     profileImageUrl: profile?.avatar_url ?? avatarFallback(name),
   };
+}
+
+/**
+ * 가입일부터 오늘까지 며칠째인지 센다. 가입 당일이 1일째다.
+ * 가입일을 알 수 없으면 오늘 시작한 것으로 보고 1을 돌려준다.
+ */
+function joinedDaysFrom(createdAt: string | null | undefined): number {
+  if (!createdAt) return 1;
+
+  const joined = new Date(createdAt);
+  if (Number.isNaN(joined.getTime())) return 1;
+
+  const elapsed = Math.floor(
+    (toMidnight(new Date()).getTime() - toMidnight(joined).getTime()) / 86400000,
+  );
+
+  return Math.max(elapsed + 1, 1);
 }
 
 async function fetchDevotion(
@@ -246,26 +273,26 @@ export async function fetchDashboardData(
   const memberPlan = await fetchActiveMemberPlan(supabase, user.id);
 
   const [
-    greeting,
+    profile,
     devotion,
     bibleReading,
     song,
     prayerSummary,
     upcomingEvents,
-    streakDays,
   ] = await Promise.all([
-    fetchGreeting(supabase, user.id),
+    fetchProfile(supabase, user.id),
     fetchDevotion(supabase, todayStr),
     fetchBibleReading(supabase, memberPlan),
     fetchSong(supabase, todayStr),
     fetchPrayerSummary(supabase, user.id),
     fetchUpcomingEvents(supabase, todayStr),
-    fetchStreakDays(supabase, memberPlan?.id ?? null),
   ]);
 
   return {
-    greeting,
-    streak: { days: streakDays },
+    greeting: buildGreeting(profile),
+    // 통독 연속일이 아니라 가입 후 함께한 날수를 센다. 통독을 시작하지
+    // 않았거나 하루 걸러도 멈추지 않는다.
+    streak: { days: joinedDaysFrom(profile?.created_at) },
     devotion,
     bibleReading,
     song,

@@ -11,7 +11,7 @@ export function ResetProgressSection({ memberPlanId }: ResetProgressSectionProps
   const { mutate: resetPlan, isPending, isSuccess, error } = useResetBiblePlan();
 
   return (
-    <section className="flex flex-col gap-2 pb-8">
+    <section className="flex flex-col gap-2">
       <h3 className="text-title-lg text-foreground">통독 초기화</h3>
       <p className="text-label-sm text-muted-foreground">
         지금까지의 완독 기록을 모두 지우고 오늘부터 1일차로 다시 시작해요. 플랜은
