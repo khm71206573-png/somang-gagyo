@@ -8,8 +8,8 @@ import { TodayPortionCard } from "@/components/bible-progress/TodayPortionCard";
 import { WeekTracker } from "@/components/bible-progress/WeekTracker";
 import { ReadingTogetherCard } from "@/components/bible-progress/ReadingTogetherCard";
 import { OverallProgressSection } from "@/components/bible-progress/OverallProgressSection";
-import { ResetProgressSection } from "@/components/bible-progress/ResetProgressSection";
-import { DeletePlanSection } from "@/components/bible-progress/DeletePlanSection";
+import { PlanActionsSection } from "@/components/bible-progress/PlanActionsSection";
+import { PausedPlanBanner } from "@/components/bible-progress/PausedPlanBanner";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
@@ -54,6 +54,12 @@ export default function BibleProgressPage() {
       <main className="flex flex-col gap-stack-lg px-margin-main pt-stack-lg">
         <PlanSelectorChip label={data.planLabel} />
         <ProgressSummaryCard summary={data.summary} />
+        {data.isPaused && (
+          <PausedPlanBanner
+            memberPlanId={data.memberPlanId}
+            pausedSinceLabel={data.pausedSinceLabel}
+          />
+        )}
         {data.missedAlert && (
           <MissedPortionAlert
             alert={data.missedAlert}
@@ -94,10 +100,10 @@ export default function BibleProgressPage() {
           oldTestament={data.oldTestament}
           newTestament={data.newTestament}
         />
-        <ResetProgressSection memberPlanId={data.memberPlanId} />
-        <DeletePlanSection
+        <PlanActionsSection
           memberPlanId={data.memberPlanId}
           planLabel={data.planLabel}
+          isPaused={data.isPaused}
         />
       </main>
       <BottomNav active="통독" />

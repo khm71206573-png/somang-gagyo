@@ -35,13 +35,13 @@ export function BibleReadingCard({ reading }: BibleReadingCardProps) {
         </div>
         <button
           type="button"
-          disabled={isPending || !reading?.planDayId}
+          disabled={isPending || !reading?.planDayId || reading.isPaused}
           aria-pressed={reading?.isCompleted ?? false}
           onClick={(event) => {
             // 카드 전체가 통독 화면으로 가는 링크라 체크 버튼은 이동을 막는다.
             event.preventDefault();
             event.stopPropagation();
-            if (!reading) return;
+            if (!reading || reading.isPaused) return;
             completeReading({
               memberPlanId: reading.memberPlanId,
               planDayId: reading.planDayId,

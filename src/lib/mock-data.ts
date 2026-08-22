@@ -20,6 +20,8 @@ export interface BibleReadingInfo {
   planName: string;
   passage: string;
   isCompleted: boolean;
+  /** 통독을 일시중지한 상태인지 */
+  isPaused: boolean;
   communityProgressLabel: string;
   progressPercent: number;
   /** 완독 체크에 필요한 값 */
@@ -77,6 +79,7 @@ export const bibleReading: BibleReadingInfo = {
   planName: "1년 1독",
   passage: "창세기 12-14장",
   isCompleted: false,
+  isPaused: false,
   communityProgressLabel: "우리 교회 32/48명 완독",
   progressPercent: 66,
   memberPlanId: "",

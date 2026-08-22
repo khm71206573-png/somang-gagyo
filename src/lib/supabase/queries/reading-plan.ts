@@ -44,18 +44,37 @@ export async function fetchExpectedDayInfo(
   };
 }
 
+const MEMBER_PLAN_COLUMNS =
+  "id, plan_id, current_day, started_at, bible_plans(title, total_days)";
+
+/** 42703 = 컬럼 없음. paused_at 마이그레이션 적용 전이면 이 코드로 온다. */
+const UNDEFINED_COLUMN = "42703";
+
 export async function fetchActiveMemberPlan(
   supabase: SupabaseClient,
   userId: string,
 ) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("member_plans")
-    .select("id, plan_id, current_day, started_at, bible_plans(title, total_days)")
+    .select(`${MEMBER_PLAN_COLUMNS}, paused_at`)
     .eq("member_id", userId)
     .eq("is_active", true)
     .maybeSingle();
 
-  return data;
+  if (!error) return data;
+
+  // 일시중지 마이그레이션 적용 전에도 통독 화면 전체가 멈추지 않도록,
+  // paused_at 없이 다시 조회해 "중지 안 함" 상태로 다룬다.
+  if (error.code !== UNDEFINED_COLUMN) return null;
+
+  const { data: legacy } = await supabase
+    .from("member_plans")
+    .select(MEMBER_PLAN_COLUMNS)
+    .eq("member_id", userId)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  return legacy ? { ...legacy, paused_at: null as string | null } : null;
 }
 
 export async function fetchActivePlanMembers(

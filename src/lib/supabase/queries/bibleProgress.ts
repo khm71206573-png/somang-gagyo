@@ -38,6 +38,10 @@ export interface BibleProgressPageData {
   /** 완독 체크 시 진행 일차를 옮기기 위한 값 */
   currentDay: number;
   totalDays: number;
+  /** 통독을 일시중지한 상태인지 */
+  isPaused: boolean;
+  /** "8월 22일부터" 같은 일시중지 시작일 안내 (진행 중이면 null) */
+  pausedSinceLabel: string | null;
   summary: BibleProgressSummary;
   missedAlert: MissedPortionAlertData | null;
   todayPortion: TodayPortion | null;
@@ -295,15 +299,23 @@ export async function fetchBibleProgressData(
     estimatedCompletionLabel: `예상 완독 ${estimatedDate.getFullYear()}년 ${estimatedDate.getMonth() + 1}월`,
   };
 
+  // 일시중지 중에는 오늘이 아니라 중지한 날을 기준으로 세서 밀린 분량이 늘지 않는다.
+  const pausedAt = memberPlan.paused_at
+    ? new Date(`${memberPlan.paused_at}T00:00:00`)
+    : null;
+  const isPaused = pausedAt !== null;
+  const referenceDate = pausedAt ?? today;
+
   const daysSinceStart =
     Math.floor(
-      (toMidnight(today).getTime() - toMidnight(startedAt).getTime()) / 86400000,
+      (toMidnight(referenceDate).getTime() - toMidnight(startedAt).getTime()) /
+        86400000,
     ) + 1;
   const expectedDay = Math.min(Math.max(daysSinceStart, 1), Math.max(totalDays, 1));
   const missedCount = Math.max(expectedDay - memberPlan.current_day, 0);
 
   const missedAlert: MissedPortionAlertData | null =
-    missedCount > 0
+    missedCount > 0 && !isPaused
       ? {
           message: `${missedCount}일치가 밀려 있어요`,
           catchUpLabel: "몰아 읽기",
@@ -328,7 +340,7 @@ export async function fetchBibleProgressData(
         .maybeSingle()
     : { data: null };
 
-  const todayPortion: TodayPortion | null = planDay
+  const todayPortion: TodayPortion | null = planDay && !isPaused
     ? {
         tag: "오늘의 분량",
         passage: planDay.passage,
@@ -358,6 +370,10 @@ export async function fetchBibleProgressData(
   return {
     planLabel: plan?.title ?? "",
     memberPlanId: memberPlan.id,
+    isPaused,
+    pausedSinceLabel: pausedAt
+      ? `${pausedAt.getMonth() + 1}월 ${pausedAt.getDate()}일부터`
+      : null,
     completedToday,
     currentDay: memberPlan.current_day,
     totalDays,

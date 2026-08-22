@@ -162,11 +162,14 @@ async function fetchBibleReading(
       ? Math.round((memberPlan.current_day / totalDays) * 100)
       : 0;
 
+  const isPaused = Boolean(memberPlan.paused_at);
+
   return {
-    tag: "말씀 읽기",
+    tag: isPaused ? "잠시 쉬는 중" : "말씀 읽기",
     planName: plan?.title ?? "",
-    passage: planDay.passage,
+    passage: isPaused ? "통독을 잠시 쉬고 있어요" : planDay.passage,
     isCompleted,
+    isPaused,
     memberPlanId: memberPlan.id,
     planDayId: planDay.id,
     currentDay: memberPlan.current_day,
