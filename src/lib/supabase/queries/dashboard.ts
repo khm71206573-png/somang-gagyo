@@ -28,7 +28,8 @@ import {
 export interface PrayerScopeSummary {
   label: string;
   count: number;
-  latestContent: string | null;
+  /** 홈 카드에서 하나씩 돌아가며 보여줄 최근 기도제목들 (최신순) */
+  contents: string[];
 }
 
 export interface PrayerSummary {
@@ -168,7 +169,10 @@ async function fetchSong(
   };
 }
 
-/** "우리 가교"·"나의 기도" 각각의 건수와 가장 최근 내용을 가져온다. */
+/** 홈 카드에서 순서대로 돌려 보여줄 기도제목 개수 */
+const PRAYER_ROTATION_LIMIT = 5;
+
+/** "우리 가교"·"나의 기도" 각각의 건수와 최근 기도제목들을 가져온다. */
 async function fetchPrayerSummary(
   supabase: SupabaseClient,
   userId: string,
@@ -179,26 +183,26 @@ async function fetchPrayerSummary(
       .select("content", { count: "exact" })
       .eq("category", PRAYER_SCOPE_COMMUNITY)
       .order("created_at", { ascending: false })
-      .limit(1),
+      .limit(PRAYER_ROTATION_LIMIT),
     supabase
       .from("prayer_requests")
       .select("content", { count: "exact" })
       .eq("category", PRAYER_SCOPE_MINE)
       .eq("member_id", userId)
       .order("created_at", { ascending: false })
-      .limit(1),
+      .limit(PRAYER_ROTATION_LIMIT),
   ]);
 
   return {
     community: {
       label: PRAYER_SCOPE_COMMUNITY,
       count: community.count ?? 0,
-      latestContent: community.data?.[0]?.content ?? null,
+      contents: (community.data ?? []).map((row) => row.content as string),
     },
     mine: {
       label: PRAYER_SCOPE_MINE,
       count: mine.count ?? 0,
-      latestContent: mine.data?.[0]?.content ?? null,
+      contents: (mine.data ?? []).map((row) => row.content as string),
     },
   };
 }

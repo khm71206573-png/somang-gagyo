@@ -1,11 +1,18 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { formatTimeAgo, unwrapRelation } from "./utils";
 
+function formatPostDate(isoString: string) {
+  const date = new Date(isoString);
+  return `${date.getFullYear()}. ${date.getMonth() + 1}. ${date.getDate()}.`;
+}
+
 export interface SermonSummaryPost {
   id: string;
   content: string;
   authorName: string;
   timeAgo: string;
+  /** 게시판 목록에 쓰는 "2026. 8. 22." 형태의 날짜 */
+  dateLabel: string;
   createdAt: string;
   /** 로그인한 사용자가 관리자라 삭제 버튼을 보여줘도 되는지는 화면에서 별도로 판단한다 */
 }
@@ -38,6 +45,7 @@ export async function fetchSermonSummaries(
       content: row.content,
       authorName: author?.name ?? "관리자",
       timeAgo: formatTimeAgo(row.created_at),
+      dateLabel: formatPostDate(row.created_at),
       createdAt: row.created_at,
     };
   });

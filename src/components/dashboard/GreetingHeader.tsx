@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Bell } from "lucide-react";
 import type { GreetingInfo } from "@/lib/mock-data";
 
 interface GreetingHeaderProps {
@@ -20,13 +19,6 @@ export function GreetingHeader({ greeting }: GreetingHeaderProps) {
           </h1>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-surface-container-low active:scale-95"
-            aria-label="알림"
-          >
-            <Bell className="h-6 w-6" strokeWidth={1.75} />
-          </button>
           <Link
             href="/profile"
             aria-label="내 프로필"

@@ -16,7 +16,8 @@ const OFFLINE_QUERY_KEYS = ["dashboard", "devotion", "bible-progress"];
 // v3 : 홈 화면 기도제목 요약(prayerSummary) 추가, 기도제목 목록 제거
 // v4 : 통독 응원 현황(cheerCount/hasCheeredToday) 추가
 // v5 : 묵상 나눔에 devotionId/isMine 추가
-const CACHE_BUSTER = "v5";
+// v6 : 홈 기도제목 요약이 최근 내용 목록(contents)을 담도록 변경
+const CACHE_BUSTER = "v6";
 
 const noopStorage: Storage = {
   getItem: () => null,
