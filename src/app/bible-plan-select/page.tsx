@@ -13,6 +13,7 @@ import { matchesBiblePlanFilter } from "@/lib/biblePlanFilters";
 import { useBiblePlanList } from "@/hooks/useBiblePlanList";
 import { useStartBiblePlan } from "@/hooks/useStartBiblePlan";
 import { toDateString } from "@/lib/supabase/queries/utils";
+import { rememberSelectedPlanId } from "@/lib/biblePlanSelection";
 
 export default function BiblePlanSelectPage() {
   const router = useRouter();
@@ -37,7 +38,9 @@ export default function BiblePlanSelectPage() {
     setStartError(null);
 
     try {
-      await startPlan({ planId: selectedPlanId, startedAt });
+      const memberPlanId = await startPlan({ planId: selectedPlanId, startedAt });
+      // 새로 추가한 플랜이 통독탭에서 바로 열리게 한다.
+      rememberSelectedPlanId(memberPlanId);
       router.push("/bible-progress");
     } catch (err) {
       setStartError(

@@ -35,7 +35,7 @@ export default function Home() {
     greeting,
     streak,
     devotion,
-    bibleReading,
+    bibleReadings,
     song,
     birthday,
     prayerSummary,
@@ -48,7 +48,13 @@ export default function Home() {
       <main className="space-y-stack-lg px-margin-main pt-stack-sm">
         <StreakBadge streak={streak} />
         <DevotionCard devotion={devotion} />
-        <BibleReadingCard reading={bibleReading} />
+        {bibleReadings.length === 0 ? (
+          <BibleReadingCard reading={null} />
+        ) : (
+          bibleReadings.map((reading) => (
+            <BibleReadingCard key={reading.memberPlanId} reading={reading} />
+          ))
+        )}
         <section className="grid grid-cols-2 gap-gutter-card">
           <SongCard song={song} />
           <PrayerSummaryCard summary={prayerSummary} />

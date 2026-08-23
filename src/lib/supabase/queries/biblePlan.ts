@@ -22,14 +22,19 @@ export async function fetchBiblePlanList(
 
   if (!plans || plans.length === 0) return [];
 
-  const { data: activePlans } = await supabase
-    .from("member_plans")
-    .select("plan_id")
-    .eq("is_active", true);
+  const [{ data: activePlans }, { data: auth }] = await Promise.all([
+    supabase.from("member_plans").select("plan_id, member_id").eq("is_active", true),
+    supabase.auth.getUser(),
+  ]);
 
   const countByPlan = new Map<string, number>();
+  const myPlanIds = new Set<string>();
+
   for (const row of activePlans ?? []) {
     countByPlan.set(row.plan_id, (countByPlan.get(row.plan_id) ?? 0) + 1);
+    if (auth?.user && row.member_id === auth.user.id) {
+      myPlanIds.add(row.plan_id);
+    }
   }
 
   return plans.map((plan) => ({
@@ -42,6 +47,7 @@ export async function fetchBiblePlanList(
     minutesPerDay: plan.minutes_per_day ?? "",
     chaptersPerDay: plan.chapters_per_day ?? "",
     participantCount: countByPlan.get(plan.id) ?? 0,
+    isJoined: myPlanIds.has(plan.id),
     difficultyFilled: plan.difficulty,
     difficultyColor: DIFFICULTY_COLOR_MAP[plan.difficulty] ?? "error",
     ribbon: plan.ribbon_label

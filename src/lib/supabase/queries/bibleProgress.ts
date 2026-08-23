@@ -17,7 +17,7 @@ import {
 } from "@/lib/bibleBooks";
 import {
   countReadingLogsForPlanDay,
-  fetchActiveMemberPlan,
+  fetchActiveMemberPlans,
   fetchActivePlanMembers,
   fetchStreakDays,
 } from "./reading-plan";
@@ -29,8 +29,18 @@ import {
   unwrapRelation,
 } from "./utils";
 
+/** 통독탭 위쪽에서 플랜을 넘나들 때 쓰는 탭 하나 */
+export interface BibleProgressPlanTab {
+  memberPlanId: string;
+  label: string;
+  isPaused: boolean;
+  percent: number;
+}
+
 export interface BibleProgressPageData {
   planLabel: string;
+  /** 진행 중인 플랜 전체 (탭으로 보여준다) */
+  planTabs: BibleProgressPlanTab[];
   /** 완독 체크를 기록할 member_plans 행 */
   memberPlanId: string;
   /** 오늘 날짜에 완독 기록이 있는지 */
@@ -266,6 +276,7 @@ async function hasReadingLogToday(
 
 export async function fetchBibleProgressData(
   supabase: SupabaseClient,
+  selectedMemberPlanId?: string | null,
 ): Promise<BibleProgressPageData | null> {
   const {
     data: { user },
@@ -275,8 +286,27 @@ export async function fetchBibleProgressData(
     throw new Error("로그인이 필요합니다.");
   }
 
-  const memberPlan = await fetchActiveMemberPlan(supabase, user.id);
-  if (!memberPlan) return null;
+  const activePlans = await fetchActiveMemberPlans(supabase, user.id);
+  if (activePlans.length === 0) return null;
+
+  // 고른 플랜이 지워졌거나 아직 안 골랐으면 첫 번째 플랜을 보여준다.
+  const memberPlan =
+    activePlans.find((row) => row.id === selectedMemberPlanId) ?? activePlans[0];
+
+  const planTabs: BibleProgressPlanTab[] = activePlans.map((row) => {
+    const rowPlan = unwrapRelation(row.bible_plans);
+    const rowTotalDays = rowPlan?.total_days ?? 0;
+
+    return {
+      memberPlanId: row.id,
+      label: rowPlan?.title ?? "",
+      isPaused: Boolean(row.paused_at),
+      percent:
+        rowTotalDays > 0
+          ? Math.round((row.current_day / rowTotalDays) * 100)
+          : 0,
+    };
+  });
 
   const plan = unwrapRelation(memberPlan.bible_plans);
   const totalDays = plan?.total_days ?? 0;
@@ -369,6 +399,7 @@ export async function fetchBibleProgressData(
 
   return {
     planLabel: plan?.title ?? "",
+    planTabs,
     memberPlanId: memberPlan.id,
     isPaused,
     pausedSinceLabel: pausedAt

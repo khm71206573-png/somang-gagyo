@@ -480,6 +480,8 @@ export interface BiblePlan {
   minutesPerDay: string;
   chaptersPerDay: string;
   participantCount: number;
+  /** 내가 이미 진행 중인 플랜인지 */
+  isJoined: boolean;
   difficultyFilled: number;
   difficultyColor: PlanDifficultyColor;
   ribbon?: BiblePlanRibbon;
@@ -496,6 +498,7 @@ export const biblePlans: BiblePlan[] = [
     minutesPerDay: "하루 약 15분",
     chaptersPerDay: "하루 3-4장",
     participantCount: 24,
+    isJoined: false,
     difficultyFilled: 2,
     difficultyColor: "primary",
     ribbon: { label: "추천", variant: "primary", rotated: true },
@@ -509,6 +512,7 @@ export const biblePlans: BiblePlan[] = [
     minutesPerDay: "하루 약 20분",
     chaptersPerDay: "하루 4장",
     participantCount: 12,
+    isJoined: false,
     difficultyFilled: 3,
     difficultyColor: "error",
   },
@@ -521,6 +525,7 @@ export const biblePlans: BiblePlan[] = [
     minutesPerDay: "하루 약 45분",
     chaptersPerDay: "하루 12장",
     participantCount: 8,
+    isJoined: false,
     difficultyFilled: 3,
     difficultyColor: "error",
   },
@@ -533,6 +538,7 @@ export const biblePlans: BiblePlan[] = [
     minutesPerDay: "하루 약 30분",
     chaptersPerDay: "하루 6-7장",
     participantCount: 15,
+    isJoined: false,
     difficultyFilled: 2,
     difficultyColor: "primary",
   },
@@ -545,6 +551,7 @@ export const biblePlans: BiblePlan[] = [
     minutesPerDay: "하루 약 5분",
     chaptersPerDay: "하루 1장",
     participantCount: 31,
+    isJoined: false,
     difficultyFilled: 1,
     difficultyColor: "secondary",
     ribbon: { label: "부담 없이", variant: "secondary" },
@@ -558,6 +565,7 @@ export const biblePlans: BiblePlan[] = [
     minutesPerDay: "하루 약 15분",
     chaptersPerDay: "하루 3장",
     participantCount: 42,
+    isJoined: false,
     difficultyFilled: 1,
     difficultyColor: "secondary",
     ribbon: { label: "처음이라면", variant: "secondary-container" },

@@ -10,7 +10,7 @@ import type {
   EventItem,
 } from "@/lib/mock-data";
 import {
-  fetchActiveMemberPlan,
+  fetchActiveMemberPlans,
   fetchActivePlanMembers,
   countReadingLogsForPlanDay,
 } from "./reading-plan";
@@ -41,7 +41,8 @@ export interface DashboardData {
   greeting: GreetingInfo;
   streak: StreakInfo;
   devotion: DevotionInfo | null;
-  bibleReading: BibleReadingInfo | null;
+  /** 진행 중인 통독 플랜마다 카드 하나 (없으면 빈 배열) */
+  bibleReadings: BibleReadingInfo[];
   song: SongInfo | null;
   birthday: BirthdayInfo | null;
   prayerSummary: PrayerSummary;
@@ -123,12 +124,14 @@ async function fetchDevotion(
   };
 }
 
+type ActiveMemberPlan = Awaited<
+  ReturnType<typeof fetchActiveMemberPlans>
+>[number];
+
 async function fetchBibleReading(
   supabase: SupabaseClient,
-  memberPlan: Awaited<ReturnType<typeof fetchActiveMemberPlan>>,
+  memberPlan: ActiveMemberPlan,
 ): Promise<BibleReadingInfo | null> {
-  if (!memberPlan) return null;
-
   const plan = unwrapRelation(memberPlan.bible_plans);
 
   const { data: planDay } = await supabase
@@ -273,19 +276,21 @@ export async function fetchDashboardData(
   }
 
   const todayStr = toDateString(new Date());
-  const memberPlan = await fetchActiveMemberPlan(supabase, user.id);
+  const memberPlans = await fetchActiveMemberPlans(supabase, user.id);
 
   const [
     profile,
     devotion,
-    bibleReading,
+    bibleReadings,
     song,
     prayerSummary,
     upcomingEvents,
   ] = await Promise.all([
     fetchProfile(supabase, user.id),
     fetchDevotion(supabase, todayStr),
-    fetchBibleReading(supabase, memberPlan),
+    Promise.all(
+      memberPlans.map((memberPlan) => fetchBibleReading(supabase, memberPlan)),
+    ),
     fetchSong(supabase, todayStr),
     fetchPrayerSummary(supabase, user.id),
     fetchUpcomingEvents(supabase, todayStr),
@@ -297,7 +302,9 @@ export async function fetchDashboardData(
     // 않았거나 하루 걸러도 멈추지 않는다.
     streak: { days: joinedDaysFrom(profile?.created_at) },
     devotion,
-    bibleReading,
+    bibleReadings: bibleReadings.filter(
+      (reading): reading is BibleReadingInfo => reading !== null,
+    ),
     song,
     // profiles에는 birth_date가 없어 생일 카드는 당분간 비활성화 상태
     birthday: null,

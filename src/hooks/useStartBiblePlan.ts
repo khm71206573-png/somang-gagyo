@@ -19,28 +19,28 @@ async function startBiblePlan({ planId, startedAt }: StartBiblePlanInput) {
     throw new Error("로그인이 필요해요.");
   }
 
-  // 통독은 한 번에 하나만 진행한다. 기존 플랜은 비활성으로 내린다.
-  const { error: deactivateError } = await supabase
+  // 여러 플랜을 동시에 진행할 수 있어 기존 플랜은 그대로 두고 새로 추가한다.
+  const { data, error } = await supabase
     .from("member_plans")
-    .update({ is_active: false })
-    .eq("member_id", user.id)
-    .eq("is_active", true);
-
-  if (deactivateError) {
-    throw new Error(deactivateError.message ?? "기존 플랜 정리에 실패했어요.");
-  }
-
-  const { error } = await supabase.from("member_plans").insert({
-    member_id: user.id,
-    plan_id: planId,
-    started_at: startedAt,
-    current_day: 1,
-    is_active: true,
-  });
+    .insert({
+      member_id: user.id,
+      plan_id: planId,
+      started_at: startedAt,
+      current_day: 1,
+      is_active: true,
+    })
+    .select("id")
+    .single();
 
   if (error) {
+    // 23505 = 유니크 위반. 같은 플랜을 이미 진행 중일 때 걸린다.
+    if (error.code === "23505") {
+      throw new Error("이미 진행 중인 플랜이에요.");
+    }
     throw new Error(error.message ?? "통독 플랜을 시작하지 못했어요.");
   }
+
+  return data.id as string;
 }
 
 export function useStartBiblePlan() {

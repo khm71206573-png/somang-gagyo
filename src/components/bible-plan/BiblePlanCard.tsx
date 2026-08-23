@@ -22,22 +22,30 @@ const dotColorClassMap = {
 };
 
 export function BiblePlanCard({ plan, isSelected, onSelect }: BiblePlanCardProps) {
+  // 이미 진행 중인 플랜은 중복으로 시작할 수 없어 고를 수 없게 둔다.
+  const canSelect = !plan.isJoined;
+
   return (
     <article
       role="button"
-      tabIndex={0}
+      tabIndex={canSelect ? 0 : -1}
       aria-pressed={isSelected}
-      onClick={() => onSelect(plan.id)}
+      aria-disabled={!canSelect}
+      onClick={() => {
+        if (canSelect) onSelect(plan.id);
+      }}
       onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
+        if (canSelect && (event.key === "Enter" || event.key === " ")) {
           event.preventDefault();
           onSelect(plan.id);
         }
       }}
       className={
-        isSelected
-          ? "group relative flex cursor-pointer flex-col gap-3 rounded-lg border-2 border-primary bg-primary/5 p-5 shadow-[0_4px_12px_rgba(145,71,35,0.08)] transition-colors"
-          : "group relative flex cursor-pointer flex-col gap-3 rounded-lg border border-surface-container-highest/50 bg-card p-5 shadow-[0_4px_12px_rgba(44,44,44,0.03)] transition-colors hover:bg-surface-container-low/50"
+        !canSelect
+          ? "group relative flex cursor-default flex-col gap-3 rounded-lg border border-outline-variant/40 bg-surface-container-low/60 p-5 opacity-70 transition-colors"
+          : isSelected
+            ? "group relative flex cursor-pointer flex-col gap-3 rounded-lg border-2 border-primary bg-primary/5 p-5 shadow-[0_4px_12px_rgba(145,71,35,0.08)] transition-colors"
+            : "group relative flex cursor-pointer flex-col gap-3 rounded-lg border border-surface-container-highest/50 bg-card p-5 shadow-[0_4px_12px_rgba(44,44,44,0.03)] transition-colors hover:bg-surface-container-low/50"
       }
     >
       {plan.ribbon && (
@@ -65,15 +73,22 @@ export function BiblePlanCard({ plan, isSelected, onSelect }: BiblePlanCardProps
             {plan.description}
           </p>
         </div>
-        <span
-          className={
-            plan.isFeatured
-              ? "whitespace-nowrap rounded-full bg-primary/10 px-3 py-1 text-label-sm text-primary"
-              : "whitespace-nowrap rounded-full bg-surface-container-highest px-3 py-1 text-label-sm text-foreground"
-          }
-        >
-          {plan.durationLabel}
-        </span>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <span
+            className={
+              plan.isFeatured
+                ? "whitespace-nowrap rounded-full bg-primary/10 px-3 py-1 text-label-sm text-primary"
+                : "whitespace-nowrap rounded-full bg-surface-container-highest px-3 py-1 text-label-sm text-foreground"
+            }
+          >
+            {plan.durationLabel}
+          </span>
+          {plan.isJoined && (
+            <span className="whitespace-nowrap rounded-full bg-secondary/15 px-3 py-1 text-label-sm text-secondary">
+              진행 중
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-outline-variant/30 pt-4">
@@ -105,7 +120,7 @@ export function BiblePlanCard({ plan, isSelected, onSelect }: BiblePlanCardProps
         </div>
       </div>
 
-      {isSelected && (
+      {isSelected && canSelect && (
         <div className="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
           <Check className="h-4 w-4" strokeWidth={3} />
         </div>

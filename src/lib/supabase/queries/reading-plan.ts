@@ -50,7 +50,11 @@ const MEMBER_PLAN_COLUMNS =
 /** 42703 = 컬럼 없음. paused_at 마이그레이션 적용 전이면 이 코드로 온다. */
 const UNDEFINED_COLUMN = "42703";
 
-export async function fetchActiveMemberPlan(
+/**
+ * 진행 중인 통독 플랜을 모두 가져온다. 시작한 순서대로 돌려주므로
+ * 통독탭의 플랜 탭 순서도 이 순서를 따른다.
+ */
+export async function fetchActiveMemberPlans(
   supabase: SupabaseClient,
   userId: string,
 ) {
@@ -59,22 +63,34 @@ export async function fetchActiveMemberPlan(
     .select(`${MEMBER_PLAN_COLUMNS}, paused_at`)
     .eq("member_id", userId)
     .eq("is_active", true)
-    .maybeSingle();
+    .order("created_at", { ascending: true });
 
-  if (!error) return data;
+  if (!error) return data ?? [];
 
   // 일시중지 마이그레이션 적용 전에도 통독 화면 전체가 멈추지 않도록,
   // paused_at 없이 다시 조회해 "중지 안 함" 상태로 다룬다.
-  if (error.code !== UNDEFINED_COLUMN) return null;
+  if (error.code !== UNDEFINED_COLUMN) return [];
 
   const { data: legacy } = await supabase
     .from("member_plans")
     .select(MEMBER_PLAN_COLUMNS)
     .eq("member_id", userId)
     .eq("is_active", true)
-    .maybeSingle();
+    .order("created_at", { ascending: true });
 
-  return legacy ? { ...legacy, paused_at: null as string | null } : null;
+  return (legacy ?? []).map((row) => ({
+    ...row,
+    paused_at: null as string | null,
+  }));
+}
+
+/** 홈 화면처럼 하나만 필요한 곳에서 쓰는, 가장 먼저 시작한 플랜 */
+export async function fetchActiveMemberPlan(
+  supabase: SupabaseClient,
+  userId: string,
+) {
+  const plans = await fetchActiveMemberPlans(supabase, userId);
+  return plans[0] ?? null;
 }
 
 export async function fetchActivePlanMembers(
