@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { X } from "lucide-react";
+import { Check, Sparkles, X } from "lucide-react";
 import { PRAYER_SCOPE_COMMUNITY, PRAYER_SCOPE_MINE } from "@/lib/mock-data";
 import { useCreatePrayerRequest } from "@/hooks/useCreatePrayerRequest";
 
@@ -25,6 +25,7 @@ export function PrayerComposeDialog({ open, onClose }: PrayerComposeDialogProps)
   const { mutateAsync, isPending } = useCreatePrayerRequest();
   const [scope, setScope] = useState(PRAYER_SCOPE_COMMUNITY);
   const [content, setContent] = useState("");
+  const [isThanksgiving, setIsThanksgiving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // 다시 열 때 이전 입력이 남지 않도록 초기화한다.
@@ -32,6 +33,7 @@ export function PrayerComposeDialog({ open, onClose }: PrayerComposeDialogProps)
     if (open) {
       setScope(PRAYER_SCOPE_COMMUNITY);
       setContent("");
+      setIsThanksgiving(false);
       setError(null);
     }
   }, [open]);
@@ -54,12 +56,14 @@ export function PrayerComposeDialog({ open, onClose }: PrayerComposeDialogProps)
     setError(null);
 
     if (!content.trim()) {
-      setError("기도제목 내용을 입력해주세요.");
+      setError(
+        isThanksgiving ? "감사한 내용을 입력해주세요." : "기도제목 내용을 입력해주세요.",
+      );
       return;
     }
 
     try {
-      await mutateAsync({ scope, content });
+      await mutateAsync({ scope, content, isThanksgiving });
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "등록에 실패했어요.");
@@ -87,7 +91,7 @@ export function PrayerComposeDialog({ open, onClose }: PrayerComposeDialogProps)
             id="prayer-compose-title"
             className="font-heading text-title-lg text-foreground"
           >
-            기도제목 나누기
+            {isThanksgiving ? "감사 나누기" : "기도제목 나누기"}
           </h2>
           <button
             type="button"
@@ -137,6 +141,44 @@ export function PrayerComposeDialog({ open, onClose }: PrayerComposeDialogProps)
             </div>
           </fieldset>
 
+          <button
+            type="button"
+            role="checkbox"
+            aria-checked={isThanksgiving}
+            onClick={() => setIsThanksgiving((checked) => !checked)}
+            className={
+              isThanksgiving
+                ? "flex items-center gap-3 rounded-lg border-2 border-secondary bg-secondary/10 p-3 text-left transition-colors"
+                : "flex items-center gap-3 rounded-lg border border-outline-variant bg-surface-container p-3 text-left transition-colors hover:bg-surface-container-high"
+            }
+          >
+            <span
+              className={
+                isThanksgiving
+                  ? "flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] bg-secondary text-secondary-foreground"
+                  : "flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border border-outline"
+              }
+            >
+              {isThanksgiving && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+            </span>
+            <span className="flex flex-col gap-0.5">
+              <span
+                className={
+                  isThanksgiving
+                    ? "flex items-center gap-1 text-label-sm font-semibold text-secondary"
+                    : "flex items-center gap-1 text-label-sm font-medium text-foreground"
+                }
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                감사기도예요
+              </span>
+              <span className="text-[11px] leading-snug text-muted-foreground">
+                응답받은 일, 감사한 일을 나눠요. 목록에서 &quot;감사&quot;로 따로
+                표시돼요.
+              </span>
+            </span>
+          </button>
+
           <div className="flex flex-col gap-2">
             <label htmlFor="prayer-content" className="text-label-sm text-foreground">
               내용
@@ -146,7 +188,11 @@ export function PrayerComposeDialog({ open, onClose }: PrayerComposeDialogProps)
               rows={5}
               value={content}
               onChange={(event) => setContent(event.target.value)}
-              placeholder="함께 기도하고 싶은 내용을 적어주세요."
+              placeholder={
+                isThanksgiving
+                  ? "감사한 일을 적어주세요. 함께 감사할 수 있어요."
+                  : "함께 기도하고 싶은 내용을 적어주세요."
+              }
               className="resize-none rounded-md border border-border bg-card px-4 py-3 text-body-md text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
             />
           </div>
@@ -158,7 +204,11 @@ export function PrayerComposeDialog({ open, onClose }: PrayerComposeDialogProps)
             disabled={isPending}
             className="rounded-md bg-primary py-4 text-body-lg font-semibold text-primary-foreground transition-opacity active:opacity-80 disabled:opacity-60"
           >
-            {isPending ? "올리는 중..." : "기도제목 올리기"}
+            {isPending
+              ? "올리는 중..."
+              : isThanksgiving
+                ? "감사 올리기"
+                : "기도제목 올리기"}
           </button>
         </form>
       </div>

@@ -215,6 +215,8 @@ export interface PrayerRequestItem {
   category: string;
   content: string;
   participantCount: number;
+  /** 감사기도로 올린 글인지 (목록에서 "감사" 배지로 구분) */
+  isThanksgiving: boolean;
   /** 로그인한 사용자가 올린 기도제목인지 ("나의 기도" 필터에 사용) */
   isMine: boolean;
   /** 로그인한 사용자가 이미 "함께 기도하기"를 눌렀는지 */
@@ -243,6 +245,7 @@ export const prayerRequestList: PrayerRequestItem[] = [
     content:
       "남편의 새로운 직장 적응을 위해 기도 부탁드립니다. 낯선 환경에서도 주님의 지혜로 잘 헤쳐나가고, 동료들과도 좋은 관계를 맺을 수 있도록 마음을 모아주세요.",
     participantCount: 12,
+    isThanksgiving: false,
     isMine: false,
     hasReacted: false,
   },
@@ -256,6 +259,7 @@ export const prayerRequestList: PrayerRequestItem[] = [
     content:
       "어머니의 수술이 무사히 끝났습니다. 함께 기도해주신 모든 분들께 감사드립니다. 앞으로의 회복 과정에서도 주님의 평안이 함께하시길 계속해서 기도 부탁드립니다.",
     participantCount: 45,
+    isThanksgiving: false,
     isMine: true,
     hasReacted: true,
   },
@@ -269,6 +273,7 @@ export const prayerRequestList: PrayerRequestItem[] = [
     content:
       "새로운 프로젝트를 기획하며 방향성에 대해 고민이 많습니다. 이 길이 주님이 기뻐하시는 길인지 분별할 수 있는 지혜를 구합니다. 과정 속에서 평안을 잃지 않도록 기도해주세요.",
     participantCount: 8,
+    isThanksgiving: false,
     isMine: false,
     hasReacted: false,
   },
@@ -282,6 +287,7 @@ export const prayerRequestList: PrayerRequestItem[] = [
     content:
       "청년부 아이들과의 소통에 지혜가 필요함을 느낍니다. 세대 차이를 넘어 그리스도의 사랑으로 교제할 수 있도록, 제 마음이 먼저 열리고 따뜻해지기를 기도합니다.",
     participantCount: 21,
+    isThanksgiving: false,
     isMine: false,
     hasReacted: true,
   },

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Hand, Trash2 } from "lucide-react";
+import { Hand, Sparkles, Trash2 } from "lucide-react";
 import type { PrayerRequestItem } from "@/lib/mock-data";
 import { useTogglePrayerReaction } from "@/hooks/useTogglePrayerReaction";
 import { useDeletePrayerRequest } from "@/hooks/useDeletePrayerRequest";
@@ -16,7 +16,13 @@ export function PrayerRequestCard({ item }: PrayerRequestCardProps) {
     useDeletePrayerRequest();
 
   return (
-    <article className="flex flex-col gap-3 rounded-lg border border-outline-variant/20 bg-card p-5 shadow-[0_2px_10px_rgba(44,44,44,0.04)]">
+    <article
+      className={
+        item.isThanksgiving
+          ? "flex flex-col gap-3 rounded-lg border border-secondary/40 bg-secondary/5 p-5 shadow-[0_2px_10px_rgba(44,44,44,0.04)]"
+          : "flex flex-col gap-3 rounded-lg border border-outline-variant/20 bg-card p-5 shadow-[0_2px_10px_rgba(44,44,44,0.04)]"
+      }
+    >
       <header className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <Image
@@ -51,9 +57,17 @@ export function PrayerRequestCard({ item }: PrayerRequestCardProps) {
       </header>
 
       <div className="mt-1 flex flex-col gap-2">
-        <span className="w-max rounded-full bg-surface-container-highest px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-          {item.category}
-        </span>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {item.isThanksgiving && (
+            <span className="flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-[11px] font-semibold text-secondary-foreground">
+              <Sparkles className="h-3 w-3" />
+              감사
+            </span>
+          )}
+          <span className="rounded-full bg-surface-container-highest px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+            {item.category}
+          </span>
+        </div>
         <p className="line-clamp-3 text-body-md leading-relaxed text-foreground">
           {item.content}
         </p>
@@ -78,7 +92,13 @@ export function PrayerRequestCard({ item }: PrayerRequestCardProps) {
             fill={item.hasReacted ? "currentColor" : "none"}
           />
           <span className="text-[12px]">
-            {item.hasReacted ? "기도 중" : "함께 기도하기"}
+            {item.hasReacted
+              ? item.isThanksgiving
+                ? "감사 중"
+                : "기도 중"
+              : item.isThanksgiving
+                ? "함께 감사하기"
+                : "함께 기도하기"}
           </span>
         </button>
         <p className="text-[12px] text-muted-foreground">
