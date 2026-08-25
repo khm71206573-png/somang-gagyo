@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { sendPendingApprovalNotification } from "@/lib/push/sendPendingApprovalNotification";
 
 interface OnboardingBody {
   name?: string;
@@ -82,6 +83,14 @@ export async function POST(request: Request) {
       { error: "프로필을 저장하지 못했어요. (권한 문제로 추정)" },
       { status: 500 },
     );
+  }
+
+  // 승인 대기가 쌓이는 걸 관리자가 바로 알 수 있도록 알림을 보낸다.
+  // 푸시 설정이 없어도 가입 신청 자체는 성공해야 하므로 실패는 삼킨다.
+  try {
+    await sendPendingApprovalNotification({ name, groupName });
+  } catch (notifyError) {
+    console.error("[api/onboarding] 승인 요청 알림 발송 실패:", notifyError);
   }
 
   return NextResponse.json({ ok: true });

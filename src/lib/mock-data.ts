@@ -857,6 +857,8 @@ export interface MoreMenuItem {
   description: string;
   icon: MoreMenuIcon;
   href: string;
+  /** 관리자만 들어갈 수 있는 메뉴. 관리자가 아니면 안내 팝업을 띄운다. */
+  adminOnly?: boolean;
 }
 
 export const moreMenuItems: MoreMenuItem[] = [
@@ -887,6 +889,7 @@ export const moreMenuItems: MoreMenuItem[] = [
     description: "관리자 전용 도구",
     icon: "admin",
     href: "/admin",
+    adminOnly: true,
   },
   {
     id: "biblePlan",
