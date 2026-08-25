@@ -1,50 +1,28 @@
 "use client";
 
+import { useState } from "react";
 import { SongTopBar } from "@/components/song/SongTopBar";
-import { SongHero } from "@/components/song/SongHero";
-import { SongLyrics } from "@/components/song/SongLyrics";
-import { PastSongsScroll } from "@/components/song/PastSongsScroll";
+import { SongTabBar } from "@/components/song/SongTabBar";
+import { PraiseSetTab } from "@/components/song/PraiseSetTab";
+import { RecommendedSongTab } from "@/components/song/RecommendedSongTab";
 import { BottomNav } from "@/components/layout/BottomNav";
-import { LoadingState } from "@/components/common/LoadingState";
-import { ErrorState } from "@/components/common/ErrorState";
-import { EmptyState } from "@/components/common/EmptyState";
-import { useSongPageData } from "@/hooks/useSongPageData";
+import { songTabs, activeSongTabId, type SongTabId } from "@/lib/mock-data";
 
 export default function SongPage() {
-  const { data, isLoading, isError, error, refetch, isFetching } =
-    useSongPageData();
-
-  if (isLoading) {
-    return <LoadingState />;
-  }
-
-  if (isError || !data) {
-    return (
-      <ErrorState
-        message={error instanceof Error ? error.message : undefined}
-        onRetry={() => refetch()}
-        isRetrying={isFetching}
-      />
-    );
-  }
-
-  if (!data.songDetail) {
-    return <EmptyState message="오늘 추천된 찬양이 아직 없어요." />;
-  }
+  const [activeTabId, setActiveTabId] = useState<SongTabId>(activeSongTabId);
 
   return (
     <div className="relative mx-auto min-h-screen w-full max-w-[480px] bg-background pb-24">
       <SongTopBar />
-      <main className="flex flex-col gap-stack-lg px-margin-main pt-stack-lg">
-        <SongHero song={data.songDetail} />
-        {data.songDetail.lyrics.length > 0 && (
-          <SongLyrics stanzas={data.songDetail.lyrics} />
-        )}
-        {data.pastSongs.length > 0 && (
-          <PastSongsScroll songs={data.pastSongs} />
-        )}
+      <SongTabBar
+        tabs={songTabs}
+        activeTabId={activeTabId}
+        onSelect={setActiveTabId}
+      />
+      <main className="flex flex-col gap-stack-lg px-margin-main pt-stack-md">
+        {activeTabId === "praiseSet" ? <PraiseSetTab /> : <RecommendedSongTab />}
       </main>
-      <BottomNav />
+      <BottomNav active="찬양" />
     </div>
   );
 }

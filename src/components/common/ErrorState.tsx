@@ -6,11 +6,19 @@ interface ErrorStateProps {
   message?: string;
   onRetry: () => void;
   isRetrying?: boolean;
+  /** 탭 안처럼 화면 일부에만 보여줄 때는 화면 전체 높이를 쓰지 않는다. */
+  inline?: boolean;
 }
 
-export function ErrorState({ message, onRetry, isRetrying }: ErrorStateProps) {
+export function ErrorState({ message, onRetry, isRetrying, inline = false }: ErrorStateProps) {
   return (
-    <div className="flex min-h-screen w-full flex-col items-center justify-center gap-4 bg-background px-margin-main text-center">
+    <div
+      className={
+        inline
+          ? "flex w-full flex-col items-center justify-center gap-4 py-stack-lg text-center"
+          : "flex min-h-screen w-full flex-col items-center justify-center gap-4 bg-background px-margin-main text-center"
+      }
+    >
       <p className="text-body-md text-muted-foreground">
         {message ?? "데이터를 불러오지 못했어요."}
       </p>

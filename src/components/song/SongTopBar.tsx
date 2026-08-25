@@ -16,9 +16,7 @@ export function SongTopBar() {
       >
         <ArrowLeft className="h-5 w-5" />
       </button>
-      <h1 className="font-heading text-headline-md text-foreground">
-        오늘의 추천 찬양
-      </h1>
+      <h1 className="font-heading text-headline-md text-foreground">찬양</h1>
     </header>
   );
 }

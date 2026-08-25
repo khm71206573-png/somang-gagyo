@@ -22,6 +22,9 @@ export default function NewAnnouncementPage() {
             router.push("/admin/announcement");
           }}
         />
+        <p className="mt-stack-md text-center text-label-sm text-muted-foreground">
+          공지를 올리면 알림을 켜둔 교인들의 휴대폰으로 알림이 가요.
+        </p>
       </main>
     </div>
   );

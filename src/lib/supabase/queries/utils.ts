@@ -16,6 +16,13 @@ export function toDateString(date: Date) {
   return `${y}-${m}-${d}`;
 }
 
+/** 주어진 날짜가 속한 주의 시작일(주일)을 "YYYY-MM-DD"로 돌려준다. */
+export function weekStartDateString(date: Date = new Date()) {
+  const start = new Date(date);
+  start.setDate(date.getDate() - date.getDay());
+  return toDateString(start);
+}
+
 export function monthDayOf(dateStr: string) {
   const [, month, day] = dateStr.split("-").map(Number);
   return { month, day };

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { sendAnnouncementNotification } from "@/lib/push/sendAnnouncementNotification";
 import {
   buildOptionRows,
   normalizeAnnouncementBody,
@@ -67,5 +68,20 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ id: created.id });
+  // 공지가 올라오면 교인들 휴대폰으로 알림을 보낸다.
+  // 푸시 설정(VAPID 키 등)이 없어도 공지 등록 자체는 성공해야 하므로 실패는 삼킨다.
+  let notified = 0;
+  try {
+    const result = await sendAnnouncementNotification({
+      announcementId: created.id,
+      title: normalized.title,
+      isPoll: normalized.kind === "poll",
+      authorId: user!.id,
+    });
+    notified = result.sent;
+  } catch (error) {
+    console.error("[announcements] 푸시 알림 발송 실패:", error);
+  }
+
+  return NextResponse.json({ id: created.id, notified });
 }

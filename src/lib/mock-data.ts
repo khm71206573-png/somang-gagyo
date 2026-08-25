@@ -799,6 +799,21 @@ export const scheduledNotification: ScheduledNotification = {
   scheduleLabel: "오늘 오후 6:00 발송 예정",
 };
 
+/** 찬양 탭 메뉴: 이번주 찬양콘티 → 추천찬양 순서로 보여준다. */
+export type SongTabId = "praiseSet" | "recommended";
+
+export interface SongTab {
+  id: SongTabId;
+  label: string;
+}
+
+export const songTabs: SongTab[] = [
+  { id: "praiseSet", label: "이번주 찬양콘티" },
+  { id: "recommended", label: "추천찬양" },
+];
+
+export const activeSongTabId: SongTabId = "praiseSet";
+
 export type GroupTabId = "bulletin" | "manuscript" | "summary" | "praise";
 
 export interface GroupTab {
