@@ -33,6 +33,7 @@ export default function EditAnnouncementPage({
       content: data.content,
       isPinned: data.is_pinned,
       allowMultiple: data.allow_multiple,
+      hideVoters: data.hide_voters,
       closesAt: data.closes_at,
       options: [...data.announcement_poll_options]
         .sort((a, b) => a.display_order - b.display_order)

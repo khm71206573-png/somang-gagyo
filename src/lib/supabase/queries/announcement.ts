@@ -1,8 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { WEEKDAY_LABELS, avatarFallback, formatTimeAgo, unwrapRelation } from "./utils";
 
-/** 42P01 = 테이블 없음. 공지사항 마이그레이션 적용 전이면 이 코드로 온다. */
+/** 42P01 = 테이블/뷰 없음, 42703 = 컬럼 없음. 마이그레이션 적용 전이면 이 코드로 온다. */
 const UNDEFINED_TABLE = "42P01";
+const UNDEFINED_COLUMN = "42703";
 
 const SETUP_MESSAGE =
   "공지사항 기능 설정이 아직 끝나지 않았어요. 관리자에게 알려주세요.";
@@ -20,7 +21,7 @@ export interface AnnouncementPollOptionItem {
   voteCount: number;
   /** 로그인한 사용자가 고른 항목인지 */
   isSelected: boolean;
-  /** 이 항목을 고른 사람들의 이름 (일정 조율에 필요해서 공개한다) */
+  /** 이 항목을 고른 사람들의 이름. 이름 비공개 투표면 빈 배열. */
   voterNames: string[];
 }
 
@@ -63,6 +64,8 @@ export interface AnnouncementDetail {
   content: string;
   isPinned: boolean;
   allowMultiple: boolean;
+  /** 투표자 이름을 감추는 투표인지 */
+  hideVoters: boolean;
   isClosed: boolean;
   closesAtLabel: string | null;
   authorName: string;
@@ -70,12 +73,20 @@ export interface AnnouncementDetail {
   timeAgo: string;
   options: AnnouncementPollOptionItem[];
   voterCount: number;
+  /** 로그인한 사용자가 고른 항목들 (투표 수정 화면의 초기값) */
+  mySelectedOptionIds: string[];
   comments: AnnouncementCommentItem[];
 }
 
 interface AuthorRelation {
   name: string | null;
   avatar_url?: string | null;
+}
+
+interface VoteRow {
+  option_id: string;
+  member_id: string;
+  voter?: AuthorRelation | AuthorRelation[] | null;
 }
 
 function formatDateLabel(isoString: string) {
@@ -133,6 +144,46 @@ function throwFriendly(error: { code?: string; message?: string }, fallback: str
   throw new Error(error.message || fallback);
 }
 
+/**
+ * 공지별 투표 참여 인원. 이름 비공개 투표는 남의 투표 행이 RLS에 가려서
+ * 직접 셀 수 없기 때문에 집계 뷰를 쓴다. 뷰가 아직 없는(마이그레이션 전) DB에서는
+ * 보이는 투표 행으로 직접 센다.
+ */
+async function fetchVoterCounts(supabase: SupabaseClient, announcementIds: string[]) {
+  const counts = new Map<string, number>();
+  if (announcementIds.length === 0) return counts;
+
+  const { data, error } = await supabase
+    .from("announcement_voter_counts")
+    .select("announcement_id, voter_count")
+    .in("announcement_id", announcementIds);
+
+  if (!error) {
+    for (const row of data ?? []) {
+      counts.set(row.announcement_id as string, (row.voter_count as number) ?? 0);
+    }
+    return counts;
+  }
+
+  const { data: votes } = await supabase
+    .from("announcement_poll_votes")
+    .select("announcement_id, member_id")
+    .in("announcement_id", announcementIds);
+
+  const voters = new Map<string, Set<string>>();
+  for (const vote of votes ?? []) {
+    const set = voters.get(vote.announcement_id) ?? new Set<string>();
+    set.add(vote.member_id);
+    voters.set(vote.announcement_id, set);
+  }
+
+  for (const [announcementId, set] of voters) {
+    counts.set(announcementId, set.size);
+  }
+
+  return counts;
+}
+
 export async function fetchAnnouncementList(
   supabase: SupabaseClient,
 ): Promise<AnnouncementListItem[]> {
@@ -153,29 +204,23 @@ export async function fetchAnnouncementList(
   const rows = data ?? [];
   if (rows.length === 0) return [];
 
-  // 투표 참여 인원(사람 수)과 내 참여 여부는 votes를 한 번에 받아 계산한다.
-  const { data: votes } = await supabase
-    .from("announcement_poll_votes")
-    .select("announcement_id, member_id")
-    .in(
-      "announcement_id",
-      rows.map((row) => row.id),
-    );
+  const ids = rows.map((row) => row.id as string);
 
-  const votersByAnnouncement = new Map<string, Set<string>>();
-  const myVotedIds = new Set<string>();
+  // 내 표는 이름 비공개 투표에서도 항상 보인다.
+  const [voterCounts, { data: myVotes }] = await Promise.all([
+    fetchVoterCounts(supabase, ids),
+    user
+      ? supabase
+          .from("announcement_poll_votes")
+          .select("announcement_id")
+          .eq("member_id", user.id)
+          .in("announcement_id", ids)
+      : Promise.resolve({ data: [] as { announcement_id: string }[] }),
+  ]);
 
-  for (const vote of votes ?? []) {
-    const voters =
-      votersByAnnouncement.get(vote.announcement_id) ?? new Set<string>();
-    voters.add(vote.member_id);
-    votersByAnnouncement.set(vote.announcement_id, voters);
-
-    if (user && vote.member_id === user.id) {
-      myVotedIds.add(vote.announcement_id);
-    }
-  }
-
+  const myVotedIds = new Set(
+    (myVotes ?? []).map((vote) => vote.announcement_id as string),
+  );
   const now = Date.now();
 
   return rows.map((row) => {
@@ -201,11 +246,62 @@ export async function fetchAnnouncementList(
       dateLabel: formatDateLabel(row.created_at),
       timeAgo: formatTimeAgo(row.created_at),
       optionCount: options.length,
-      voterCount: votersByAnnouncement.get(row.id)?.size ?? 0,
+      voterCount: voterCounts.get(row.id as string) ?? 0,
       commentCount: commentCount?.count ?? 0,
-      hasVoted: myVotedIds.has(row.id),
+      hasVoted: myVotedIds.has(row.id as string),
     };
   });
+}
+
+const DETAIL_COLUMNS =
+  "id, kind, poll_type, title, content, is_pinned, allow_multiple, closes_at, created_at, author:profiles(name), announcement_poll_options(id, label, option_date, start_time, display_order)";
+
+/** hide_voters 컬럼이 아직 없는 DB에서도 상세 화면이 열리도록 한 번 더 조회한다. */
+async function fetchAnnouncementRow(supabase: SupabaseClient, announcementId: string) {
+  const { data, error } = await supabase
+    .from("announcements")
+    .select(`${DETAIL_COLUMNS}, hide_voters`)
+    .eq("id", announcementId)
+    .maybeSingle();
+
+  if (!error) return data;
+  if (error.code !== UNDEFINED_COLUMN) throwFriendly(error, "공지사항을 불러오지 못했어요.");
+
+  const { data: legacy, error: legacyError } = await supabase
+    .from("announcements")
+    .select(DETAIL_COLUMNS)
+    .eq("id", announcementId)
+    .maybeSingle();
+
+  if (legacyError) throwFriendly(legacyError, "공지사항을 불러오지 못했어요.");
+  return legacy ? { ...legacy, hide_voters: false } : null;
+}
+
+/** 항목별 득표 수. 집계 뷰가 없으면 보이는 투표 행으로 직접 센다. */
+async function fetchOptionCounts(
+  supabase: SupabaseClient,
+  announcementId: string,
+  voteRows: VoteRow[],
+) {
+  const counts = new Map<string, number>();
+
+  const { data, error } = await supabase
+    .from("announcement_poll_option_counts")
+    .select("option_id, vote_count")
+    .eq("announcement_id", announcementId);
+
+  if (!error) {
+    for (const row of data ?? []) {
+      counts.set(row.option_id as string, (row.vote_count as number) ?? 0);
+    }
+    return counts;
+  }
+
+  for (const vote of voteRows) {
+    counts.set(vote.option_id, (counts.get(vote.option_id) ?? 0) + 1);
+  }
+
+  return counts;
 }
 
 export async function fetchAnnouncementDetail(
@@ -216,15 +312,7 @@ export async function fetchAnnouncementDetail(
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: row, error } = await supabase
-    .from("announcements")
-    .select(
-      "id, kind, poll_type, title, content, is_pinned, allow_multiple, closes_at, created_at, author:profiles(name), announcement_poll_options(id, label, option_date, start_time, display_order)",
-    )
-    .eq("id", announcementId)
-    .maybeSingle();
-
-  if (error) throwFriendly(error, "공지사항을 불러오지 못했어요.");
+  const row = await fetchAnnouncementRow(supabase, announcementId);
   if (!row) throw new Error("공지사항을 찾을 수 없어요.");
 
   const [{ data: votes }, { data: comments }] = await Promise.all([
@@ -239,8 +327,13 @@ export async function fetchAnnouncementDetail(
       .order("created_at", { ascending: true }),
   ]);
 
-  const voteRows = votes ?? [];
-  const voterIds = new Set(voteRows.map((vote) => vote.member_id as string));
+  const voteRows = (votes ?? []) as VoteRow[];
+  const hideVoters = Boolean(row.hide_voters);
+
+  const [optionCounts, voterCounts] = await Promise.all([
+    fetchOptionCounts(supabase, announcementId, voteRows),
+    fetchVoterCounts(supabase, [announcementId]),
+  ]);
 
   const optionRows = ((row.announcement_poll_options ?? []) as {
     id: string;
@@ -250,6 +343,10 @@ export async function fetchAnnouncementDetail(
     display_order: number;
   }[]).sort((a, b) => a.display_order - b.display_order);
 
+  const mySelectedOptionIds = user
+    ? voteRows.filter((vote) => vote.member_id === user.id).map((vote) => vote.option_id)
+    : [];
+
   const options: AnnouncementPollOptionItem[] = optionRows.map((option) => {
     const optionVotes = voteRows.filter((vote) => vote.option_id === option.id);
 
@@ -258,14 +355,15 @@ export async function fetchAnnouncementDetail(
       label: buildOptionLabel(option),
       optionDate: option.option_date,
       startTime: option.start_time,
-      voteCount: optionVotes.length,
-      isSelected: Boolean(user) && optionVotes.some((vote) => vote.member_id === user?.id),
-      voterNames: optionVotes.map((vote) => {
-        const voter = unwrapRelation(
-          vote.voter as AuthorRelation | AuthorRelation[] | null,
-        );
-        return voter?.name ?? "성도";
-      }),
+      voteCount: optionCounts.get(option.id) ?? 0,
+      isSelected: mySelectedOptionIds.includes(option.id),
+      // 이름 비공개 투표는 관리자에게도 이름을 보여주지 않는다.
+      voterNames: hideVoters
+        ? []
+        : optionVotes.map((vote) => {
+            const voter = unwrapRelation(vote.voter ?? null);
+            return voter?.name ?? "성도";
+          }),
     };
   });
 
@@ -283,13 +381,15 @@ export async function fetchAnnouncementDetail(
     content: row.content ?? "",
     isPinned: Boolean(row.is_pinned),
     allowMultiple: Boolean(row.allow_multiple),
+    hideVoters,
     isClosed,
     closesAtLabel: formatClosesAtLabel(row.closes_at, isClosed),
     authorName: author?.name ?? "관리자",
     dateLabel: formatDateLabel(row.created_at),
     timeAgo: formatTimeAgo(row.created_at),
     options,
-    voterCount: voterIds.size,
+    voterCount: voterCounts.get(announcementId) ?? 0,
+    mySelectedOptionIds,
     comments: (comments ?? []).map((comment) => {
       const commentAuthor = unwrapRelation(
         comment.author as AuthorRelation | AuthorRelation[] | null,

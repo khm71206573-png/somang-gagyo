@@ -14,6 +14,7 @@ export interface AnnouncementAdminDetail {
   content: string | null;
   is_pinned: boolean;
   allow_multiple: boolean;
+  hide_voters: boolean;
   closes_at: string | null;
   created_at: string;
   announcement_poll_options: {

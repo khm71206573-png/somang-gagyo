@@ -1,6 +1,7 @@
 "use client";
 
 import { GreetingHeader } from "@/components/dashboard/GreetingHeader";
+import { AnnouncementBanner } from "@/components/dashboard/AnnouncementBanner";
 import { StreakBadge } from "@/components/dashboard/StreakBadge";
 import { DevotionCard } from "@/components/dashboard/DevotionCard";
 import { BibleReadingCard } from "@/components/dashboard/BibleReadingCard";
@@ -40,6 +41,7 @@ export default function Home() {
     birthday,
     prayerSummary,
     upcomingEvents,
+    announcements,
   } = data;
 
   return (
@@ -47,6 +49,7 @@ export default function Home() {
       <GreetingHeader greeting={greeting} />
       <main className="space-y-stack-lg px-margin-main pt-stack-sm">
         <StreakBadge streak={streak} />
+        <AnnouncementBanner announcements={announcements} />
         <DevotionCard devotion={devotion} />
         {bibleReadings.length === 0 ? (
           <BibleReadingCard reading={null} />

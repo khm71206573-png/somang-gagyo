@@ -22,6 +22,8 @@ export interface CreateAnnouncementInput {
   content: string;
   isPinned: boolean;
   allowMultiple: boolean;
+  /** 투표자 이름 비공개 */
+  hideVoters: boolean;
   /** ISO 문자열. 마감 없음이면 null */
   closesAt: string | null;
   options: AnnouncementOptionInput[];

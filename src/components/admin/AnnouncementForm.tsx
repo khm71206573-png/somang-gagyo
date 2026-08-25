@@ -26,6 +26,7 @@ export interface AnnouncementFormInitialValue {
   content: string | null;
   isPinned: boolean;
   allowMultiple: boolean;
+  hideVoters: boolean;
   closesAt: string | null;
   options: AnnouncementOptionInput[];
 }
@@ -99,6 +100,7 @@ export function AnnouncementForm({
   const [content, setContent] = useState("");
   const [isPinned, setIsPinned] = useState(false);
   const [allowMultiple, setAllowMultiple] = useState(false);
+  const [hideVoters, setHideVoters] = useState(false);
   const [closesAtLocal, setClosesAtLocal] = useState("");
   const [options, setOptions] = useState<OptionRow[]>([
     createOptionRow(),
@@ -115,6 +117,7 @@ export function AnnouncementForm({
     setContent(initialValue.content ?? "");
     setIsPinned(initialValue.isPinned);
     setAllowMultiple(initialValue.allowMultiple);
+    setHideVoters(initialValue.hideVoters);
     setClosesAtLocal(
       initialValue.closesAt ? toDatetimeLocalValue(initialValue.closesAt) : "",
     );
@@ -143,6 +146,7 @@ export function AnnouncementForm({
         content,
         isPinned,
         allowMultiple: kind === "poll" && allowMultiple,
+        hideVoters: kind === "poll" && hideVoters,
         closesAt:
           kind === "poll" && closesAtLocal
             ? new Date(closesAtLocal).toISOString()
@@ -372,6 +376,23 @@ export function AnnouncementForm({
               </span>
               <span className="text-[11px] text-muted-foreground">
                 가능한 날짜를 여러 개 고를 수 있게 해요.
+              </span>
+            </span>
+          </label>
+
+          <label className="flex items-center gap-3 rounded-md border border-outline-variant/60 bg-card p-3">
+            <input
+              type="checkbox"
+              checked={hideVoters}
+              onChange={(event) => setHideVoters(event.target.checked)}
+              className="h-4 w-4 accent-[var(--primary)]"
+            />
+            <span className="flex flex-col">
+              <span className="text-label-sm font-medium text-foreground">
+                투표자 이름 비공개
+              </span>
+              <span className="text-[11px] text-muted-foreground">
+                누가 무엇을 골랐는지 감추고 참여 인원과 득표 수만 보여줘요.
               </span>
             </span>
           </label>

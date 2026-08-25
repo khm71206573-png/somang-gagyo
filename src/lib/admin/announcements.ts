@@ -20,6 +20,8 @@ export interface AnnouncementBody {
   content?: string;
   isPinned?: boolean;
   allowMultiple?: boolean;
+  /** 투표자 이름을 감출지 */
+  hideVoters?: boolean;
   /** ISO 문자열. 마감 없음이면 null */
   closesAt?: string | null;
   options?: AnnouncementOptionBody[];
@@ -32,6 +34,7 @@ export interface NormalizedAnnouncement {
   content: string | null;
   isPinned: boolean;
   allowMultiple: boolean;
+  hideVoters: boolean;
   closesAt: string | null;
   options: NormalizedOption[];
 }
@@ -104,6 +107,7 @@ export function normalizeAnnouncementBody(
       content,
       isPinned: Boolean(body?.isPinned),
       allowMultiple: false,
+      hideVoters: false,
       closesAt: null,
       options: [],
     };
@@ -150,6 +154,7 @@ export function normalizeAnnouncementBody(
     content,
     isPinned: Boolean(body?.isPinned),
     allowMultiple: Boolean(body?.allowMultiple),
+    hideVoters: Boolean(body?.hideVoters),
     closesAt,
     options,
   };
@@ -166,4 +171,37 @@ export function buildOptionRows(
     start_time: option.startTime,
     display_order: index,
   }));
+}
+
+/** 42703·PGRST204 = 컬럼 없음. hide_voters 마이그레이션 적용 전이면 이 코드로 온다. */
+const MISSING_COLUMN_CODES = ["42703", "PGRST204"];
+
+export function isMissingColumnError(error: { code?: string } | null) {
+  return MISSING_COLUMN_CODES.includes(error?.code ?? "");
+}
+
+/** 공지 본문 컬럼 묶음. hide_voters가 없는 DB에서는 그 키만 빼고 다시 쓴다. */
+export function buildAnnouncementRow(normalized: NormalizedAnnouncement) {
+  return {
+    kind: normalized.kind,
+    poll_type: normalized.pollType,
+    title: normalized.title,
+    content: normalized.content,
+    is_pinned: normalized.isPinned,
+    allow_multiple: normalized.allowMultiple,
+    hide_voters: normalized.hideVoters,
+    closes_at: normalized.closesAt,
+  };
+}
+
+export function withoutHideVoters(row: ReturnType<typeof buildAnnouncementRow>) {
+  return {
+    kind: row.kind,
+    poll_type: row.poll_type,
+    title: row.title,
+    content: row.content,
+    is_pinned: row.is_pinned,
+    allow_multiple: row.allow_multiple,
+    closes_at: row.closes_at,
+  };
 }

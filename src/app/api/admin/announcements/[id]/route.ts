@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import {
+  buildAnnouncementRow,
+  isMissingColumnError,
   normalizeAnnouncementBody,
   requireAdmin,
+  withoutHideVoters,
   type AnnouncementBody,
 } from "@/lib/admin/announcements";
 
@@ -16,10 +19,29 @@ export async function GET(
   const { data, error } = await supabase
     .from("announcements")
     .select(
-      "id, kind, poll_type, title, content, is_pinned, allow_multiple, closes_at, created_at, announcement_poll_options(id, label, option_date, start_time, display_order)",
+      "id, kind, poll_type, title, content, is_pinned, allow_multiple, hide_voters, closes_at, created_at, announcement_poll_options(id, label, option_date, start_time, display_order)",
     )
     .eq("id", id)
     .maybeSingle();
+
+  // hide_voters 컬럼이 아직 없는 DB에서도 수정 화면이 열리도록 한 번 더 조회한다.
+  if (error && isMissingColumnError(error)) {
+    const legacy = await supabase
+      .from("announcements")
+      .select(
+        "id, kind, poll_type, title, content, is_pinned, allow_multiple, closes_at, created_at, announcement_poll_options(id, label, option_date, start_time, display_order)",
+      )
+      .eq("id", id)
+      .maybeSingle();
+
+    if (legacy.error) {
+      return NextResponse.json({ error: legacy.error.message }, { status: 500 });
+    }
+
+    return legacy.data
+      ? NextResponse.json({ ...legacy.data, hide_voters: false })
+      : NextResponse.json({ error: "공지사항을 찾을 수 없어요." }, { status: 404 });
+  }
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -47,18 +69,17 @@ export async function PATCH(
     return NextResponse.json({ error: normalized.error }, { status: 400 });
   }
 
-  const { error } = await supabase
-    .from("announcements")
-    .update({
-      kind: normalized.kind,
-      poll_type: normalized.pollType,
-      title: normalized.title,
-      content: normalized.content,
-      is_pinned: normalized.isPinned,
-      allow_multiple: normalized.allowMultiple,
-      closes_at: normalized.closesAt,
-    })
-    .eq("id", id);
+  const row = buildAnnouncementRow(normalized);
+
+  let { error } = await supabase.from("announcements").update(row).eq("id", id);
+
+  // hide_voters 마이그레이션 전이어도 수정은 되도록 그 컬럼만 빼고 다시 시도한다.
+  if (error && isMissingColumnError(error)) {
+    ({ error } = await supabase
+      .from("announcements")
+      .update(withoutHideVoters(row))
+      .eq("id", id));
+  }
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

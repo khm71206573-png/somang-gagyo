@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { sendAnnouncementNotification } from "@/lib/push/sendAnnouncementNotification";
 import {
+  buildAnnouncementRow,
   buildOptionRows,
+  isMissingColumnError,
   normalizeAnnouncementBody,
   requireAdmin,
+  withoutHideVoters,
   type AnnouncementBody,
 } from "@/lib/admin/announcements";
 
@@ -37,23 +40,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: normalized.error }, { status: 400 });
   }
 
-  const { data: created, error } = await supabase
+  const row = { ...buildAnnouncementRow(normalized), created_by: user!.id };
+
+  let { data: created, error } = await supabase
     .from("announcements")
-    .insert({
-      kind: normalized.kind,
-      poll_type: normalized.pollType,
-      title: normalized.title,
-      content: normalized.content,
-      is_pinned: normalized.isPinned,
-      allow_multiple: normalized.allowMultiple,
-      closes_at: normalized.closesAt,
-      created_by: user!.id,
-    })
+    .insert(row)
     .select("id")
     .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  // hide_voters 마이그레이션 전이어도 공지 등록 자체는 되도록 그 컬럼만 빼고 다시 시도한다.
+  if (error && isMissingColumnError(error)) {
+    ({ data: created, error } = await supabase
+      .from("announcements")
+      .insert({ ...withoutHideVoters(row), created_by: user!.id })
+      .select("id")
+      .single());
+  }
+
+  if (error || !created) {
+    return NextResponse.json(
+      { error: error?.message ?? "공지 등록에 실패했어요." },
+      { status: 500 },
+    );
   }
 
   if (normalized.options.length > 0) {

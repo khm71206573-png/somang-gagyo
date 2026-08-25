@@ -37,6 +37,15 @@ export interface PrayerSummary {
   mine: PrayerScopeSummary;
 }
 
+/** 홈 상단 공지 배너에 돌려 보여줄 공지 한 건 */
+export interface DashboardAnnouncement {
+  id: string;
+  title: string;
+  kind: "post" | "poll";
+  pollType: "schedule" | "choice" | null;
+  isPinned: boolean;
+}
+
 export interface DashboardData {
   greeting: GreetingInfo;
   streak: StreakInfo;
@@ -47,6 +56,8 @@ export interface DashboardData {
   birthday: BirthdayInfo | null;
   prayerSummary: PrayerSummary;
   upcomingEvents: EventItem[];
+  /** 홈 상단에 돌려 보여줄 최근 공지 (고정 공지 우선) */
+  announcements: DashboardAnnouncement[];
 }
 
 function greetingMessageFor(hour: number) {
@@ -240,6 +251,34 @@ async function fetchPrayerSummary(
   };
 }
 
+/** 홈 배너에서 돌려 보여줄 공지 개수 */
+const ANNOUNCEMENT_ROTATION_LIMIT = 5;
+
+/**
+ * 홈 상단 공지 배너용 목록. 고정 공지를 앞에 두고 최신순으로 가져온다.
+ * 공지사항 마이그레이션 적용 전이면 홈 화면이 통째로 실패하지 않도록 빈 배열을 돌려준다.
+ */
+async function fetchDashboardAnnouncements(
+  supabase: SupabaseClient,
+): Promise<DashboardAnnouncement[]> {
+  const { data, error } = await supabase
+    .from("announcements")
+    .select("id, title, kind, poll_type, is_pinned")
+    .order("is_pinned", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(ANNOUNCEMENT_ROTATION_LIMIT);
+
+  if (error) return [];
+
+  return (data ?? []).map((row) => ({
+    id: row.id as string,
+    title: row.title as string,
+    kind: row.kind as "post" | "poll",
+    pollType: (row.poll_type as "schedule" | "choice" | null) ?? null,
+    isPinned: Boolean(row.is_pinned),
+  }));
+}
+
 async function fetchUpcomingEvents(
   supabase: SupabaseClient,
   todayStr: string,
@@ -285,6 +324,7 @@ export async function fetchDashboardData(
     song,
     prayerSummary,
     upcomingEvents,
+    announcements,
   ] = await Promise.all([
     fetchProfile(supabase, user.id),
     fetchDevotion(supabase, todayStr),
@@ -294,6 +334,7 @@ export async function fetchDashboardData(
     fetchSong(supabase, todayStr),
     fetchPrayerSummary(supabase, user.id),
     fetchUpcomingEvents(supabase, todayStr),
+    fetchDashboardAnnouncements(supabase),
   ]);
 
   return {
@@ -310,5 +351,6 @@ export async function fetchDashboardData(
     birthday: null,
     prayerSummary,
     upcomingEvents,
+    announcements,
   };
 }
