@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Cake } from "lucide-react";
+import { Cake, Repeat } from "lucide-react";
 import type { ScheduleEvent } from "@/lib/mock-data";
 import { eventCategory } from "@/lib/eventCategories";
 
@@ -18,6 +18,12 @@ export function ScheduleEventCard({ event }: ScheduleEventCardProps) {
         <span className={`text-label-sm ${category.textClassName}`}>
           {category.label}
         </span>
+        {event.repeatLabel && (
+          <span className="flex items-center gap-1 rounded-full bg-surface-container-highest px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+            <Repeat className="h-3 w-3" />
+            {event.repeatLabel}
+          </span>
+        )}
       </div>
 
       {isBirthday ? (

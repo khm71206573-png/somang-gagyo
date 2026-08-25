@@ -13,6 +13,11 @@ import {
 } from "@/components/admin/adminFormStyles";
 import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
+import {
+  EVENT_REPEAT_OPTIONS,
+  repeatDescription,
+  type EventRepeatType,
+} from "@/lib/eventRecurrence";
 import { useEvent } from "@/hooks/useEvent";
 import { useUpdateEvent } from "@/hooks/useUpdateEvent";
 
@@ -41,6 +46,8 @@ export default function EditEventPage({
   const [startTime, setStartTime] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
+  const [repeatType, setRepeatType] = useState<EventRepeatType>("none");
+  const [repeatUntil, setRepeatUntil] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -51,6 +58,8 @@ export default function EditEventPage({
     setStartTime(data.start_time ?? "");
     setLocation(data.location ?? "");
     setDescription(data.description ?? "");
+    setRepeatType(data.repeat_type ?? "none");
+    setRepeatUntil(data.repeat_until ?? "");
   }, [data]);
 
   if (isLoading) {
@@ -77,7 +86,17 @@ export default function EditEventPage({
     }
 
     try {
-      await mutateAsync({ id, eventDate, title, type, startTime, location, description });
+      await mutateAsync({
+        id,
+        eventDate,
+        title,
+        type,
+        startTime,
+        location,
+        description,
+        repeatType,
+        repeatUntil: repeatType === "none" ? "" : repeatUntil,
+      });
       router.push("/admin/event");
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "수정에 실패했어요.");
@@ -131,6 +150,52 @@ export default function EditEventPage({
               ))}
             </select>
           </div>
+
+
+          <div className={fieldGroup}>
+            <label htmlFor="repeatType" className={fieldLabel}>
+              반복
+            </label>
+            <select
+              id="repeatType"
+              value={repeatType}
+              onChange={(event) =>
+                setRepeatType(event.target.value as EventRepeatType)
+              }
+              className={fieldInput}
+            >
+              {EVENT_REPEAT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            {repeatType !== "none" && (
+              <p className="text-[11px] text-muted-foreground">
+                {repeatDescription(repeatType, eventDate, repeatUntil || null)}로
+                달력에 반복해서 표시돼요.
+              </p>
+            )}
+          </div>
+
+          {repeatType !== "none" && (
+            <div className={fieldGroup}>
+              <label htmlFor="repeatUntil" className={fieldLabel}>
+                반복 종료일 <span className="text-muted-foreground">(선택)</span>
+              </label>
+              <input
+                id="repeatUntil"
+                type="date"
+                value={repeatUntil}
+                min={eventDate}
+                onChange={(event) => setRepeatUntil(event.target.value)}
+                className={fieldInput}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                비워두면 종료 없이 계속 반복해요.
+              </p>
+            </div>
+          )}
 
           <div className={fieldGroup}>
             <label htmlFor="startTime" className={fieldLabel}>

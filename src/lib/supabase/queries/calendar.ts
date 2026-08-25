@@ -7,6 +7,8 @@ import type {
   ScheduleEventType,
 } from "@/lib/mock-data";
 import { holidayName, holidaysInMonth } from "@/lib/holidays";
+import { repeatShortLabel } from "@/lib/eventRecurrence";
+import { expandEventRows, fetchEventsInWindow, type EventOccurrence } from "./events";
 import { WEEKDAY_LABELS, avatarFallback, monthDayOf, toDateString } from "./utils";
 
 export interface CalendarPageData {
@@ -26,28 +28,14 @@ function toEventType(value: unknown): ScheduleEventType {
     : "church";
 }
 
-async function fetchMonthDots(
-  supabase: SupabaseClient,
-  year: number,
-  month: number,
-) {
-  const monthStart = `${year}-${String(month).padStart(2, "0")}-01`;
-  const nextMonth = month === 12 ? { y: year + 1, m: 1 } : { y: year, m: month + 1 };
-  const monthEnd = `${nextMonth.y}-${String(nextMonth.m).padStart(2, "0")}-01`;
-
-  // 생일은 profiles에 birth_date 컬럼이 없어 events(type='birthday')로만 표시한다.
-  const { data: events } = await supabase
-    .from("events")
-    .select("event_date, type")
-    .gte("event_date", monthStart)
-    .lt("event_date", monthEnd);
-
+/** 반복 일정까지 펼친 뒤 날짜별 점을 모은다. */
+function buildDotMap(occurrences: EventOccurrence[]) {
   const dotMap = new Map<number, Set<CalendarEventDot>>();
 
-  for (const event of events ?? []) {
-    const { day } = monthDayOf(event.event_date);
+  for (const occurrence of occurrences) {
+    const { day } = monthDayOf(occurrence.date);
     if (!dotMap.has(day)) dotMap.set(day, new Set());
-    dotMap.get(day)!.add(toEventType(event.type));
+    dotMap.get(day)!.add(toEventType(occurrence.event.type));
   }
 
   return dotMap;
@@ -95,23 +83,21 @@ function buildCalendarMonth(
   };
 }
 
-async function fetchScheduleFor(
-  supabase: SupabaseClient,
+/** 하루치 일정 목록 (반복 일정 포함) */
+function buildScheduleFor(
+  occurrences: EventOccurrence[],
   dateStr: string,
-): Promise<ScheduleEvent[]> {
-  const { data: events } = await supabase
-    .from("events")
-    .select("id, title, description, location, start_time, type")
-    .eq("event_date", dateStr)
-    .order("start_time", { ascending: true });
-
-  return (events ?? []).map((event) => ({
-    id: event.id,
-    type: toEventType(event.type),
-    title: event.title,
-    subtitle: event.location ?? event.description ?? "",
-    time: event.start_time ? event.start_time.slice(0, 5) : undefined,
-  }));
+): ScheduleEvent[] {
+  return occurrences
+    .filter((occurrence) => occurrence.date === dateStr)
+    .map(({ event }) => ({
+      id: event.id,
+      type: toEventType(event.type),
+      title: event.title,
+      subtitle: event.location ?? event.description ?? "",
+      time: event.start_time ? event.start_time.slice(0, 5) : undefined,
+      repeatLabel: repeatShortLabel(event.repeat_type) ?? undefined,
+    }));
 }
 
 /**
@@ -137,15 +123,22 @@ export async function fetchCalendarPageData(
   const month = target.getMonth() + 1;
   const dateStr = toDateString(target);
 
-  const [{ data: profile }, dotMap, scheduleEvents] = await Promise.all([
+  // 이 달 전체를 한 번에 가져와 달력 점과 그날 일정 목록을 함께 만든다.
+  const monthStart = `${year}-${String(month).padStart(2, "0")}-01`;
+  const monthEnd = toDateString(new Date(year, month, 0));
+
+  const [{ data: profile }, eventRows] = await Promise.all([
     supabase
       .from("profiles")
       .select("name, avatar_url")
       .eq("id", user.id)
       .maybeSingle(),
-    fetchMonthDots(supabase, year, month),
-    fetchScheduleFor(supabase, dateStr),
+    fetchEventsInWindow(supabase, monthStart, monthEnd),
   ]);
+
+  const occurrences = expandEventRows(eventRows, monthStart, monthEnd);
+  const dotMap = buildDotMap(occurrences);
+  const scheduleEvents = buildScheduleFor(occurrences, dateStr);
 
   return {
     profileImageUrl:

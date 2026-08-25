@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { isMissingColumnError } from "@/lib/supabase/errors";
+import { toEventRepeatType, type EventRepeatType } from "@/lib/eventRecurrence";
 
 type EventType = "church" | "gagyo" | "birthday" | "other";
 
@@ -10,6 +12,8 @@ interface UpdateEventBody {
   startTime?: string;
   location?: string;
   description?: string;
+  repeatType?: EventRepeatType;
+  repeatUntil?: string;
 }
 
 const VALID_TYPES: EventType[] = ["church", "gagyo", "birthday", "other"];
@@ -85,17 +89,28 @@ export async function PATCH(
     return NextResponse.json({ error: "날짜와 일정 제목을 입력해주세요." }, { status: 400 });
   }
 
-  const { error } = await supabase
-    .from("events")
-    .update({
-      title,
-      description: body?.description?.trim() || null,
-      event_date: eventDate,
-      start_time: body?.startTime?.trim() || null,
-      location: body?.location?.trim() || null,
-      type,
-    })
-    .eq("id", id);
+  const repeatType = toEventRepeatType(body?.repeatType);
+  const row = {
+    title,
+    description: body?.description?.trim() || null,
+    event_date: eventDate,
+    start_time: body?.startTime?.trim() || null,
+    location: body?.location?.trim() || null,
+    type,
+    repeat_type: repeatType,
+    repeat_until:
+      repeatType === "none" ? null : body?.repeatUntil?.trim() || null,
+  };
+
+  let { error } = await supabase.from("events").update(row).eq("id", id);
+
+  // 반복 마이그레이션 전이어도 수정은 되도록 그 컬럼만 빼고 다시 시도한다.
+  if (error && isMissingColumnError(error)) {
+    const { repeat_type: _type, repeat_until: _until, ...rest } = row;
+    void _type;
+    void _until;
+    ({ error } = await supabase.from("events").update(rest).eq("id", id));
+  }
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

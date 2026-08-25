@@ -319,6 +319,8 @@ export interface ScheduleEvent {
   subtitle: string;
   time?: string;
   avatarUrl?: string;
+  /** 반복 일정이면 "매주" 같은 배지 문구 */
+  repeatLabel?: string;
 }
 
 export const calendarProfileImageUrl =

@@ -9,6 +9,7 @@ import type {
   BirthdayInfo,
   EventItem,
 } from "@/lib/mock-data";
+import { expandEventRows, fetchEventsInWindow } from "./events";
 import {
   fetchActiveMemberPlans,
   fetchActivePlanMembers,
@@ -279,20 +280,24 @@ async function fetchDashboardAnnouncements(
   }));
 }
 
+/** 다가오는 일정을 찾을 때 앞으로 얼마나 내다볼지 (반복 일정 포함) */
+const UPCOMING_WINDOW_DAYS = 365;
+
 async function fetchUpcomingEvents(
   supabase: SupabaseClient,
   todayStr: string,
 ): Promise<EventItem[]> {
-  const { data } = await supabase
-    .from("events")
-    .select("title, event_date")
-    .gte("event_date", todayStr)
-    .order("event_date", { ascending: true })
-    .limit(3);
+  const today = new Date(`${todayStr}T00:00:00`);
+  const windowEnd = toDateString(
+    new Date(today.getFullYear(), today.getMonth(), today.getDate() + UPCOMING_WINDOW_DAYS),
+  );
 
-  return (data ?? []).map((event) => {
-    const { month, day } = monthDayOf(event.event_date);
-    const weekdayIndex = new Date(`${event.event_date}T00:00:00`).getDay();
+  const rows = await fetchEventsInWindow(supabase, todayStr, windowEnd);
+  const occurrences = expandEventRows(rows, todayStr, windowEnd).slice(0, 3);
+
+  return occurrences.map(({ date, event }) => {
+    const { month, day } = monthDayOf(date);
+    const weekdayIndex = new Date(`${date}T00:00:00`).getDay();
 
     return {
       month: String(month),

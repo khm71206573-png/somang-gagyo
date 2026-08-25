@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { isMissingColumnError } from "@/lib/supabase/errors";
+import { toEventRepeatType, type EventRepeatType } from "@/lib/eventRecurrence";
 
 type EventType = "church" | "gagyo" | "birthday" | "other";
 
@@ -10,6 +12,8 @@ interface CreateEventBody {
   startTime?: string;
   location?: string;
   description?: string;
+  repeatType?: EventRepeatType;
+  repeatUntil?: string;
 }
 
 const VALID_TYPES: EventType[] = ["church", "gagyo", "birthday", "other"];
@@ -75,7 +79,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "날짜와 일정 제목을 입력해주세요." }, { status: 400 });
   }
 
-  const { error } = await supabase.from("events").insert({
+  const repeatType = toEventRepeatType(body?.repeatType);
+  const row = {
     title,
     description: body?.description?.trim() || null,
     event_date: eventDate,
@@ -83,11 +88,32 @@ export async function POST(request: Request) {
     location: body?.location?.trim() || null,
     type,
     created_by: user.id,
-  });
+    repeat_type: repeatType,
+    // 반복하지 않는 일정에는 종료일이 의미가 없다.
+    repeat_until:
+      repeatType === "none" ? null : body?.repeatUntil?.trim() || null,
+  };
+
+  let { error } = await supabase.from("events").insert(row);
+
+  // 반복 마이그레이션 전이어도 일정 등록 자체는 되도록 그 컬럼만 빼고 다시 시도한다.
+  if (error && isMissingColumnError(error)) {
+    ({ error } = await supabase.from("events").insert(withoutRepeat(row)));
+  }
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });
+}
+
+/** repeat 컬럼이 없는 DB로 보낼 때 그 두 값만 뺀다. */
+function withoutRepeat<T extends { repeat_type: unknown; repeat_until: unknown }>(
+  row: T,
+) {
+  const { repeat_type: _type, repeat_until: _until, ...rest } = row;
+  void _type;
+  void _until;
+  return rest;
 }

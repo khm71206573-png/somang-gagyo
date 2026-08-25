@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { EventRepeatType } from "@/lib/eventRecurrence";
 
 export interface CreateEventInput {
   eventDate: string;
@@ -9,6 +10,10 @@ export interface CreateEventInput {
   startTime: string;
   location: string;
   description: string;
+  /** 반복 주기 (none이면 하루짜리 일정) */
+  repeatType: EventRepeatType;
+  /** 반복 종료일. 비우면 계속 반복한다. */
+  repeatUntil: string;
 }
 
 async function createEvent(input: CreateEventInput) {

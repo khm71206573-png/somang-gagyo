@@ -7,6 +7,7 @@ import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { useEventList } from "@/hooks/useEventList";
 import { useDeleteEvent } from "@/hooks/useDeleteEvent";
+import { repeatShortLabel } from "@/lib/eventRecurrence";
 
 export default function EventListPage() {
   const { data, isLoading, isError, error, refetch, isFetching } = useEventList();
@@ -60,6 +61,11 @@ export default function EventListPage() {
                   <p className="text-label-sm text-muted-foreground">
                     {item.event_date}
                     {item.start_time && ` · ${item.start_time}`}
+                    {repeatShortLabel(item.repeat_type ?? "none") && (
+                      <span className="ml-1.5 rounded-full bg-surface-container-highest px-2 py-0.5 text-[11px] font-medium text-primary">
+                        {repeatShortLabel(item.repeat_type ?? "none")}
+                      </span>
+                    )}
                   </p>
                 </div>
                 <div className="flex shrink-0 gap-2">

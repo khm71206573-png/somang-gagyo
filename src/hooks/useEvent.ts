@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import type { EventRepeatType } from "@/lib/eventRecurrence";
 
 export interface EventDetailData {
   id: string;
@@ -10,6 +11,8 @@ export interface EventDetailData {
   start_time: string | null;
   location: string | null;
   type: "church" | "gagyo" | "birthday" | "other";
+  repeat_type: EventRepeatType;
+  repeat_until: string | null;
 }
 
 async function fetchEvent(id: string): Promise<EventDetailData> {

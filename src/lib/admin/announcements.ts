@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { isMissingColumnError } from "@/lib/supabase/errors";
 
 export type AnnouncementKind = "post" | "poll";
 export type AnnouncementPollType = "schedule" | "choice";
@@ -173,13 +174,6 @@ export function buildOptionRows(
   }));
 }
 
-/** 42703·PGRST204 = 컬럼 없음. hide_voters 마이그레이션 적용 전이면 이 코드로 온다. */
-const MISSING_COLUMN_CODES = ["42703", "PGRST204"];
-
-export function isMissingColumnError(error: { code?: string } | null) {
-  return MISSING_COLUMN_CODES.includes(error?.code ?? "");
-}
-
 /** 공지 본문 컬럼 묶음. hide_voters가 없는 DB에서는 그 키만 빼고 다시 쓴다. */
 export function buildAnnouncementRow(normalized: NormalizedAnnouncement) {
   return {
@@ -205,3 +199,5 @@ export function withoutHideVoters(row: ReturnType<typeof buildAnnouncementRow>) 
     closes_at: row.closes_at,
   };
 }
+
+export { isMissingColumnError };
