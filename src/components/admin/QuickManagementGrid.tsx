@@ -18,6 +18,7 @@ interface QuickManagementGridProps {
 }
 
 const iconMap: Record<QuickManagementIcon, typeof FileEdit> = {
+  announcement: Megaphone,
   devotion: FileEdit,
   song: Library,
   groupMaterial: Newspaper,

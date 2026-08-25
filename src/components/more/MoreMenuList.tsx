@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { ShieldCheck, BookMarked, UserCircle, Users, ChevronRight } from "lucide-react";
+import {
+  ShieldCheck,
+  BookMarked,
+  Megaphone,
+  UserCircle,
+  Users,
+  ChevronRight,
+} from "lucide-react";
 import type { MoreMenuItem, MoreMenuIcon } from "@/lib/mock-data";
 
 interface MoreMenuListProps {
@@ -8,6 +15,7 @@ interface MoreMenuListProps {
 
 const iconMap: Record<MoreMenuIcon, typeof ShieldCheck> = {
   admin: ShieldCheck,
+  announcement: Megaphone,
   biblePlan: BookMarked,
   profile: UserCircle,
   members: Users,

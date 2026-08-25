@@ -717,6 +717,7 @@ export const todayRegistrationStatus: RegistrationStatusItem[] = [
 ];
 
 export type QuickManagementIcon =
+  | "announcement"
   | "devotion"
   | "song"
   | "groupMaterial"
@@ -734,6 +735,12 @@ export interface QuickManagementAction {
 }
 
 export const quickManagementActions: QuickManagementAction[] = [
+  {
+    id: "announcement",
+    label: "공지 등록",
+    icon: "announcement",
+    href: "/admin/announcement/new",
+  },
   { id: "devotion", label: "묵상 등록", icon: "devotion", href: "/admin/devotion/new" },
   { id: "song", label: "찬양 등록", icon: "song", href: "/admin/song/new" },
   {
@@ -822,7 +829,12 @@ export const praiseSheets: PraiseSheet[] = [
   { id: "2", key: "F Key", title: "예배합니다", sheetUrl: null },
 ];
 
-export type MoreMenuIcon = "admin" | "biblePlan" | "profile" | "members";
+export type MoreMenuIcon =
+  | "admin"
+  | "announcement"
+  | "biblePlan"
+  | "profile"
+  | "members";
 
 export interface MoreMenuItem {
   id: string;
@@ -833,6 +845,13 @@ export interface MoreMenuItem {
 }
 
 export const moreMenuItems: MoreMenuItem[] = [
+  {
+    id: "announcement",
+    label: "공지사항",
+    description: "공지와 투표를 확인해요",
+    icon: "announcement",
+    href: "/announcement",
+  },
   {
     id: "profile",
     label: "내 프로필",
