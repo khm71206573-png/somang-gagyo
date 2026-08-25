@@ -19,7 +19,8 @@ const OFFLINE_QUERY_KEYS = ["dashboard", "devotion", "bible-progress"];
 // v6 : 홈 기도제목 요약이 최근 내용 목록(contents)을 담도록 변경
 // v7 : 통독 일시중지 상태(isPaused) 추가
 // v8 : 통독 플랜 다중 진행 (홈 bibleReadings 배열, 통독탭 planTabs)
-const CACHE_BUSTER = "v8";
+// v9 : 홈 공지 배너 목록(announcements) 추가
+const CACHE_BUSTER = "v9";
 
 const noopStorage: Storage = {
   getItem: () => null,

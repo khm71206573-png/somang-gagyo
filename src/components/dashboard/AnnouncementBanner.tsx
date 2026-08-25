@@ -6,7 +6,11 @@ import { ChevronRight, Megaphone, Pin } from "lucide-react";
 import type { DashboardAnnouncement } from "@/lib/supabase/queries/dashboard";
 
 interface AnnouncementBannerProps {
-  announcements: DashboardAnnouncement[];
+  /**
+   * 예전 모양의 영속 캐시가 복원되면 이 값이 통째로 없을 수 있다.
+   * 홈 화면이 통째로 멈추지 않도록 없으면 배너를 그리지 않는다.
+   */
+  announcements?: DashboardAnnouncement[];
 }
 
 /** 공지가 여러 개일 때 하나씩 넘어가는 간격 */
@@ -17,7 +21,9 @@ function kindLabel(announcement: DashboardAnnouncement) {
   return announcement.pollType === "schedule" ? "일정투표" : "문항투표";
 }
 
-export function AnnouncementBanner({ announcements }: AnnouncementBannerProps) {
+export function AnnouncementBanner({
+  announcements = [],
+}: AnnouncementBannerProps) {
   const [index, setIndex] = useState(0);
   const total = announcements.length;
 
