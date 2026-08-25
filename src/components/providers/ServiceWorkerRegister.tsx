@@ -20,9 +20,32 @@ export function ServiceWorkerRegister() {
       return;
     }
 
-    navigator.serviceWorker.register("/sw.js").catch((error) => {
-      console.error("서비스 워커 등록 실패:", error);
-    });
+    // 새 배포가 올라왔는지 앱을 열 때마다 확인한다. 예전 서비스 워커가
+    // 잘못된 응답을 캐시해 화면이 깨진 경우, 이 확인이 있어야 스스로 회복된다.
+    navigator.serviceWorker
+      .register("/sw.js")
+      .then((registration) => registration.update())
+      .catch((error) => {
+        console.error("서비스 워커 등록 실패:", error);
+      });
+
+    // 새 서비스 워커가 제어를 넘겨받으면 한 번만 새로고침해서
+    // 지금 화면이 예전 캐시로 만든 자산을 쓰지 않도록 한다.
+    const hadController = Boolean(navigator.serviceWorker.controller);
+    let hasReloaded = false;
+
+    function handleControllerChange() {
+      if (!hadController || hasReloaded) return;
+      hasReloaded = true;
+      window.location.reload();
+    }
+
+    navigator.serviceWorker.addEventListener("controllerchange", handleControllerChange);
+    return () =>
+      navigator.serviceWorker.removeEventListener(
+        "controllerchange",
+        handleControllerChange,
+      );
   }, []);
 
   return null;

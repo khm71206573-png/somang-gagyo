@@ -1,4 +1,6 @@
-const CACHE_VERSION = "v1";
+// 캐시 이름이 바뀌면 activate에서 예전 캐시를 통째로 버린다.
+// v2 : 실패한 응답(404 등)까지 캐시하던 문제로 오염된 v1 캐시를 폐기
+const CACHE_VERSION = "v2";
 const APP_SHELL_CACHE = `app-shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `runtime-${CACHE_VERSION}`;
 const KNOWN_CACHES = [APP_SHELL_CACHE, RUNTIME_CACHE];
@@ -35,6 +37,21 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+/**
+ * 캐시에 넣어도 되는 응답인지.
+ * 404·500 같은 실패 응답을 넣어두면(특히 cache-first인 정적 자산에서)
+ * 다음부터 계속 그 실패가 재생돼 화면이 스타일 없이 뜨거나 깨진다.
+ */
+function isCacheable(response) {
+  return Boolean(response) && response.ok && response.type !== "opaque";
+}
+
+function putIfCacheable(cacheName, request, response) {
+  if (!isCacheable(response)) return;
+  const clone = response.clone();
+  caches.open(cacheName).then((cache) => cache.put(request, clone));
+}
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
@@ -46,8 +63,7 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const clone = response.clone();
-          caches.open(APP_SHELL_CACHE).then((cache) => cache.put(request, clone));
+          putIfCacheable(APP_SHELL_CACHE, request, response);
           return response;
         })
         .catch(async () => {
@@ -58,18 +74,18 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Next 정적 자산(_next/static): 해시가 포함되어 불변이므로 cache-first
+  // Next 정적 자산(_next/static): 해시가 포함되어 불변이므로 cache-first.
+  // 예전에 잘못 캐시된 실패 응답이 남아있을 수 있어 성공한 응답만 재사용한다.
   if (url.origin === self.location.origin && url.pathname.startsWith("/_next/static")) {
     event.respondWith(
-      caches.match(request).then(
-        (cached) =>
-          cached ||
-          fetch(request).then((response) => {
-            const clone = response.clone();
-            caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, clone));
-            return response;
-          }),
-      ),
+      caches.match(request).then((cached) => {
+        if (isCacheable(cached)) return cached;
+
+        return fetch(request).then((response) => {
+          putIfCacheable(RUNTIME_CACHE, request, response);
+          return response;
+        });
+      }),
     );
     return;
   }
@@ -80,8 +96,7 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const clone = response.clone();
-          caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, clone));
+          putIfCacheable(RUNTIME_CACHE, request, response);
           return response;
         })
         .catch(() => caches.match(request)),
