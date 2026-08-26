@@ -6,11 +6,11 @@ import { AnnouncementDetailTopBar } from "@/components/announcement/Announcement
 import { AnnouncementKindBadge } from "@/components/announcement/AnnouncementKindBadge";
 import { AnnouncementPoll } from "@/components/announcement/AnnouncementPoll";
 import { AnnouncementComments } from "@/components/announcement/AnnouncementComments";
+import { AnnouncementReadButton } from "@/components/announcement/AnnouncementReadButton";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { useAnnouncement } from "@/hooks/useAnnouncement";
-import { useIsAdmin } from "@/hooks/useProfile";
 
 export default function AnnouncementDetailPage({
   params,
@@ -18,7 +18,6 @@ export default function AnnouncementDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const isAdmin = useIsAdmin();
   const { data, isLoading, isError, error, refetch, isFetching } = useAnnouncement(id);
 
   if (isLoading) {
@@ -38,7 +37,8 @@ export default function AnnouncementDetailPage({
   return (
     <div className="relative mx-auto min-h-screen w-full max-w-[480px] overflow-x-hidden bg-background pb-[100px]">
       <AnnouncementDetailTopBar
-        editHref={isAdmin ? `/admin/announcement/${data.id}` : undefined}
+        // 공지는 올린 사람만 고칠 수 있다.
+        editHref={data.isMine ? `/admin/announcement/${data.id}` : undefined}
       />
       <main className="flex flex-col gap-stack-lg px-margin-main pt-stack-sm">
         <article className="flex flex-col gap-3">
@@ -79,6 +79,8 @@ export default function AnnouncementDetailPage({
         </article>
 
         {data.kind === "poll" && <AnnouncementPoll announcement={data} />}
+
+        <AnnouncementReadButton announcement={data} />
 
         <AnnouncementComments announcementId={data.id} comments={data.comments} />
       </main>

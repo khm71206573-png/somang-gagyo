@@ -17,7 +17,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from("announcements")
     .select(
-      "id, kind, poll_type, title, content, is_pinned, allow_multiple, closes_at, created_at, announcement_poll_options(id)",
+      "id, kind, poll_type, title, content, is_pinned, allow_multiple, closes_at, created_by, created_at, announcement_poll_options(id)",
     )
     .order("is_pinned", { ascending: false })
     .order("created_at", { ascending: false });

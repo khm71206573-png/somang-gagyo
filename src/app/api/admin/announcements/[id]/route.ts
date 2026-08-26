@@ -4,6 +4,7 @@ import {
   isMissingColumnError,
   normalizeAnnouncementBody,
   requireAdmin,
+  requireAnnouncementAuthor,
   withoutHideVoters,
   type AnnouncementBody,
 } from "@/lib/admin/announcements";
@@ -13,7 +14,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const { supabase, errorResponse } = await requireAdmin();
+  const { supabase, errorResponse } = await requireAnnouncementAuthor(id);
   if (errorResponse) return errorResponse;
 
   const { data, error } = await supabase
@@ -59,7 +60,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const { supabase, errorResponse } = await requireAdmin();
+  const { supabase, errorResponse } = await requireAnnouncementAuthor(id);
   if (errorResponse) return errorResponse;
 
   const body = (await request.json().catch(() => null)) as AnnouncementBody | null;

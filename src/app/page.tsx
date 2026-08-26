@@ -38,6 +38,7 @@ export default function Home() {
     devotion,
     bibleReadings,
     song,
+    praiseSet,
     birthday,
     prayerSummary,
     upcomingEvents,
@@ -59,7 +60,7 @@ export default function Home() {
           ))
         )}
         <section className="grid grid-cols-2 gap-gutter-card">
-          <SongCard song={song} />
+          <SongCard song={song} praiseSet={praiseSet} />
           <PrayerSummaryCard summary={prayerSummary} />
         </section>
         {birthday && <BirthdayCard birthday={birthday} />}

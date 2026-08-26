@@ -32,37 +32,20 @@ export default function NewDevotionPage() {
   const [verses, setVerses] = useState("");
   const [questions, setQuestions] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [isAutoFilling, setIsAutoFilling] = useState(false);
 
+  // 본문만 가져와 채운다. 묵상 질문은 아래 "AI로 질문 자동 생성"을
+  // 눌렀을 때만 만들고, 비워두면 기본 질문으로 나간다.
   async function handleFetchSource() {
     setError(null);
-    setIsAutoFilling(true);
     try {
       const source = await fetchSource();
       setDevotionDate(source.devotionDate);
       setTag("매일성경");
       setTitle(source.title);
       setReference(source.reference);
-      const versesText = source.verses.join("\n");
-      setVerses(versesText);
-
-      try {
-        const generated = await generateQuestions({
-          reference: source.reference,
-          verses: versesText,
-        });
-        setQuestions(generated.join("\n"));
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? `본문은 가져왔지만 질문 자동 생성에 실패했어요: ${err.message}`
-            : "본문은 가져왔지만 질문 자동 생성에 실패했어요.",
-        );
-      }
+      setVerses(source.verses.join("\n"));
     } catch (err) {
       setError(err instanceof Error ? err.message : "오늘의 묵상을 가져오지 못했어요.");
-    } finally {
-      setIsAutoFilling(false);
     }
   }
 
@@ -104,15 +87,11 @@ export default function NewDevotionPage() {
         <button
           type="button"
           onClick={handleFetchSource}
-          disabled={isAutoFilling}
+          disabled={isFetchingSource}
           className="mb-stack-md flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-3 text-label-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
         >
           <Download className="h-4 w-4" />
-          {isAutoFilling
-            ? isFetchingSource
-              ? "가져오는 중..."
-              : "질문 생성 중..."
-            : "오늘의 묵상 가져와서 자동 입력"}
+          {isFetchingSource ? "가져오는 중..." : "오늘의 묵상 본문 가져오기"}
         </button>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-stack-md">
@@ -194,7 +173,7 @@ export default function NewDevotionPage() {
                 disabled={isGenerating}
                 className="text-label-sm font-medium text-primary disabled:opacity-50"
               >
-                {isGenerating ? "생성 중..." : "AI로 질문 자동 생성"}
+                {isGenerating ? "생성 중..." : "AI로 질문 만들기"}
               </button>
             </div>
             <textarea
@@ -207,6 +186,10 @@ export default function NewDevotionPage() {
               }
               className={fieldTextarea}
             />
+            <p className="text-label-sm text-muted-foreground">
+              비워두면 기본 묵상 질문으로 올라가요. 본문에 맞는 질문이 필요할 때만
+              위의 &quot;AI로 질문 만들기&quot;를 눌러주세요.
+            </p>
           </div>
 
           {error && <p className={errorText}>{error}</p>}

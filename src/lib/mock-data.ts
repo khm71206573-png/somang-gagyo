@@ -221,6 +221,10 @@ export interface PrayerRequestItem {
   isMine: boolean;
   /** 로그인한 사용자가 이미 "함께 기도하기"를 눌렀는지 */
   hasReacted: boolean;
+  /** 하트(좋아요)를 누른 사람 수 */
+  likeCount: number;
+  /** 로그인한 사용자가 하트를 눌렀는지 */
+  hasLiked: boolean;
 }
 
 export const PRAYER_SCOPE_COMMUNITY = "우리 가교";
@@ -248,6 +252,8 @@ export const prayerRequestList: PrayerRequestItem[] = [
     isThanksgiving: false,
     isMine: false,
     hasReacted: false,
+    likeCount: 0,
+    hasLiked: false,
   },
   {
     id: "2",
@@ -262,6 +268,8 @@ export const prayerRequestList: PrayerRequestItem[] = [
     isThanksgiving: false,
     isMine: true,
     hasReacted: true,
+    likeCount: 0,
+    hasLiked: false,
   },
   {
     id: "3",
@@ -276,6 +284,8 @@ export const prayerRequestList: PrayerRequestItem[] = [
     isThanksgiving: false,
     isMine: false,
     hasReacted: false,
+    likeCount: 0,
+    hasLiked: false,
   },
   {
     id: "4",
@@ -290,6 +300,8 @@ export const prayerRequestList: PrayerRequestItem[] = [
     isThanksgiving: false,
     isMine: false,
     hasReacted: true,
+    likeCount: 0,
+    hasLiked: false,
   },
 ];
 
@@ -430,6 +442,8 @@ export interface PastSong {
   id: string;
   title: string;
   coverImageUrl: string;
+  /** 유튜브 주소. 없으면 빈 문자열 (누를 수 없는 카드가 된다) */
+  youtubeUrl: string;
 }
 
 export const songDetail: SongDetail = {
@@ -446,11 +460,11 @@ const pastSongCoverImageUrl =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuAuGdvVhihE62VCKc4_YRybiAj3dvtwbImOANttgHWSWrbc9C-_-BJdb0UBrjq3iBP__wm88jnYImKQS-c-f5TV1H2CmNnYDHgfiPPyGOyqu2SSdpvHaTJeWvc9pY1cR2wA2hvs9pe9NZOP2mNFKRRc0QI4DzntkGt83rK35e-h3MVk16LWiM6Thyl2pX3H6anE1znbi0QCf7t8FToL8nYMgd3Y-U-NAqNjegSBtJM6IexKYnyPsBzw";
 
 export const pastSongs: PastSong[] = [
-  { id: "1", title: "주님의 품에", coverImageUrl: pastSongCoverImageUrl },
-  { id: "2", title: "나의 피난처", coverImageUrl: pastSongCoverImageUrl },
-  { id: "3", title: "은혜 아니면", coverImageUrl: pastSongCoverImageUrl },
-  { id: "4", title: "내 영혼아", coverImageUrl: pastSongCoverImageUrl },
-  { id: "5", title: "새로운 아침", coverImageUrl: pastSongCoverImageUrl },
+  { id: "1", title: "주님의 품에", coverImageUrl: pastSongCoverImageUrl, youtubeUrl: "" },
+  { id: "2", title: "나의 피난처", coverImageUrl: pastSongCoverImageUrl, youtubeUrl: "" },
+  { id: "3", title: "은혜 아니면", coverImageUrl: pastSongCoverImageUrl, youtubeUrl: "" },
+  { id: "4", title: "내 영혼아", coverImageUrl: pastSongCoverImageUrl, youtubeUrl: "" },
+  { id: "5", title: "새로운 아침", coverImageUrl: pastSongCoverImageUrl, youtubeUrl: "" },
 ];
 
 export interface BiblePlanFilterChip {
