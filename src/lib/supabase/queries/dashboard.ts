@@ -10,6 +10,7 @@ import type {
   EventItem,
 } from "@/lib/mock-data";
 import { expandEventRows, fetchEventsInWindow } from "./events";
+import { fetchCurrentPraiseSet } from "./praiseSet";
 import {
   fetchActiveMemberPlans,
   fetchActivePlanMembers,
@@ -47,6 +48,17 @@ export interface DashboardAnnouncement {
   isPinned: boolean;
 }
 
+/** 홈 찬양 카드에서 "이번주 찬양콘티" 쪽에 보여줄 요약 */
+export interface DashboardPraiseSet {
+  /** "8월 24일 ~ 8월 30일" */
+  weekLabel: string;
+  /** 이번 주 콘티인지. false면 지난 주 콘티를 대신 보여주는 중이다. */
+  isThisWeek: boolean;
+  itemCount: number;
+  /** 첫 번째 콘티의 사진(또는 유튜브 썸네일) 주소 */
+  coverImageUrl: string | null;
+}
+
 export interface DashboardData {
   greeting: GreetingInfo;
   streak: StreakInfo;
@@ -54,6 +66,8 @@ export interface DashboardData {
   /** 진행 중인 통독 플랜마다 카드 하나 (없으면 빈 배열) */
   bibleReadings: BibleReadingInfo[];
   song: SongInfo | null;
+  /** 이번주 찬양콘티 요약 (홈 찬양 카드가 추천찬양과 번갈아 보여준다) */
+  praiseSet: DashboardPraiseSet | null;
   birthday: BirthdayInfo | null;
   prayerSummary: PrayerSummary;
   upcomingEvents: EventItem[];
@@ -214,6 +228,30 @@ async function fetchSong(
   };
 }
 
+/**
+ * 이번주(없으면 가장 최근 주) 찬양콘티 요약.
+ * 콘티 기능 설정 전이라 테이블이 없어도 홈 화면이 통째로 막히지 않도록 삼킨다.
+ */
+async function fetchPraiseSetSummary(
+  supabase: SupabaseClient,
+): Promise<DashboardPraiseSet | null> {
+  try {
+    const week = await fetchCurrentPraiseSet(supabase);
+    if (week.items.length === 0) return null;
+
+    const first = week.items[0];
+
+    return {
+      weekLabel: week.weekLabel,
+      isThisWeek: week.isThisWeek,
+      itemCount: week.items.length,
+      coverImageUrl: first.imageUrl ?? first.thumbnailUrl,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /** 홈 카드에서 순서대로 돌려 보여줄 기도제목 개수 */
 const PRAYER_ROTATION_LIMIT = 5;
 
@@ -327,6 +365,7 @@ export async function fetchDashboardData(
     devotion,
     bibleReadings,
     song,
+    praiseSet,
     prayerSummary,
     upcomingEvents,
     announcements,
@@ -337,6 +376,7 @@ export async function fetchDashboardData(
       memberPlans.map((memberPlan) => fetchBibleReading(supabase, memberPlan)),
     ),
     fetchSong(supabase, todayStr),
+    fetchPraiseSetSummary(supabase),
     fetchPrayerSummary(supabase, user.id),
     fetchUpcomingEvents(supabase, todayStr),
     fetchDashboardAnnouncements(supabase),
@@ -352,6 +392,7 @@ export async function fetchDashboardData(
       (reading): reading is BibleReadingInfo => reading !== null,
     ),
     song,
+    praiseSet,
     // profiles에는 birth_date가 없어 생일 카드는 당분간 비활성화 상태
     birthday: null,
     prayerSummary,

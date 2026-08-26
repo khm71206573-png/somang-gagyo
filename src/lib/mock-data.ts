@@ -442,6 +442,8 @@ export interface PastSong {
   id: string;
   title: string;
   coverImageUrl: string;
+  /** 유튜브 주소. 없으면 빈 문자열 (누를 수 없는 카드가 된다) */
+  youtubeUrl: string;
 }
 
 export const songDetail: SongDetail = {
@@ -458,11 +460,11 @@ const pastSongCoverImageUrl =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuAuGdvVhihE62VCKc4_YRybiAj3dvtwbImOANttgHWSWrbc9C-_-BJdb0UBrjq3iBP__wm88jnYImKQS-c-f5TV1H2CmNnYDHgfiPPyGOyqu2SSdpvHaTJeWvc9pY1cR2wA2hvs9pe9NZOP2mNFKRRc0QI4DzntkGt83rK35e-h3MVk16LWiM6Thyl2pX3H6anE1znbi0QCf7t8FToL8nYMgd3Y-U-NAqNjegSBtJM6IexKYnyPsBzw";
 
 export const pastSongs: PastSong[] = [
-  { id: "1", title: "주님의 품에", coverImageUrl: pastSongCoverImageUrl },
-  { id: "2", title: "나의 피난처", coverImageUrl: pastSongCoverImageUrl },
-  { id: "3", title: "은혜 아니면", coverImageUrl: pastSongCoverImageUrl },
-  { id: "4", title: "내 영혼아", coverImageUrl: pastSongCoverImageUrl },
-  { id: "5", title: "새로운 아침", coverImageUrl: pastSongCoverImageUrl },
+  { id: "1", title: "주님의 품에", coverImageUrl: pastSongCoverImageUrl, youtubeUrl: "" },
+  { id: "2", title: "나의 피난처", coverImageUrl: pastSongCoverImageUrl, youtubeUrl: "" },
+  { id: "3", title: "은혜 아니면", coverImageUrl: pastSongCoverImageUrl, youtubeUrl: "" },
+  { id: "4", title: "내 영혼아", coverImageUrl: pastSongCoverImageUrl, youtubeUrl: "" },
+  { id: "5", title: "새로운 아침", coverImageUrl: pastSongCoverImageUrl, youtubeUrl: "" },
 ];
 
 export interface BiblePlanFilterChip {

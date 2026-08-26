@@ -53,18 +53,28 @@ export async function fetchSongPageData(
 
   const { data: pastRows } = await supabase
     .from("daily_songs")
-    .select("song_date, songs(id, title, cover_image_url)")
+    .select("song_date, songs(id, title, cover_image_url, youtube_url)")
     .lt("song_date", currentSongDate)
     .order("song_date", { ascending: false })
     .limit(5);
 
-  type PastSongRow = { id: string; title: string; cover_image_url: string | null };
+  type PastSongRow = {
+    id: string;
+    title: string;
+    cover_image_url: string | null;
+    youtube_url: string | null;
+  };
 
   const pastSongs: PastSong[] = (pastRows ?? [])
     .map((row) => {
       const s = unwrapRelation(row.songs as PastSongRow | PastSongRow[] | null);
       if (!s) return null;
-      return { id: s.id, title: s.title, coverImageUrl: s.cover_image_url ?? "" };
+      return {
+        id: s.id,
+        title: s.title,
+        coverImageUrl: s.cover_image_url ?? "",
+        youtubeUrl: s.youtube_url ?? "",
+      };
     })
     .filter((s): s is PastSong => s !== null);
 

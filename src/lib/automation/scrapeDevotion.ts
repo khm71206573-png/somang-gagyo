@@ -110,7 +110,9 @@ export type ScrapeDevotionResult =
   | { ok: true; skipped: true; reason: string };
 
 /**
- * "오늘의 묵상" 페이지를 스크랩해 devotions 테이블에 저장한다 (질문 자동 생성 포함).
+ * "오늘의 묵상" 페이지를 스크랩해 devotions 테이블에 저장한다.
+ * 묵상 질문은 AI로 만들지 않고 고정된 기본 질문으로 넣는다. 본문에 맞춘 질문이
+ * 필요하면 관리자 화면에서 직접 "AI로 질문 만들기"를 눌러 덮어쓴다.
  * Cron·관리자 수동 실행 버튼 양쪽에서 동일한 스크랩 로직을 쓰기 위한 공용 함수.
  *
  * fetch/파싱 실패는 Error를 throw한다 (호출부에서 502로 매핑).
@@ -127,7 +129,7 @@ export async function scrapeDevotion(): Promise<ScrapeDevotionResult> {
   const { devotionDate, title, reference, verses } = parsed;
 
   // 매일 같은 기본 질문으로 묵상한다. 본문에 맞춘 질문이 필요하면
-  // 관리자 화면의 "질문 자동 생성"으로 따로 덮어쓸 수 있다.
+  // 관리자 화면의 "AI로 질문 만들기"로 따로 덮어쓸 수 있다.
   const questions = defaultDevotionQuestions();
 
   const supabase = createServiceClient();

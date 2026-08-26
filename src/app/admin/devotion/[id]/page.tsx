@@ -176,7 +176,7 @@ export default function EditDevotionPage({
                 disabled={isGenerating}
                 className="text-label-sm font-medium text-primary disabled:opacity-50"
               >
-                {isGenerating ? "생성 중..." : "AI로 질문 자동 생성"}
+                {isGenerating ? "생성 중..." : "AI로 질문 만들기"}
               </button>
             </div>
             <textarea
