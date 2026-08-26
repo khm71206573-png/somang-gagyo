@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Clock3, XCircle } from "lucide-react";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { createClient } from "@/lib/supabase/server";
@@ -33,7 +34,13 @@ export default async function PendingPage() {
           ? "문의사항은 교회 사무실로 연락해 주세요."
           : "관리자 승인 후 이용하실 수 있어요. 조금만 기다려 주세요."}
       </p>
-      <LogoutButton className="mt-4 rounded-md border border-border px-6 py-3 text-body-md text-foreground" />
+      <Link
+        href="/guide"
+        className="mt-2 text-label-sm font-medium text-primary underline"
+      >
+        기다리는 동안 앱 사용법 보기
+      </Link>
+      <LogoutButton className="mt-2 rounded-md border border-border px-6 py-3 text-body-md text-foreground" />
     </div>
   );
 }

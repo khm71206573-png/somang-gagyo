@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   ShieldCheck,
   BookMarked,
+  BookOpenCheck,
   Megaphone,
   UserCircle,
   Users,
@@ -22,6 +23,7 @@ const iconMap: Record<MoreMenuIcon, typeof ShieldCheck> = {
   admin: ShieldCheck,
   announcement: Megaphone,
   biblePlan: BookMarked,
+  guide: BookOpenCheck,
   profile: UserCircle,
   members: Users,
 };
