@@ -37,16 +37,16 @@ export function AnnouncementReadButton({
           onClick={handleClick}
           className={
             hasRead
-              ? "flex flex-1 items-center justify-center gap-1.5 rounded-md border border-secondary/40 bg-secondary/10 py-3 text-body-md font-semibold text-secondary transition-transform active:scale-[0.99] disabled:opacity-60"
-              : "flex flex-1 items-center justify-center gap-1.5 rounded-md bg-primary py-3 text-body-md font-semibold text-primary-foreground transition-opacity active:opacity-80 disabled:opacity-60"
+              ? "flex items-center justify-center gap-1.5 rounded-md border border-secondary/40 bg-secondary/10 px-6 py-3 text-body-md font-semibold text-secondary transition-transform active:scale-[0.99] disabled:opacity-60"
+              : "flex items-center justify-center gap-1.5 rounded-md bg-primary px-6 py-3 text-body-md font-semibold text-primary-foreground transition-opacity active:opacity-80 disabled:opacity-60"
           }
         >
           {hasRead ? (
-            <CheckCheck className="h-4 w-4" strokeWidth={3} />
+            <CheckCheck className="h-[18px] w-[18px]" strokeWidth={3} />
           ) : (
-            <Check className="h-4 w-4" strokeWidth={3} />
+            <Check className="h-[18px] w-[18px]" strokeWidth={3} />
           )}
-          {hasRead ? "확인했어요" : "확인했어요 누르기"}
+          {hasRead ? "확인함" : "확인"}
         </button>
         <span className="shrink-0 text-label-sm text-muted-foreground">
           <span className="font-semibold text-primary">{readCount}명</span> 확인
