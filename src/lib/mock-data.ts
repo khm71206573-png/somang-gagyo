@@ -864,6 +864,7 @@ export type MoreMenuIcon =
   | "admin"
   | "announcement"
   | "biblePlan"
+  | "guide"
   | "profile"
   | "members";
 
@@ -878,6 +879,13 @@ export interface MoreMenuItem {
 }
 
 export const moreMenuItems: MoreMenuItem[] = [
+  {
+    id: "guide",
+    label: "앱 사용 가이드",
+    description: "설치부터 탭 사용법까지 카드로 봐요",
+    icon: "guide",
+    href: "/guide",
+  },
   {
     id: "announcement",
     label: "공지사항",

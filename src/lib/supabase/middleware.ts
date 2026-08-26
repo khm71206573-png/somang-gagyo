@@ -9,6 +9,12 @@ const PUBLIC_PATHS = [
 ];
 
 export async function updateSession(request: NextRequest) {
+  // 앱 사용 가이드는 설치 방법을 담고 있어 로그인 전에도, 승인 대기 중에도
+  // 열려 있어야 한다. 개인 정보가 없으므로 세션을 확인하지 않고 그대로 보여준다.
+  if (request.nextUrl.pathname.startsWith("/guide")) {
+    return NextResponse.next({ request });
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

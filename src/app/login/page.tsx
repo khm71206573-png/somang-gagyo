@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { OAuthLoginButton } from "@/components/auth/OAuthLoginButton";
 
 export default function LoginPage() {
@@ -15,6 +16,12 @@ export default function LoginPage() {
       <p className="mt-6 text-center text-label-sm text-muted-foreground">
         로그인 후 관리자 승인이 완료되면 이용하실 수 있어요.
       </p>
+      <Link
+        href="/guide"
+        className="mt-4 text-label-sm font-medium text-primary underline"
+      >
+        앱 설치와 사용법 보기
+      </Link>
     </div>
   );
 }
