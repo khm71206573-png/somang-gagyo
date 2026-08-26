@@ -85,6 +85,57 @@ export async function requireAdmin(): Promise<{
   return { supabase, user, errorResponse: null };
 }
 
+/**
+ * 공지는 올린 사람만 고칠 수 있다. 관리자여도 남이 올린 공지는 손대지 못한다.
+ * (삭제는 잘못 올라온 공지를 치울 수 있도록 관리자에게 열려 있다.)
+ */
+export async function requireAnnouncementAuthor(announcementId: string): Promise<{
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  user: User | null;
+  errorResponse: NextResponse | null;
+}> {
+  const { supabase, user, errorResponse } = await requireAdmin();
+  if (errorResponse) return { supabase, user, errorResponse };
+
+  const { data, error } = await supabase
+    .from("announcements")
+    .select("created_by")
+    .eq("id", announcementId)
+    .maybeSingle();
+
+  if (error) {
+    return {
+      supabase,
+      user,
+      errorResponse: NextResponse.json({ error: error.message }, { status: 500 }),
+    };
+  }
+
+  if (!data) {
+    return {
+      supabase,
+      user,
+      errorResponse: NextResponse.json(
+        { error: "공지사항을 찾을 수 없어요." },
+        { status: 404 },
+      ),
+    };
+  }
+
+  if (data.created_by !== user!.id) {
+    return {
+      supabase,
+      user,
+      errorResponse: NextResponse.json(
+        { error: "공지는 올린 사람만 수정할 수 있어요." },
+        { status: 403 },
+      ),
+    };
+  }
+
+  return { supabase, user, errorResponse: null };
+}
+
 export function normalizeAnnouncementBody(
   body: AnnouncementBody | null,
 ): NormalizedAnnouncement | { error: string } {

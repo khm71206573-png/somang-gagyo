@@ -7,6 +7,7 @@ import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { useAnnouncementAdminList } from "@/hooks/useAnnouncementAdminList";
 import { useDeleteAnnouncement } from "@/hooks/useDeleteAnnouncement";
+import { useProfile } from "@/hooks/useProfile";
 
 const KIND_LABELS: Record<string, string> = {
   post: "게시글",
@@ -15,6 +16,7 @@ const KIND_LABELS: Record<string, string> = {
 };
 
 export default function AnnouncementAdminListPage() {
+  const { data: profile } = useProfile();
   const { data, isLoading, isError, error, refetch, isFetching } =
     useAnnouncementAdminList();
   const {
@@ -62,6 +64,8 @@ export default function AnnouncementAdminListPage() {
                   ? (KIND_LABELS[item.poll_type ?? "choice"] ?? "투표")
                   : KIND_LABELS.post;
               const createdLabel = new Date(item.created_at).toLocaleDateString("ko-KR");
+              // 공지는 올린 사람만 고칠 수 있다.
+              const isMine = Boolean(profile) && item.created_by === profile?.id;
 
               return (
                 <div
@@ -84,13 +88,15 @@ export default function AnnouncementAdminListPage() {
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-2">
-                    <Link
-                      href={`/admin/announcement/${item.id}`}
-                      aria-label="수정"
-                      className="flex h-8 w-8 items-center justify-center rounded-md bg-surface-container-highest text-muted-foreground transition-colors hover:bg-surface-dim"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Link>
+                    {isMine && (
+                      <Link
+                        href={`/admin/announcement/${item.id}`}
+                        aria-label="수정"
+                        className="flex h-8 w-8 items-center justify-center rounded-md bg-surface-container-highest text-muted-foreground transition-colors hover:bg-surface-dim"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Link>
+                    )}
                     <button
                       type="button"
                       aria-label="삭제"

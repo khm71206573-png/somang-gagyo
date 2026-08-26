@@ -54,6 +54,10 @@ export interface AnnouncementListItem {
   commentCount: number;
   /** 로그인한 사용자가 이미 투표했는지 */
   hasVoted: boolean;
+  /** "확인했어요"를 누른 사람 수 */
+  readCount: number;
+  /** 로그인한 사용자가 확인 표시를 했는지 */
+  hasRead: boolean;
 }
 
 export interface AnnouncementDetail {
@@ -69,12 +73,22 @@ export interface AnnouncementDetail {
   isClosed: boolean;
   closesAtLabel: string | null;
   authorName: string;
+  /** 공지를 올린 사람 (수정 권한 판단용) */
+  authorId: string | null;
+  /** 로그인한 사용자가 올린 공지인지. 수정은 작성자만 할 수 있다. */
+  isMine: boolean;
   dateLabel: string;
   timeAgo: string;
   options: AnnouncementPollOptionItem[];
   voterCount: number;
   /** 로그인한 사용자가 고른 항목들 (투표 수정 화면의 초기값) */
   mySelectedOptionIds: string[];
+  /** "확인했어요"를 누른 사람 수 */
+  readCount: number;
+  /** 로그인한 사용자가 확인 표시를 했는지 */
+  hasRead: boolean;
+  /** 확인 표시를 한 사람들의 이름 */
+  readerNames: string[];
   comments: AnnouncementCommentItem[];
 }
 
@@ -87,6 +101,12 @@ interface VoteRow {
   option_id: string;
   member_id: string;
   voter?: AuthorRelation | AuthorRelation[] | null;
+}
+
+interface ReadRow {
+  announcement_id: string;
+  member_id: string;
+  reader?: AuthorRelation | AuthorRelation[] | null;
 }
 
 function formatDateLabel(isoString: string) {
@@ -184,6 +204,22 @@ async function fetchVoterCounts(supabase: SupabaseClient, announcementIds: strin
   return counts;
 }
 
+/**
+ * 공지별 "확인했어요" 기록. 확인 표시 마이그레이션 전이라 테이블이 없으면
+ * 공지 목록·상세가 통째로 막히지 않도록 빈 값으로 다룬다.
+ */
+async function fetchReadRows(supabase: SupabaseClient, announcementIds: string[]) {
+  if (announcementIds.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from("announcement_reads")
+    .select("announcement_id, member_id, reader:profiles(name)")
+    .in("announcement_id", announcementIds);
+
+  if (error) return [];
+  return (data ?? []) as ReadRow[];
+}
+
 export async function fetchAnnouncementList(
   supabase: SupabaseClient,
 ): Promise<AnnouncementListItem[]> {
@@ -207,7 +243,7 @@ export async function fetchAnnouncementList(
   const ids = rows.map((row) => row.id as string);
 
   // 내 표는 이름 비공개 투표에서도 항상 보인다.
-  const [voterCounts, { data: myVotes }] = await Promise.all([
+  const [voterCounts, { data: myVotes }, readRows] = await Promise.all([
     fetchVoterCounts(supabase, ids),
     user
       ? supabase
@@ -216,7 +252,15 @@ export async function fetchAnnouncementList(
           .eq("member_id", user.id)
           .in("announcement_id", ids)
       : Promise.resolve({ data: [] as { announcement_id: string }[] }),
+    fetchReadRows(supabase, ids),
   ]);
+
+  const readCounts = new Map<string, number>();
+  const myReadIds = new Set<string>();
+  for (const read of readRows) {
+    readCounts.set(read.announcement_id, (readCounts.get(read.announcement_id) ?? 0) + 1);
+    if (user && read.member_id === user.id) myReadIds.add(read.announcement_id);
+  }
 
   const myVotedIds = new Set(
     (myVotes ?? []).map((vote) => vote.announcement_id as string),
@@ -249,12 +293,14 @@ export async function fetchAnnouncementList(
       voterCount: voterCounts.get(row.id as string) ?? 0,
       commentCount: commentCount?.count ?? 0,
       hasVoted: myVotedIds.has(row.id as string),
+      readCount: readCounts.get(row.id as string) ?? 0,
+      hasRead: myReadIds.has(row.id as string),
     };
   });
 }
 
 const DETAIL_COLUMNS =
-  "id, kind, poll_type, title, content, is_pinned, allow_multiple, closes_at, created_at, author:profiles(name), announcement_poll_options(id, label, option_date, start_time, display_order)";
+  "id, kind, poll_type, title, content, is_pinned, allow_multiple, closes_at, created_by, created_at, author:profiles(name), announcement_poll_options(id, label, option_date, start_time, display_order)";
 
 /** hide_voters 컬럼이 아직 없는 DB에서도 상세 화면이 열리도록 한 번 더 조회한다. */
 async function fetchAnnouncementRow(supabase: SupabaseClient, announcementId: string) {
@@ -315,7 +361,7 @@ export async function fetchAnnouncementDetail(
   const row = await fetchAnnouncementRow(supabase, announcementId);
   if (!row) throw new Error("공지사항을 찾을 수 없어요.");
 
-  const [{ data: votes }, { data: comments }] = await Promise.all([
+  const [{ data: votes }, { data: comments }, readRows] = await Promise.all([
     supabase
       .from("announcement_poll_votes")
       .select("option_id, member_id, voter:profiles(name)")
@@ -325,6 +371,7 @@ export async function fetchAnnouncementDetail(
       .select("id, member_id, content, created_at, author:profiles(name, avatar_url)")
       .eq("announcement_id", announcementId)
       .order("created_at", { ascending: true }),
+    fetchReadRows(supabase, [announcementId]),
   ]);
 
   const voteRows = (votes ?? []) as VoteRow[];
@@ -385,11 +432,19 @@ export async function fetchAnnouncementDetail(
     isClosed,
     closesAtLabel: formatClosesAtLabel(row.closes_at, isClosed),
     authorName: author?.name ?? "관리자",
+    authorId: (row.created_by as string | null) ?? null,
+    isMine: Boolean(user) && row.created_by === user?.id,
     dateLabel: formatDateLabel(row.created_at),
     timeAgo: formatTimeAgo(row.created_at),
     options,
     voterCount: voterCounts.get(announcementId) ?? 0,
     mySelectedOptionIds,
+    readCount: readRows.length,
+    hasRead: Boolean(user) && readRows.some((read) => read.member_id === user?.id),
+    readerNames: readRows.map((read) => {
+      const reader = unwrapRelation(read.reader ?? null);
+      return reader?.name ?? "성도";
+    }),
     comments: (comments ?? []).map((comment) => {
       const commentAuthor = unwrapRelation(
         comment.author as AuthorRelation | AuthorRelation[] | null,

@@ -221,6 +221,10 @@ export interface PrayerRequestItem {
   isMine: boolean;
   /** 로그인한 사용자가 이미 "함께 기도하기"를 눌렀는지 */
   hasReacted: boolean;
+  /** 하트(좋아요)를 누른 사람 수 */
+  likeCount: number;
+  /** 로그인한 사용자가 하트를 눌렀는지 */
+  hasLiked: boolean;
 }
 
 export const PRAYER_SCOPE_COMMUNITY = "우리 가교";
@@ -248,6 +252,8 @@ export const prayerRequestList: PrayerRequestItem[] = [
     isThanksgiving: false,
     isMine: false,
     hasReacted: false,
+    likeCount: 0,
+    hasLiked: false,
   },
   {
     id: "2",
@@ -262,6 +268,8 @@ export const prayerRequestList: PrayerRequestItem[] = [
     isThanksgiving: false,
     isMine: true,
     hasReacted: true,
+    likeCount: 0,
+    hasLiked: false,
   },
   {
     id: "3",
@@ -276,6 +284,8 @@ export const prayerRequestList: PrayerRequestItem[] = [
     isThanksgiving: false,
     isMine: false,
     hasReacted: false,
+    likeCount: 0,
+    hasLiked: false,
   },
   {
     id: "4",
@@ -290,6 +300,8 @@ export const prayerRequestList: PrayerRequestItem[] = [
     isThanksgiving: false,
     isMine: false,
     hasReacted: true,
+    likeCount: 0,
+    hasLiked: false,
   },
 ];
 

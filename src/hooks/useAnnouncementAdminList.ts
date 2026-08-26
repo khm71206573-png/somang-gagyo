@@ -15,6 +15,8 @@ export interface AnnouncementAdminListItem {
   is_pinned: boolean;
   allow_multiple: boolean;
   closes_at: string | null;
+  /** 공지를 올린 사람. 수정은 작성자만 할 수 있다. */
+  created_by: string | null;
   created_at: string;
   announcement_poll_options: { id: string }[];
 }

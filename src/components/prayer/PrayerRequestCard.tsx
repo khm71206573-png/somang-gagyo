@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { Hand, Sparkles, Trash2 } from "lucide-react";
+import { Hand, Heart, Sparkles, Trash2 } from "lucide-react";
 import type { PrayerRequestItem } from "@/lib/mock-data";
 import { useTogglePrayerReaction } from "@/hooks/useTogglePrayerReaction";
+import { useTogglePrayerLike } from "@/hooks/useTogglePrayerLike";
 import { useDeletePrayerRequest } from "@/hooks/useDeletePrayerRequest";
 
 interface PrayerRequestCardProps {
@@ -12,6 +13,7 @@ interface PrayerRequestCardProps {
 
 export function PrayerRequestCard({ item }: PrayerRequestCardProps) {
   const { mutate, isPending } = useTogglePrayerReaction();
+  const { mutate: toggleLike, isPending: isLiking } = useTogglePrayerLike();
   const { mutate: deletePrayerRequest, isPending: isDeleting } =
     useDeletePrayerRequest();
 
@@ -101,12 +103,35 @@ export function PrayerRequestCard({ item }: PrayerRequestCardProps) {
                 : "함께 기도하기"}
           </span>
         </button>
-        <p className="text-[12px] text-muted-foreground">
-          <span className="font-semibold text-primary">
-            {item.participantCount}명
-          </span>{" "}
-          참여
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-[12px] text-muted-foreground">
+            <span className="font-semibold text-primary">
+              {item.participantCount}명
+            </span>{" "}
+            참여
+          </p>
+          {/* 글에 마음을 표현하는 하트. "함께 기도하기"와 따로 센다. */}
+          <button
+            type="button"
+            disabled={isLiking}
+            aria-pressed={item.hasLiked}
+            aria-label={item.hasLiked ? "좋아요 취소" : "좋아요"}
+            onClick={() =>
+              toggleLike({ prayerRequestId: item.id, hasLiked: item.hasLiked })
+            }
+            className={
+              item.hasLiked
+                ? "flex items-center gap-1 rounded-full border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-destructive transition-transform active:scale-95 disabled:opacity-60"
+                : "flex items-center gap-1 rounded-full border border-outline-variant px-3 py-1.5 text-muted-foreground transition-colors hover:bg-surface-container-low active:scale-95 disabled:opacity-60"
+            }
+          >
+            <Heart
+              className="h-4 w-4"
+              fill={item.hasLiked ? "currentColor" : "none"}
+            />
+            <span className="text-[12px] font-medium">{item.likeCount}</span>
+          </button>
+        </div>
       </footer>
     </article>
   );

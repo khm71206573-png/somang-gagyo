@@ -29,6 +29,22 @@ async function fetchRows(supabase: SupabaseClient) {
   return (legacy ?? []).map((row) => ({ ...row, is_thanksgiving: false }));
 }
 
+/**
+ * 기도제목별 좋아요(하트). 좋아요 마이그레이션 전이라 테이블이 없으면
+ * 목록이 통째로 막히지 않도록 빈 값으로 다룬다.
+ */
+async function fetchLikeRows(supabase: SupabaseClient, prayerRequestIds: string[]) {
+  if (prayerRequestIds.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from("prayer_likes")
+    .select("prayer_request_id, member_id")
+    .in("prayer_request_id", prayerRequestIds);
+
+  if (error) return [];
+  return (data ?? []) as { prayer_request_id: string; member_id: string }[];
+}
+
 export async function fetchPrayerRequestList(
   supabase: SupabaseClient,
 ): Promise<PrayerRequestItem[]> {
@@ -55,6 +71,21 @@ export async function fetchPrayerRequestList(
     );
   }
 
+  // 하트(좋아요)는 "함께 기도하기"와 따로 센다.
+  const likeRows = await fetchLikeRows(
+    supabase,
+    rows.map((row) => row.id as string),
+  );
+  const likeCounts = new Map<string, number>();
+  const likedIds = new Set<string>();
+  for (const like of likeRows) {
+    likeCounts.set(
+      like.prayer_request_id,
+      (likeCounts.get(like.prayer_request_id) ?? 0) + 1,
+    );
+    if (user && like.member_id === user.id) likedIds.add(like.prayer_request_id);
+  }
+
   return rows.map((row) => {
     const member = unwrapRelation(
       row.member as
@@ -78,6 +109,8 @@ export async function fetchPrayerRequestList(
       isThanksgiving: Boolean(row.is_thanksgiving),
       isMine: Boolean(user) && row.member_id === user?.id,
       hasReacted: reactedIds.has(row.id),
+      likeCount: likeCounts.get(row.id) ?? 0,
+      hasLiked: likedIds.has(row.id),
     };
   });
 }
