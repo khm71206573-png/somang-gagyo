@@ -38,6 +38,18 @@ export async function getAccessToken(): Promise<string> {
 
   if (!response.ok) {
     const text = await response.text().catch(() => "");
+
+    // invalid_grant = 저장해둔 refresh token이 만료됐거나 취소된 상태.
+    // 구글 OAuth 동의 화면이 "테스트" 상태면 토큰이 7일 만에 만료되므로,
+    // 화면에는 무엇을 해야 하는지만 알려주고 자세한 응답은 로그로 남긴다.
+    if (text.includes("invalid_grant")) {
+      console.error("[youtube] refresh token 만료/취소:", text);
+      throw new Error(
+        "유튜브 연동이 끊겼어요. 관리자에게 YOUTUBE_REFRESH_TOKEN 재발급을 요청해주세요. " +
+          "그동안에는 곡 정보를 직접 입력해 등록할 수 있어요.",
+      );
+    }
+
     throw new Error(`YouTube access token 발급에 실패했어요. (status ${response.status}) ${text}`);
   }
 
