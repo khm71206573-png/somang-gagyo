@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { storageObjectPath } from "@/lib/storage/fileName";
 
 const AVATAR_BUCKET = "avatars";
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
@@ -47,8 +48,7 @@ async function updateMyProfile({ name, avatarFile }: UpdateMyProfileInput) {
 
   if (!avatarFile) return;
 
-  const safeName = avatarFile.name.replace(/[^\w.\-가-힣]/g, "_");
-  const path = `${user.id}/${Date.now()}-${safeName}`;
+  const path = storageObjectPath(user.id, avatarFile);
 
   const { error: uploadError } = await supabase.storage
     .from(AVATAR_BUCKET)

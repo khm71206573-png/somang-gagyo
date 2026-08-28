@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { storageObjectPath } from "@/lib/storage/fileName";
 
 const BUCKET = "sheet-music";
 
@@ -48,8 +49,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "이미지 파일만 업로드할 수 있어요." }, { status: 400 });
   }
 
-  const safeName = file.name.replace(/[^\w.\-가-힣]/g, "_");
-  const path = `${sermonId}/${Date.now()}-${safeName}`;
+  // 스토리지 키는 ASCII만 받아서 경로에는 안전한 이름을 쓰고,
+  // 화면에 보이는 제목은 원래 파일명을 그대로 쓴다.
+  const path = storageObjectPath(sermonId, file);
 
   const { error: uploadError } = await supabase.storage
     .from(BUCKET)
@@ -68,7 +70,7 @@ export async function POST(request: Request) {
     .select("id", { count: "exact", head: true })
     .eq("sermon_id", sermonId);
 
-  const title = safeName.replace(/\.[^.]+$/, "");
+  const title = file.name.replace(/\.[^.]+$/, "") || "악보";
 
   const { data: inserted, error: insertError } = await supabase
     .from("sermon_songs")

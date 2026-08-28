@@ -10,29 +10,95 @@ export const PRAISE_SET_SETUP_MESSAGE =
 
 export const PRAISE_SET_BUCKET = "praise-sets";
 
-/** 유튜브 주소에서 영상 ID만 뽑아낸다. 유튜브 링크가 아니면 null. */
-export function youtubeVideoId(url: string): string | null {
+/** 유튜브 영상 ID 형식(11자) */
+const VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
+
+/** 다른 사이트를 거쳐 온 링크에서 원래 주소가 담기는 쿼리 이름들 */
+const REDIRECT_PARAMS = ["continue", "url", "u", "q", "target", "redirect"];
+
+/**
+ * 붙여넣은 문자열에서 유튜브 주소만 골라낸다.
+ * 카카오톡·유튜브 앱에서 공유하면 "제목 https://youtu.be/... " 처럼
+ * 앞뒤에 다른 글자가 붙거나 http:// 가 빠진 채로 넘어오는 경우가 많다.
+ */
+function parseYoutubeUrl(value: string): URL | null {
+  const cleaned = value
+    // 붙여넣기할 때 딸려 오는 보이지 않는 문자를 먼저 지운다.
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .trim();
+
+  const token = cleaned.match(
+    /(?:https?:\/\/)?[^\s<>"']*(?:youtube\.com|youtu\.be|youtube-nocookie\.com)[^\s<>"']*/i,
+  )?.[0];
+
+  if (!token) return null;
+
+  const withScheme = /^https?:\/\//i.test(token) ? token : `https://${token}`;
+
   try {
-    const parsed = new URL(url.trim());
-    const host = parsed.hostname.replace(/^www\./, "");
-
-    if (host === "youtu.be") {
-      return parsed.pathname.split("/")[1] || null;
-    }
-
-    if (host !== "youtube.com" && host !== "m.youtube.com" && host !== "music.youtube.com") {
-      return null;
-    }
-
-    const videoParam = parsed.searchParams.get("v");
-    if (videoParam) return videoParam;
-
-    // /shorts/ID, /embed/ID, /live/ID 형태도 받아준다.
-    const match = parsed.pathname.match(/^\/(?:shorts|embed|live)\/([^/?]+)/);
-    return match?.[1] ?? null;
+    return new URL(withScheme);
   } catch {
     return null;
   }
+}
+
+function isYoutubeHost(host: string) {
+  return (
+    host === "youtu.be" ||
+    host === "youtube.com" ||
+    host === "youtube-nocookie.com" ||
+    host.endsWith(".youtube.com") ||
+    host.endsWith(".youtube-nocookie.com")
+  );
+}
+
+/** 유튜브 주소에서 영상 ID만 뽑아낸다. 유튜브 링크가 아니면 null. */
+export function youtubeVideoId(url: string): string | null {
+  const parsed = parseYoutubeUrl(url);
+  if (!parsed) return null;
+
+  const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
+
+  if (!isYoutubeHost(host)) {
+    // consent.google.com 처럼 중간 페이지를 거쳐 온 링크는 쿼리 안에 원래 주소가 있다.
+    for (const param of REDIRECT_PARAMS) {
+      const nested = parsed.searchParams.get(param);
+      if (nested) {
+        const id = youtubeVideoId(nested);
+        if (id) return id;
+      }
+    }
+    return null;
+  }
+
+  const candidates: (string | null | undefined)[] = [parsed.searchParams.get("v")];
+
+  if (host === "youtu.be") {
+    candidates.push(parsed.pathname.split("/").filter(Boolean)[0]);
+  }
+
+  // /shorts/ID, /embed/ID, /live/ID, /v/ID 형태도 받아준다.
+  candidates.push(parsed.pathname.match(/\/(?:shorts|embed|live|v|e)\/([^/?#]+)/)?.[1]);
+
+  // consent.youtube.com/m?continue=... 처럼 유튜브 안에서 한 번 더 감싸는 경우
+  for (const param of REDIRECT_PARAMS) {
+    const nested = parsed.searchParams.get(param);
+    if (nested?.includes("youtu")) {
+      const id = youtubeVideoId(nested);
+      if (id) return id;
+    }
+  }
+
+  const ids = candidates
+    .map((candidate) => candidate?.trim())
+    .filter((candidate): candidate is string => Boolean(candidate));
+
+  return ids.find((id) => VIDEO_ID_PATTERN.test(id)) ?? null;
+}
+
+/** 어디서 복사해 왔든 항상 같은 형태로 저장한다. */
+export function youtubeWatchUrl(videoId: string) {
+  return `https://www.youtube.com/watch?v=${videoId}`;
 }
 
 export function youtubeThumbnailUrl(videoId: string) {

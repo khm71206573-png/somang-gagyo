@@ -1,59 +1,81 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { ImageIcon, Link2, Play, Plus, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ImagePlus, Link2, Play, Trash2, X } from "lucide-react";
 import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { useIsAdmin } from "@/hooks/useProfile";
 import { usePraiseSet } from "@/hooks/usePraiseSet";
-import { useUploadPraiseSetImage } from "@/hooks/useUploadPraiseSetImage";
-import { useAddPraiseSetLink } from "@/hooks/useAddPraiseSetLink";
+import {
+  useSubmitPraiseSet,
+  validatePraiseSetImage,
+} from "@/hooks/useSubmitPraiseSet";
 import { useDeletePraiseSetItem } from "@/hooks/useDeletePraiseSetItem";
 import type { PraiseSetItem } from "@/lib/supabase/queries/praiseSet";
 
 export function PraiseSetTab() {
   const isAdmin = useIsAdmin();
   const { data, isLoading, isError, error, refetch, isFetching } = usePraiseSet();
-  const { mutate: uploadImage, isPending: isUploading } = useUploadPraiseSetImage();
-  const { mutateAsync: addLink, isPending: isAddingLink } = useAddPraiseSetLink();
+  const {
+    mutateAsync: submitPraiseSet,
+    isPending: isSubmitting,
+    progress,
+  } = useSubmitPraiseSet();
   const {
     mutate: deleteItem,
     isPending: isDeleting,
     variables: deletingInput,
   } = useDeletePraiseSetItem();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // 등록 버튼을 누르기 전까지 고른 악보 사진을 여기에 담아둔다.
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [linkUrl, setLinkUrl] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+
+  const previews = useMemo(
+    () => pendingFiles.map((file) => ({ file, url: URL.createObjectURL(file) })),
+    [pendingFiles],
+  );
+
+  useEffect(
+    () => () => previews.forEach((preview) => URL.revokeObjectURL(preview.url)),
+    [previews],
+  );
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files ?? []);
     event.target.value = "";
     if (files.length === 0) return;
 
-    setFormError(null);
-    // 여러 장을 한 번에 고르면 고른 순서대로 하나씩 올린다.
-    for (const file of files) {
-      uploadImage(file, {
-        onError: (err) =>
-          setFormError(err instanceof Error ? err.message : "사진을 올리지 못했어요."),
-      });
+    const invalid = files.map(validatePraiseSetImage).find(Boolean);
+    setFormError(invalid ?? null);
+
+    // 문제 있는 파일만 빼고 나머지는 그대로 담아둔다.
+    const accepted = files.filter((file) => !validatePraiseSetImage(file));
+    if (accepted.length > 0) {
+      setPendingFiles((current) => [...current, ...accepted]);
     }
   }
 
-  async function handleAddLink(event: React.FormEvent) {
+  function handleRemovePending(target: File) {
+    setPendingFiles((current) => current.filter((file) => file !== target));
+  }
+
+  async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setFormError(null);
 
-    if (!linkUrl.trim()) {
-      setFormError("유튜브 링크를 입력해주세요.");
+    if (pendingFiles.length === 0 && !linkUrl.trim()) {
+      setFormError("악보 사진이나 유튜브 링크를 추가해주세요.");
       return;
     }
 
     try {
-      await addLink(linkUrl);
+      await submitPraiseSet({ files: pendingFiles, youtubeUrl: linkUrl });
+      setPendingFiles([]);
       setLinkUrl("");
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "링크를 등록하지 못했어요.");
+      setFormError(err instanceof Error ? err.message : "콘티를 등록하지 못했어요.");
     }
   }
 
@@ -179,7 +201,7 @@ export function PraiseSetTab() {
         </div>
       )}
 
-      <div className="flex flex-col gap-2">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input
           ref={fileInputRef}
           type="file"
@@ -188,46 +210,74 @@ export function PraiseSetTab() {
           className="hidden"
           onChange={handleFileChange}
         />
+
         <button
           type="button"
-          disabled={isUploading}
+          disabled={isSubmitting}
           onClick={() => fileInputRef.current?.click()}
           className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-outline-variant p-4 text-label-sm font-medium text-primary transition-colors hover:bg-surface-container-low disabled:opacity-50"
         >
-          {isUploading ? (
-            <ImageIcon className="h-4 w-4 animate-pulse" />
-          ) : (
-            <Plus className="h-4 w-4" />
-          )}
-          {isUploading ? "올리는 중..." : "콘티 사진 올리기"}
+          <ImagePlus className="h-4 w-4" />
+          악보 사진 고르기
         </button>
 
-        <form onSubmit={handleAddLink} className="flex gap-2">
+        {previews.length > 0 && (
+          <ul className="flex gap-2 overflow-x-auto pb-1">
+            {previews.map((preview) => (
+              <li key={preview.url} className="relative shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={preview.url}
+                  alt={preview.file.name}
+                  className="h-20 w-20 rounded-md border border-outline-variant/40 object-cover"
+                />
+                <button
+                  type="button"
+                  aria-label="고른 사진 빼기"
+                  disabled={isSubmitting}
+                  onClick={() => handleRemovePending(preview.file)}
+                  className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-foreground/70 text-background transition-opacity active:opacity-80 disabled:opacity-50"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className="flex items-center gap-2 rounded-md border border-border bg-card px-4 py-3 focus-within:border-primary">
+          <Link2 className="h-4 w-4 shrink-0 text-muted-foreground" />
           <input
             value={linkUrl}
             onChange={(event) => setLinkUrl(event.target.value)}
-            placeholder="유튜브 링크 붙여넣기"
+            placeholder="유튜브 링크 붙여넣기 (선택)"
             aria-label="유튜브 링크"
             inputMode="url"
-            className="min-w-0 flex-1 rounded-md border border-border bg-card px-4 py-3 text-body-md text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+            disabled={isSubmitting}
+            className="min-w-0 flex-1 bg-transparent text-body-md text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-50"
           />
-          <button
-            type="submit"
-            disabled={isAddingLink}
-            className="flex shrink-0 items-center gap-1 rounded-md border border-outline-variant px-4 text-label-sm font-medium text-primary transition-colors hover:bg-surface-container-low disabled:opacity-50"
-          >
-            <Link2 className="h-4 w-4" />
-            {isAddingLink ? "등록 중..." : "링크 추가"}
-          </button>
-        </form>
+        </div>
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full rounded-md bg-primary py-3.5 text-body-lg font-semibold text-primary-foreground transition-opacity active:opacity-80 disabled:opacity-50"
+        >
+          {isSubmitting
+            ? progress && progress.total > 1
+              ? `등록 중... (${progress.done + 1}/${progress.total})`
+              : "등록 중..."
+            : "등록하기"}
+        </button>
 
         <p className="text-center text-[11px] text-muted-foreground">
-          누구나 올릴 수 있어요. 사진과 유튜브 링크 모두 이번 주 콘티로 저장돼요.
+          누구나 올릴 수 있어요. 악보 사진과 유튜브 링크를 함께 고른 뒤 등록하기를 누르면
+          이번 주 콘티로 저장돼요.
         </p>
         {formError && (
           <p className="text-center text-label-sm text-destructive">{formError}</p>
         )}
-      </div>
+      </form>
     </section>
   );
 }
