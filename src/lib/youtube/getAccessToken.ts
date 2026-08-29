@@ -8,12 +8,13 @@ const TOKEN_URL = "https://oauth2.googleapis.com/token";
  */
 export const YOUTUBE_AUTH_EXPIRED_MESSAGE =
   "유튜브 연결이 만료됐어요. 자동 가져오기는 잠시 쓸 수 없지만 아래에서 직접 입력해 등록할 수 있어요. " +
-  "(관리자: Google OAuth 동의 화면을 '프로덕션'으로 게시한 뒤 refresh token을 다시 발급해 " +
-  "YOUTUBE_REFRESH_TOKEN 환경변수를 새로 넣어주세요)";
+  "(관리자: 공개 재생목록은 YOUTUBE_API_KEY와 YOUTUBE_RECOMMENDED_PLAYLIST_ID만 넣으면 " +
+  "재인증 없이 동작합니다. 좋아요 목록까지 쓰려면 refresh token을 다시 발급해주세요)";
 
 export const YOUTUBE_AUTH_MISSING_MESSAGE =
   "유튜브 연결 설정이 아직 없어요. 자동 가져오기는 쓸 수 없지만 아래에서 직접 입력해 등록할 수 있어요. " +
-  "(관리자: YOUTUBE_CLIENT_ID·CLIENT_SECRET·REFRESH_TOKEN 환경변수 필요)";
+  "(관리자: 공개 재생목록은 YOUTUBE_API_KEY, 좋아요 목록은 " +
+  "YOUTUBE_CLIENT_ID·CLIENT_SECRET·REFRESH_TOKEN 환경변수가 필요합니다)";
 
 interface TokenResponse {
   access_token: string;

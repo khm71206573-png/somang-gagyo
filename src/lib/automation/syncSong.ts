@@ -4,6 +4,7 @@ import {
   resolveSongPlaylist,
   type SongSource,
 } from "@/lib/youtube/resolvePlaylist";
+import { withAuth } from "@/lib/youtube/auth";
 import { toDateString } from "@/lib/supabase/queries/utils";
 import { HttpError } from "./HttpError";
 
@@ -108,8 +109,8 @@ export async function fetchSongFromSource(
       playlistUrl.searchParams.set("maxResults", String(PLAYLIST_PAGE_SIZE));
       if (pageToken) playlistUrl.searchParams.set("pageToken", pageToken);
 
-      const playlistResponse = await fetch(playlistUrl, {
-        headers: playlist.authHeaders,
+      const playlistResponse = await fetch(withAuth(playlistUrl, playlist.auth), {
+        headers: playlist.auth.headers,
       });
       if (!playlistResponse.ok) {
         throw new HttpError(

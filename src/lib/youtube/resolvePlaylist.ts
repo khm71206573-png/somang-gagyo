@@ -1,4 +1,9 @@
-import { getAccessToken } from "./getAccessToken";
+import {
+  personalYoutubeAuth,
+  publicYoutubeAuth,
+  withAuth,
+  type YoutubeAuth,
+} from "./auth";
 import { HttpError } from "@/lib/automation/HttpError";
 
 const CHANNELS_URL =
@@ -26,10 +31,10 @@ export type PlaylistLookup =
   | { ok: true; playlistId: string }
   | { ok: false; reason: string };
 
-async function fetchLikesPlaylistId(
-  authHeaders: HeadersInit,
-): Promise<PlaylistLookup> {
-  const response = await fetch(CHANNELS_URL, { headers: authHeaders });
+async function fetchLikesPlaylistId(auth: YoutubeAuth): Promise<PlaylistLookup> {
+  const response = await fetch(withAuth(new URL(CHANNELS_URL), auth), {
+    headers: auth.headers,
+  });
   if (!response.ok) {
     throw new HttpError(
       `YouTube 채널 정보를 불러오지 못했어요. (status ${response.status})`,
@@ -54,12 +59,8 @@ async function fetchLikesPlaylistId(
  * YOUTUBE_RECOMMENDED_PLAYLIST_ID를 지정하면 이름 검색 없이 그 재생목록을 쓴다.
  */
 async function fetchRecommendedPlaylistId(
-  authHeaders: HeadersInit,
+  auth: YoutubeAuth,
 ): Promise<PlaylistLookup> {
-  const configuredId = process.env.YOUTUBE_RECOMMENDED_PLAYLIST_ID?.trim();
-  if (configuredId) {
-    return { ok: true, playlistId: configuredId };
-  }
 
   const wantedTitle = recommendedPlaylistTitle();
   const wanted = normalizeTitle(wantedTitle);
@@ -73,7 +74,7 @@ async function fetchRecommendedPlaylistId(
     url.searchParams.set("maxResults", "50");
     if (pageToken) url.searchParams.set("pageToken", pageToken);
 
-    const response = await fetch(url, { headers: authHeaders });
+    const response = await fetch(withAuth(url, auth), { headers: auth.headers });
     if (!response.ok) {
       throw new HttpError(
         `YouTube 재생목록을 불러오지 못했어요. (status ${response.status})`,
@@ -104,20 +105,34 @@ async function fetchRecommendedPlaylistId(
   };
 }
 
-/** 소스 종류에 맞는 재생목록 ID와 인증 헤더를 준비한다. */
+/**
+ * 소스 종류에 맞는 재생목록 ID와 인증 정보를 준비한다.
+ *
+ * 추천찬양 재생목록 ID를 환경변수로 지정해두면 "내 재생목록 찾기"를 건너뛰므로,
+ * API 키만 있어도(=OAuth 없이도) 동작한다.
+ * 좋아요 표시한 동영상은 계정 개인 데이터라 OAuth가 반드시 필요하다.
+ */
 export async function resolveSongPlaylist(source: SongSource): Promise<
-  | { ok: true; playlistId: string; authHeaders: HeadersInit }
-  | { ok: false; reason: string }
+  { ok: true; playlistId: string; auth: YoutubeAuth } | { ok: false; reason: string }
 > {
-  const accessToken = await getAccessToken();
-  const authHeaders = { Authorization: `Bearer ${accessToken}` };
+  const configuredId = process.env.YOUTUBE_RECOMMENDED_PLAYLIST_ID?.trim();
+
+  if (source === "recommended" && configuredId) {
+    return {
+      ok: true,
+      playlistId: configuredId,
+      auth: await publicYoutubeAuth(),
+    };
+  }
+
+  const auth = await personalYoutubeAuth();
 
   const lookup =
     source === "recommended"
-      ? await fetchRecommendedPlaylistId(authHeaders)
-      : await fetchLikesPlaylistId(authHeaders);
+      ? await fetchRecommendedPlaylistId(auth)
+      : await fetchLikesPlaylistId(auth);
 
   if (!lookup.ok) return lookup;
 
-  return { ok: true, playlistId: lookup.playlistId, authHeaders };
+  return { ok: true, playlistId: lookup.playlistId, auth };
 }

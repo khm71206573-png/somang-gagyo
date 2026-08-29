@@ -1,4 +1,4 @@
-import { getAccessToken } from "./getAccessToken";
+import { publicYoutubeAuth, withAuth } from "./auth";
 
 const OEMBED_URL = "https://www.youtube.com/oembed";
 const PLAYLIST_ITEMS_URL = "https://www.googleapis.com/youtube/v3/playlistItems";
@@ -54,20 +54,20 @@ async function fetchFromOembed(
 
 /**
  * oEmbed가 막혔을 때를 위한 두 번째 방법.
- * 오늘의 찬양 동기화에 쓰는 유튜브 인증이 설정돼 있을 때만 동작한다.
+ * YOUTUBE_API_KEY(없으면 OAuth)가 설정돼 있을 때만 동작한다.
  */
 async function fetchFromDataApi(
   playlistId: string,
 ): Promise<YoutubePlaylistPreview | null> {
-  const accessToken = await getAccessToken();
+  const auth = await publicYoutubeAuth();
 
   const url = new URL(PLAYLIST_ITEMS_URL);
   url.searchParams.set("part", "snippet");
   url.searchParams.set("playlistId", playlistId);
   url.searchParams.set("maxResults", "1");
 
-  const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+  const response = await fetch(withAuth(url, auth), {
+    headers: auth.headers,
     next: { revalidate: CACHE_SECONDS },
   });
 
@@ -99,6 +99,6 @@ export async function fetchPlaylistPreview(
   const oembed = await fetchFromOembed(playlistId).catch(() => null);
   if (oembed?.thumbnailUrl) return oembed;
 
-  // 유튜브 인증이 설정돼 있지 않으면 getAccessToken이 예외를 던진다.
+  // 유튜브 인증(API 키·OAuth)이 하나도 없으면 예외가 나므로 조용히 넘긴다.
   return await fetchFromDataApi(playlistId).catch(() => null);
 }
