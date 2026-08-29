@@ -24,9 +24,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "관리자만 사용할 수 있어요." }, { status: 403 });
   }
 
-  // 어느 재생목록에서 가져올지 (기본: 좋아요 표시한 동영상)
+  // 어느 재생목록에서 가져올지 (기본: 추천찬양 재생목록)
   const body = await request.json().catch(() => null);
-  const source = isSongSource(body?.source) ? body.source : "liked";
+  const source = isSongSource(body?.source) ? body.source : "recommended";
 
   try {
     const result = await fetchSongFromSource(source);

@@ -10,9 +10,10 @@ export async function GET(request: Request) {
   const authError = checkCronAuth(request);
   if (authError) return authError;
 
-  // 기본은 좋아요 목록. ?source=recommended 를 붙이면 추천찬양 재생목록에서 가져온다.
+  // 기본은 추천찬양 재생목록. ?source=liked 를 붙이면 좋아요 목록에서 가져온다.
+  // (좋아요 목록은 계정 개인 데이터라 유튜브 OAuth 인증이 설정돼 있어야 한다)
   const sourceParam = new URL(request.url).searchParams.get("source");
-  const source = isSongSource(sourceParam) ? sourceParam : "liked";
+  const source = isSongSource(sourceParam) ? sourceParam : "recommended";
 
   try {
     const result = await syncSong(source);
