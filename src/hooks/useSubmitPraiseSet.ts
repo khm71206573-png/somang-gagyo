@@ -7,14 +7,18 @@ import { storageObjectPath } from "@/lib/storage/fileName";
 import {
   PRAISE_SET_BUCKET,
   PRAISE_SET_SETUP_MESSAGE,
+  PRAISE_SET_YOUTUBE_SETUP_MESSAGE,
   parseYoutubeLink,
 } from "@/lib/supabase/queries/praiseSet";
 import { weekStartDateString } from "@/lib/supabase/queries/utils";
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
+/** 42P01 = 테이블 없음 */
+const UNDEFINED_TABLE = "42P01";
+
 /** 42703·PGRST204 = 컬럼 없음. youtube_url 마이그레이션 적용 전이면 이 코드로 온다. */
-const MISSING_COLUMN_CODES = ["42P01", "42703", "PGRST204"];
+const MISSING_COLUMN_CODES = ["42703", "PGRST204"];
 
 export const YOUTUBE_LINK_ERROR =
   "유튜브 링크를 확인해주세요. 영상 주소와 재생목록 주소 모두 등록할 수 있어요.";
@@ -112,7 +116,8 @@ async function submitPraiseSet(
       // 목록에 안 뜨는 파일이 스토리지에 남지 않도록 되돌린다.
       await supabase.storage.from(PRAISE_SET_BUCKET).remove([path]);
 
-      if (MISSING_COLUMN_CODES.includes(insertError.code ?? "")) {
+      const code = insertError.code ?? "";
+      if (code === UNDEFINED_TABLE || MISSING_COLUMN_CODES.includes(code)) {
         throw new Error(PRAISE_SET_SETUP_MESSAGE);
       }
       throw new Error(insertError.message ?? "찬양콘티를 등록하지 못했어요.");
@@ -131,7 +136,12 @@ async function submitPraiseSet(
     });
 
     if (error) {
-      if (MISSING_COLUMN_CODES.includes(error.code ?? "")) {
+      const code = error.code ?? "";
+      // 사진은 되는데 링크만 막히면 youtube_url 컬럼이 없는 것이라 따로 안내한다.
+      if (MISSING_COLUMN_CODES.includes(code)) {
+        throw new Error(PRAISE_SET_YOUTUBE_SETUP_MESSAGE);
+      }
+      if (code === UNDEFINED_TABLE) {
         throw new Error(PRAISE_SET_SETUP_MESSAGE);
       }
       throw new Error(error.message ?? "링크를 등록하지 못했어요.");

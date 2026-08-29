@@ -8,6 +8,14 @@ const UNDEFINED_COLUMN = "42703";
 export const PRAISE_SET_SETUP_MESSAGE =
   "찬양콘티 기능 설정이 아직 끝나지 않았어요. 관리자에게 알려주세요.";
 
+/**
+ * 사진은 올라가는데 링크만 막히는 경우, praise_sets 테이블에 youtube_url 컬럼이
+ * 아직 없는 것이다. (supabase/migrations/20260827010000_praise_set_youtube.sql 미적용)
+ */
+export const PRAISE_SET_YOUTUBE_SETUP_MESSAGE =
+  "유튜브 링크 기능 설정이 아직 끝나지 않았어요. 관리자에게 알려주세요. " +
+  "(praise_sets 테이블에 youtube_url 컬럼 추가 필요)";
+
 export const PRAISE_SET_BUCKET = "praise-sets";
 
 /** 유튜브 영상 ID 형식(11자) */
