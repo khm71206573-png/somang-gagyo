@@ -52,53 +52,103 @@ function isYoutubeHost(host: string) {
   );
 }
 
-/** 유튜브 주소에서 영상 ID만 뽑아낸다. 유튜브 링크가 아니면 null. */
-export function youtubeVideoId(url: string): string | null {
-  const parsed = parseYoutubeUrl(url);
+/** 재생목록 ID 형식. PL·OLAK5uy_·UU·RD 등 종류가 많아 길이만 확인한다. */
+const PLAYLIST_ID_PATTERN = /^[A-Za-z0-9_-]{10,}$/;
+
+/** "좋아요 표시한 동영상"(LL)·"나중에 볼 동영상"(WL)처럼 짧은 재생목록 */
+const SHORT_PLAYLIST_IDS = ["LL", "WL"];
+
+export interface YoutubeLink {
+  /** 영상 링크면 영상 ID. 재생목록만 있는 링크면 null. */
+  videoId: string | null;
+  /** 재생목록(list=) ID. 없으면 null. */
+  playlistId: string | null;
+  /** 어디서 복사해 왔든 항상 열리도록 정리한 주소 */
+  url: string;
+  /** 목록에 보여줄 썸네일. 재생목록만 있으면 유튜브가 주소를 열어주지 않아 null. */
+  thumbnailUrl: string | null;
+}
+
+function firstMatching(
+  candidates: (string | null | undefined)[],
+  pattern: RegExp,
+  extraAllowed: string[] = [],
+) {
+  for (const candidate of candidates) {
+    const value = candidate?.trim();
+    if (value && (pattern.test(value) || extraAllowed.includes(value))) {
+      return value;
+    }
+  }
+  return null;
+}
+
+/**
+ * 붙여넣은 주소에서 영상 ID와 재생목록 ID를 뽑아낸다.
+ * 영상 링크(watch·youtu.be·shorts)와 재생목록 링크(playlist?list=) 모두 받는다.
+ * 유튜브 링크가 아니면 null.
+ */
+export function parseYoutubeLink(value: string): YoutubeLink | null {
+  const parsed = parseYoutubeUrl(value);
   if (!parsed) return null;
 
   const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
 
-  if (!isYoutubeHost(host)) {
-    // consent.google.com 처럼 중간 페이지를 거쳐 온 링크는 쿼리 안에 원래 주소가 있다.
+  // consent.google.com 처럼 중간 페이지를 거쳐 온 링크는 쿼리 안에 원래 주소가 있다.
+  const nestedLink = (() => {
     for (const param of REDIRECT_PARAMS) {
       const nested = parsed.searchParams.get(param);
-      if (nested) {
-        const id = youtubeVideoId(nested);
-        if (id) return id;
+      if (nested && (!isYoutubeHost(host) || nested.includes("youtu"))) {
+        const link = parseYoutubeLink(nested);
+        if (link) return link;
       }
     }
     return null;
-  }
+  })();
 
-  const candidates: (string | null | undefined)[] = [parsed.searchParams.get("v")];
+  if (!isYoutubeHost(host)) return nestedLink;
+  if (nestedLink) return nestedLink;
+
+  const videoCandidates: (string | null | undefined)[] = [parsed.searchParams.get("v")];
 
   if (host === "youtu.be") {
-    candidates.push(parsed.pathname.split("/").filter(Boolean)[0]);
+    videoCandidates.push(parsed.pathname.split("/").filter(Boolean)[0]);
   }
 
-  // /shorts/ID, /embed/ID, /live/ID, /v/ID 형태도 받아준다.
-  candidates.push(parsed.pathname.match(/\/(?:shorts|embed|live|v|e)\/([^/?#]+)/)?.[1]);
+  // /shorts/ID, /embed/ID, /live/ID 형태도 받아준다.
+  videoCandidates.push(
+    parsed.pathname.match(/\/(?:shorts|embed|live|v|e)\/([^/?#]+)/)?.[1],
+  );
 
-  // consent.youtube.com/m?continue=... 처럼 유튜브 안에서 한 번 더 감싸는 경우
-  for (const param of REDIRECT_PARAMS) {
-    const nested = parsed.searchParams.get(param);
-    if (nested?.includes("youtu")) {
-      const id = youtubeVideoId(nested);
-      if (id) return id;
-    }
-  }
+  const videoId = firstMatching(videoCandidates, VIDEO_ID_PATTERN);
+  const playlistId = firstMatching(
+    [parsed.searchParams.get("list")],
+    PLAYLIST_ID_PATTERN,
+    SHORT_PLAYLIST_IDS,
+  );
 
-  const ids = candidates
-    .map((candidate) => candidate?.trim())
-    .filter((candidate): candidate is string => Boolean(candidate));
+  if (!videoId && !playlistId) return null;
 
-  return ids.find((id) => VIDEO_ID_PATTERN.test(id)) ?? null;
+  return {
+    videoId,
+    playlistId,
+    url: youtubeCanonicalUrl(videoId, playlistId),
+    thumbnailUrl: videoId ? youtubeThumbnailUrl(videoId) : null,
+  };
 }
 
-/** 어디서 복사해 왔든 항상 같은 형태로 저장한다. */
-export function youtubeWatchUrl(videoId: string) {
-  return `https://www.youtube.com/watch?v=${videoId}`;
+/** 저장할 때 쓰는 정리된 주소. 재생목록만 있으면 재생목록 주소로 저장한다. */
+export function youtubeCanonicalUrl(
+  videoId: string | null,
+  playlistId: string | null,
+) {
+  if (!videoId && playlistId) {
+    return `https://www.youtube.com/playlist?list=${playlistId}`;
+  }
+
+  const base = `https://www.youtube.com/watch?v=${videoId}`;
+  // 재생목록 안의 영상이면 재생목록도 함께 열리도록 남겨둔다.
+  return playlistId ? `${base}&list=${playlistId}` : base;
 }
 
 export function youtubeThumbnailUrl(videoId: string) {
@@ -112,8 +162,10 @@ export interface PraiseSetItem {
   storagePath: string | null;
   /** 유튜브로 올린 콘티. 사진이면 null. */
   youtubeUrl: string | null;
-  /** 유튜브 콘티의 썸네일 주소 */
+  /** 유튜브 콘티의 썸네일 주소. 재생목록 링크면 null. */
   thumbnailUrl: string | null;
+  /** 재생목록 링크로 올린 콘티인지 (카드 문구용) */
+  isPlaylist: boolean;
   uploaderName: string;
   timeAgo: string;
   /** 로그인한 사용자가 올린 콘티인지 (삭제 버튼 노출용) */
@@ -202,14 +254,15 @@ export async function fetchCurrentPraiseSet(
         row.uploader as { name: string | null } | { name: string | null }[] | null,
       );
       const youtubeUrl = (row.youtube_url as string | null) ?? null;
-      const videoId = youtubeUrl ? youtubeVideoId(youtubeUrl) : null;
+      const youtubeLink = youtubeUrl ? parseYoutubeLink(youtubeUrl) : null;
 
       return {
         id: row.id,
         imageUrl: (row.image_url as string | null) ?? null,
         storagePath: (row.storage_path as string | null) ?? null,
         youtubeUrl,
-        thumbnailUrl: videoId ? youtubeThumbnailUrl(videoId) : null,
+        thumbnailUrl: youtubeLink?.thumbnailUrl ?? null,
+        isPlaylist: Boolean(youtubeLink && !youtubeLink.videoId && youtubeLink.playlistId),
         uploaderName: uploader?.name ?? "성도",
         timeAgo: formatTimeAgo(row.created_at),
         isMine: Boolean(user) && row.created_by === user?.id,

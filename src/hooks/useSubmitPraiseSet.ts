@@ -7,8 +7,7 @@ import { storageObjectPath } from "@/lib/storage/fileName";
 import {
   PRAISE_SET_BUCKET,
   PRAISE_SET_SETUP_MESSAGE,
-  youtubeVideoId,
-  youtubeWatchUrl,
+  parseYoutubeLink,
 } from "@/lib/supabase/queries/praiseSet";
 import { weekStartDateString } from "@/lib/supabase/queries/utils";
 
@@ -18,7 +17,7 @@ const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MISSING_COLUMN_CODES = ["42P01", "42703", "PGRST204"];
 
 export const YOUTUBE_LINK_ERROR =
-  "유튜브 링크를 확인해주세요. (예: https://youtu.be/영상ID)";
+  "유튜브 링크를 확인해주세요. 영상 주소와 재생목록 주소 모두 등록할 수 있어요.";
 
 export interface SubmitPraiseSetInput {
   /** 등록 버튼을 누르기 전에 골라둔 악보 사진들 */
@@ -52,14 +51,14 @@ async function submitPraiseSet(
   onProgress: (progress: SubmitPraiseSetProgress | null) => void,
 ) {
   const trimmedLink = youtubeUrl.trim();
-  const videoId = trimmedLink ? youtubeVideoId(trimmedLink) : null;
+  const link = trimmedLink ? parseYoutubeLink(trimmedLink) : null;
 
   // 사진을 올리다 링크에서 막히지 않도록 검사를 모두 먼저 끝낸다.
-  if (trimmedLink && !videoId) {
+  if (trimmedLink && !link) {
     throw new Error(YOUTUBE_LINK_ERROR);
   }
 
-  if (files.length === 0 && !videoId) {
+  if (files.length === 0 && !link) {
     throw new Error("악보 사진이나 유튜브 링크를 추가해주세요.");
   }
 
@@ -78,7 +77,7 @@ async function submitPraiseSet(
   }
 
   const weekStart = weekStartDateString();
-  const total = files.length + (videoId ? 1 : 0);
+  const total = files.length + (link ? 1 : 0);
   let done = 0;
   onProgress({ done, total });
 
@@ -123,11 +122,11 @@ async function submitPraiseSet(
     onProgress({ done, total });
   }
 
-  if (videoId) {
+  if (link) {
     const { error } = await supabase.from("praise_sets").insert({
       week_start: weekStart,
       // 어디서 복사해 왔든 항상 열리는 형태로 저장한다.
-      youtube_url: youtubeWatchUrl(videoId),
+      youtube_url: link.url,
       created_by: user.id,
     });
 

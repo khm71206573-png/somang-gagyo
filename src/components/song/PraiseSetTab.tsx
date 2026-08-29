@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ImagePlus, Link2, Play, Trash2, X } from "lucide-react";
+import { ImagePlus, Link2, ListVideo, Play, Trash2, X } from "lucide-react";
 import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { useIsAdmin } from "@/hooks/useProfile";
@@ -11,6 +11,7 @@ import {
   validatePraiseSetImage,
 } from "@/hooks/useSubmitPraiseSet";
 import { useDeletePraiseSetItem } from "@/hooks/useDeletePraiseSetItem";
+import { PraiseSheetCarousel } from "@/components/song/PraiseSheetCarousel";
 import type { PraiseSetItem } from "@/lib/supabase/queries/praiseSet";
 
 export function PraiseSetTab() {
@@ -31,6 +32,16 @@ export function PraiseSetTab() {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [linkUrl, setLinkUrl] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+
+  // 악보 사진은 좌우로 넘겨 보고, 유튜브 링크는 그 아래에 카드로 쌓는다.
+  const sheetItems = useMemo(
+    () => (data?.items ?? []).filter((item) => item.imageUrl),
+    [data],
+  );
+  const linkItems = useMemo(
+    () => (data?.items ?? []).filter((item) => !item.imageUrl && item.youtubeUrl),
+    [data],
+  );
 
   const previews = useMemo(
     () => pendingFiles.map((file) => ({ file, url: URL.createObjectURL(file) })),
@@ -128,61 +139,66 @@ export function PraiseSetTab() {
         </p>
       ) : (
         <div className="flex flex-col gap-gutter-card">
-          {data.items.map((item) => (
+          <PraiseSheetCarousel
+            items={sheetItems}
+            isAdmin={isAdmin}
+            deletingId={isDeleting ? (deletingInput?.id ?? null) : null}
+            onDelete={handleDelete}
+          />
+
+          {linkItems.map((item) => (
             <figure
               key={item.id}
               className="overflow-hidden rounded-lg border border-outline-variant/30 bg-card shadow-[0px_4px_20px_rgba(44,44,44,0.04)]"
             >
-              {item.imageUrl && (
-                <a href={item.imageUrl} target="_blank" rel="noopener noreferrer">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={item.imageUrl} alt="찬양콘티" className="w-full" />
-                </a>
-              )}
-
-              {item.youtubeUrl && (
-                <a
-                  href={item.youtubeUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="relative block"
-                >
-                  {item.thumbnailUrl ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
-                      src={item.thumbnailUrl}
-                      alt="유튜브 찬양콘티 썸네일"
-                      className="aspect-video w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex aspect-video w-full items-center justify-center bg-surface-container">
+              <a
+                href={item.youtubeUrl ?? undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative block"
+              >
+                {item.thumbnailUrl ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={item.thumbnailUrl}
+                    alt="유튜브 찬양콘티 썸네일"
+                    className="aspect-video w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 bg-surface-container">
+                    {item.isPlaylist ? (
+                      <ListVideo className="h-8 w-8 text-muted-foreground" />
+                    ) : (
                       <Link2 className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                  )}
+                    )}
+                    <span className="text-label-sm text-muted-foreground">
+                      {item.isPlaylist ? "유튜브 재생목록" : "유튜브 링크"}
+                    </span>
+                  </div>
+                )}
+                {!item.isPlaylist && (
                   <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
                     <span className="flex h-14 w-14 items-center justify-center rounded-full bg-black/55 text-white">
                       <Play className="h-6 w-6" fill="currentColor" />
                     </span>
                   </span>
-                </a>
-              )}
+                )}
+              </a>
 
               <figcaption className="flex items-center justify-between gap-2 px-4 py-3">
                 <span className="min-w-0 truncate text-label-sm text-muted-foreground">
                   {item.uploaderName} · {item.timeAgo}
                 </span>
                 <div className="flex shrink-0 items-center gap-2">
-                  {item.youtubeUrl && (
-                    <a
-                      href={item.youtubeUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 rounded-md bg-primary px-3 py-2 text-[12px] font-medium text-primary-foreground transition-opacity active:opacity-80"
-                    >
-                      <Play className="h-3.5 w-3.5" fill="currentColor" />
-                      유튜브로 보기
-                    </a>
-                  )}
+                  <a
+                    href={item.youtubeUrl ?? undefined}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 rounded-md bg-primary px-3 py-2 text-[12px] font-medium text-primary-foreground transition-opacity active:opacity-80"
+                  >
+                    <Play className="h-3.5 w-3.5" fill="currentColor" />
+                    {item.isPlaylist ? "재생목록 열기" : "유튜브로 보기"}
+                  </a>
                   {(item.isMine || isAdmin) && (
                     <button
                       type="button"
@@ -250,7 +266,7 @@ export function PraiseSetTab() {
           <input
             value={linkUrl}
             onChange={(event) => setLinkUrl(event.target.value)}
-            placeholder="유튜브 링크 붙여넣기 (선택)"
+            placeholder="유튜브 영상·재생목록 링크 (선택)"
             aria-label="유튜브 링크"
             inputMode="url"
             disabled={isSubmitting}
