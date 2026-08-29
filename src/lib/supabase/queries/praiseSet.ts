@@ -159,6 +159,18 @@ export function youtubeCanonicalUrl(
   return playlistId ? `${base}&list=${playlistId}` : base;
 }
 
+/**
+ * 재생목록을 처음부터 순서대로 재생하는 주소.
+ * 첫 영상을 알면 그 영상부터 재생목록이 이어서 재생되고,
+ * 모르면 재생목록 페이지를 열어 사용자가 직접 고르게 한다.
+ */
+export function youtubePlayAllUrl(playlistId: string, firstVideoId: string | null) {
+  if (!firstVideoId) {
+    return `https://www.youtube.com/playlist?list=${playlistId}`;
+  }
+  return `https://www.youtube.com/watch?v=${firstVideoId}&list=${playlistId}&index=1`;
+}
+
 export function youtubeThumbnailUrl(videoId: string) {
   return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
 }
