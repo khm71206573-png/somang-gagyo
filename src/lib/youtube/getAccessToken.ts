@@ -1,4 +1,19 @@
+import { HttpError } from "@/lib/automation/HttpError";
+
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
+
+/**
+ * refresh token이 만료·해제되면 구글이 invalid_grant를 돌려준다.
+ * (OAuth 동의 화면이 "테스트" 상태면 7일마다 만료된다)
+ */
+export const YOUTUBE_AUTH_EXPIRED_MESSAGE =
+  "유튜브 연결이 만료됐어요. 자동 가져오기는 잠시 쓸 수 없지만 아래에서 직접 입력해 등록할 수 있어요. " +
+  "(관리자: Google OAuth 동의 화면을 '프로덕션'으로 게시한 뒤 refresh token을 다시 발급해 " +
+  "YOUTUBE_REFRESH_TOKEN 환경변수를 새로 넣어주세요)";
+
+export const YOUTUBE_AUTH_MISSING_MESSAGE =
+  "유튜브 연결 설정이 아직 없어요. 자동 가져오기는 쓸 수 없지만 아래에서 직접 입력해 등록할 수 있어요. " +
+  "(관리자: YOUTUBE_CLIENT_ID·CLIENT_SECRET·REFRESH_TOKEN 환경변수 필요)";
 
 interface TokenResponse {
   access_token: string;
@@ -18,9 +33,7 @@ export async function getAccessToken(): Promise<string> {
   const refreshToken = process.env.YOUTUBE_REFRESH_TOKEN;
 
   if (!clientId || !clientSecret || !refreshToken) {
-    throw new Error(
-      "YOUTUBE_CLIENT_ID/CLIENT_SECRET/REFRESH_TOKEN이 설정되지 않았어요.",
-    );
+    throw new HttpError(YOUTUBE_AUTH_MISSING_MESSAGE, 503);
   }
 
   const body = new URLSearchParams({
@@ -38,7 +51,16 @@ export async function getAccessToken(): Promise<string> {
 
   if (!response.ok) {
     const text = await response.text().catch(() => "");
-    throw new Error(`YouTube access token 발급에 실패했어요. (status ${response.status}) ${text}`);
+
+    // 만료·해제는 관리자가 다시 인증해야 풀리는 문제라 안내 문구를 따로 준다.
+    if (text.includes("invalid_grant")) {
+      throw new HttpError(YOUTUBE_AUTH_EXPIRED_MESSAGE, 503);
+    }
+
+    throw new HttpError(
+      `유튜브 연결에 실패했어요. (status ${response.status}) ${text}`,
+      502,
+    );
   }
 
   const data = (await response.json()) as TokenResponse;
