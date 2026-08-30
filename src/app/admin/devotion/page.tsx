@@ -7,6 +7,7 @@ import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { useDevotionList } from "@/hooks/useDevotionList";
 import { useDeleteDevotion } from "@/hooks/useDeleteDevotion";
+import { devotionSourceLabels, toDevotionSource } from "@/lib/devotionSource";
 
 export default function DevotionListPage() {
   const { data, isLoading, isError, error, refetch, isFetching } = useDevotionList();
@@ -46,7 +47,11 @@ export default function DevotionListPage() {
           </p>
         ) : (
           <div className="overflow-hidden rounded-md border border-outline-variant/40 bg-card shadow-[0px_4px_14px_rgba(44,44,44,0.03)]">
-            {data.map((item, index) => (
+            {data.map((item, index) => {
+              // 같은 날 매일성경과 QT가 나란히 있을 수 있어 출처를 함께 보여준다.
+              const sourceLabel = devotionSourceLabels[toDevotionSource(item.source)];
+
+              return (
               <div
                 key={item.id}
                 className={
@@ -58,8 +63,8 @@ export default function DevotionListPage() {
                 <div>
                   <p className="text-body-md font-medium text-foreground">{item.title}</p>
                   <p className="text-label-sm text-muted-foreground">
-                    {item.devotion_date}
-                    {item.tag && ` · ${item.tag}`}
+                    {item.devotion_date} · {sourceLabel}
+                    {item.tag && item.tag !== sourceLabel && ` · ${item.tag}`}
                   </p>
                 </div>
                 <div className="flex shrink-0 gap-2">
@@ -85,7 +90,8 @@ export default function DevotionListPage() {
                   </button>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </main>

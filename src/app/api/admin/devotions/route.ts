@@ -1,15 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { linesToArray } from "@/lib/adminFormParsing";
-
-interface CreateDevotionBody {
-  devotionDate?: string;
-  tag?: string;
-  title?: string;
-  reference?: string;
-  verses?: string;
-  questions?: string;
-}
+import {
+  toDevotionColumns,
+  type DevotionRequestBody,
+} from "@/lib/admin/devotionPayload";
 
 export async function GET() {
   const supabase = await createClient();
@@ -63,39 +57,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "관리자만 사용할 수 있어요." }, { status: 403 });
   }
 
-  const body = (await request.json().catch(() => null)) as CreateDevotionBody | null;
-  const devotionDate = body?.devotionDate?.trim();
-  const title = body?.title?.trim();
-  const reference = body?.reference?.trim();
-  const tag = body?.tag?.trim() || null;
-  const verseLines = linesToArray(body?.verses ?? "");
+  const body = (await request.json().catch(() => null)) as DevotionRequestBody | null;
+  const parsed = toDevotionColumns(body);
 
-  if (!devotionDate || !title || !reference || verseLines.length === 0) {
-    return NextResponse.json(
-      { error: "날짜, 제목, 본문 구절, 말씀 내용을 입력해주세요." },
-      { status: 400 },
-    );
+  if ("error" in parsed) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
-  const verses = verseLines.map((text, index) => ({ number: index + 1, text }));
-  const questions = linesToArray(body?.questions ?? "").map((question, index) => ({
-    id: index + 1,
-    question,
-  }));
-
   const { error } = await supabase.from("devotions").insert({
-    devotion_date: devotionDate,
-    tag,
-    title,
-    reference,
-    verses,
-    questions,
+    ...parsed.columns,
     created_by: user.id,
   });
 
   if (error) {
     const message =
-      error.code === "23505" ? "해당 날짜에 이미 등록된 묵상이 있어요." : error.message;
+      error.code === "23505"
+        ? "해당 날짜에 이미 같은 출처의 묵상이 있어요."
+        : error.message;
     return NextResponse.json({ error: message }, { status: error.code === "23505" ? 409 : 500 });
   }
 

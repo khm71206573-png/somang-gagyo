@@ -5,11 +5,19 @@ import { useQuery } from "@tanstack/react-query";
 export interface DevotionDetailData {
   id: string;
   devotion_date: string;
+  source: string | null;
   tag: string | null;
   title: string;
   reference: string;
   verses: { number: number; text: string }[];
   questions: { id: number; question: string }[];
+  hymn: string | null;
+  commentary: { heading: string; body: string }[] | null;
+  prayer: string | null;
+  practice: string | null;
+  footnotes: { marker: string; text: string; verse: number | null }[] | null;
+  page_label: string | null;
+  image_urls: string[] | null;
 }
 
 async function fetchDevotion(id: string): Promise<DevotionDetailData> {

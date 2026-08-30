@@ -136,6 +136,7 @@ export async function scrapeDevotion(): Promise<ScrapeDevotionResult> {
 
   const { error: insertError } = await supabase.from("devotions").insert({
     devotion_date: devotionDate,
+    source: "daily_bible",
     tag: "매일성경",
     title,
     reference,

@@ -9,6 +9,10 @@ import type {
   BirthdayInfo,
   EventItem,
 } from "@/lib/mock-data";
+import {
+  DEVOTION_SOURCE_PREFERENCE,
+  toDevotionSource,
+} from "@/lib/devotionSource";
 import { expandEventRows, fetchEventsInWindow } from "./events";
 import { fetchCurrentPraiseSet } from "./praiseSet";
 import {
@@ -133,19 +137,26 @@ async function fetchDevotion(
   supabase: SupabaseClient,
   todayStr: string,
 ): Promise<DevotionInfo | null> {
+  // 같은 날 매일성경과 하나님나라QT가 함께 올라올 수 있어서 여러 건을 받는다.
+  // 홈 카드는 한 장뿐이라 그중 하나만 골라 보여주고, 나머지는 묵상 탭에서 본다.
   const { data } = await supabase
     .from("devotions")
-    .select("tag, reference, verses")
-    .eq("devotion_date", todayStr)
-    .maybeSingle();
+    .select("source, tag, reference, verses")
+    .eq("devotion_date", todayStr);
 
-  if (!data) return null;
+  const rows = data ?? [];
+  if (rows.length === 0) return null;
 
-  const verses = (data.verses ?? []) as { number: number; text: string }[];
+  const preferred =
+    DEVOTION_SOURCE_PREFERENCE.map((source) =>
+      rows.find((row) => toDevotionSource(row.source) === source),
+    ).find(Boolean) ?? rows[0];
+
+  const verses = (preferred.verses ?? []) as { number: number; text: string }[];
 
   return {
-    tag: data.tag ?? "오늘의 묵상",
-    reference: data.reference,
+    tag: preferred.tag ?? "오늘의 묵상",
+    reference: preferred.reference,
     verse: verses.map((v) => v.text).join(" "),
   };
 }
