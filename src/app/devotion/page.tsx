@@ -3,6 +3,7 @@
 import { DevotionTopBar } from "@/components/devotion/DevotionTopBar";
 import { ScriptureHeading } from "@/components/devotion/ScriptureHeading";
 import { ScriptureCard } from "@/components/devotion/ScriptureCard";
+import { DevotionPhotoViewer } from "@/components/devotion/DevotionPhotoViewer";
 import { CommentaryCard } from "@/components/devotion/CommentaryCard";
 import { ReflectionQuestions } from "@/components/devotion/ReflectionQuestions";
 import { PrayerCard } from "@/components/devotion/PrayerCard";
@@ -48,6 +49,7 @@ export default function DevotionDetailPage() {
       <main className="flex flex-col gap-stack-lg px-margin-main pt-stack-sm">
         <ScriptureHeading devotion={devotion} />
         <ScriptureCard verses={devotion.verses} footnotes={devotion.footnotes} />
+        <DevotionPhotoViewer imageUrls={devotion.imageUrls} />
         <CommentaryCard sections={devotion.commentary} />
         <ReflectionQuestions
           questions={
