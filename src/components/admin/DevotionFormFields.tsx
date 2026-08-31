@@ -6,7 +6,6 @@ import {
   fieldLabel,
   fieldTextarea,
 } from "@/components/admin/adminFormStyles";
-import type { DevotionSource } from "@/lib/devotionSource";
 
 /** 등록·수정 화면이 함께 쓰는 묵상 입력값. 전부 입력칸의 문자열 그대로다. */
 export interface DevotionFormValues {
@@ -42,7 +41,6 @@ export function emptyDevotionFormValues(devotionDate: string): DevotionFormValue
 }
 
 interface DevotionFormFieldsProps {
-  source: DevotionSource;
   values: DevotionFormValues;
   onChange: (patch: Partial<DevotionFormValues>) => void;
   onGenerateQuestions: () => void;
@@ -50,14 +48,11 @@ interface DevotionFormFieldsProps {
 }
 
 export function DevotionFormFields({
-  source,
   values,
   onChange,
   onGenerateQuestions,
   isGeneratingQuestions,
 }: DevotionFormFieldsProps) {
-  const isKingdomQt = source === "kingdom_qt";
-
   return (
     <>
       <div className={fieldGroup}>
@@ -107,25 +102,23 @@ export function DevotionFormFields({
           id="reference"
           value={values.reference}
           onChange={(event) => onChange({ reference: event.target.value })}
-          placeholder="예: 요한복음 3:16"
+          placeholder="예: 출애굽기 11:1-10"
           className={fieldInput}
         />
       </div>
 
-      {isKingdomQt && (
-        <div className={fieldGroup}>
-          <label htmlFor="hymn" className={fieldLabel}>
-            찬송가 <span className="text-muted-foreground">(선택)</span>
-          </label>
-          <input
-            id="hymn"
-            value={values.hymn}
-            onChange={(event) => onChange({ hymn: event.target.value })}
-            placeholder="예: 317장 (통 353) 내 주 예수 주신 은혜"
-            className={fieldInput}
-          />
-        </div>
-      )}
+      <div className={fieldGroup}>
+        <label htmlFor="hymn" className={fieldLabel}>
+          찬송가 <span className="text-muted-foreground">(선택)</span>
+        </label>
+        <input
+          id="hymn"
+          value={values.hymn}
+          onChange={(event) => onChange({ hymn: event.target.value })}
+          placeholder="예: 317장 (통 353) 내 주 예수 주신 은혜"
+          className={fieldInput}
+        />
+      </div>
 
       <div className={fieldGroup}>
         <label htmlFor="verses" className={fieldLabel}>
@@ -137,7 +130,7 @@ export function DevotionFormFields({
           rows={8}
           value={values.verses}
           onChange={(event) => onChange({ verses: event.target.value })}
-          placeholder={"1 하나님이 세상을 이처럼 사랑하사...\n2 이는 그를 믿는 자마다..."}
+          placeholder={"1 주님께서 모세에게 말씀하셨다...\n2 이제 너는 백성에게 일러서..."}
           className={fieldTextarea}
         />
         <p className="text-label-sm text-muted-foreground">
@@ -145,26 +138,24 @@ export function DevotionFormFields({
         </p>
       </div>
 
-      {isKingdomQt && (
-        <div className={fieldGroup}>
-          <label htmlFor="commentary" className={fieldLabel}>
-            묵상 해설 <span className="text-muted-foreground">(선택)</span>
-          </label>
-          <textarea
-            id="commentary"
-            rows={10}
-            value={values.commentary}
-            onChange={(event) => onChange({ commentary: event.target.value })}
-            placeholder={
-              "성경 속의 하나님 나라\n이제 마지막 한 가지 재앙만 남았습니다...\n\n지금 이곳의 하나님 나라\n신앙인도 세상과 같은 무대에서..."
-            }
-            className={fieldTextarea}
-          />
-          <p className="text-label-sm text-muted-foreground">
-            빈 줄로 나눈 덩어리마다 첫 줄이 소제목, 나머지가 본문이에요.
-          </p>
-        </div>
-      )}
+      <div className={fieldGroup}>
+        <label htmlFor="commentary" className={fieldLabel}>
+          묵상 해설 <span className="text-muted-foreground">(선택)</span>
+        </label>
+        <textarea
+          id="commentary"
+          rows={10}
+          value={values.commentary}
+          onChange={(event) => onChange({ commentary: event.target.value })}
+          placeholder={
+            "성경 속의 하나님 나라\n이제 마지막 한 가지 재앙만 남았습니다...\n\n지금 이곳의 하나님 나라\n신앙인도 세상과 같은 무대에서..."
+          }
+          className={fieldTextarea}
+        />
+        <p className="text-label-sm text-muted-foreground">
+          빈 줄로 나눈 덩어리마다 첫 줄이 소제목, 나머지가 본문이에요.
+        </p>
+      </div>
 
       <div className={fieldGroup}>
         <div className="flex items-center justify-between">
@@ -186,78 +177,73 @@ export function DevotionFormFields({
           value={values.questions}
           onChange={(event) => onChange({ questions: event.target.value })}
           placeholder={
-            "오늘 본문에서 하나님은 어떤 분으로 묘사되고 있나요?\n이 말씀이 지금 내 삶과 어떻게 연결되나요?\n오늘 하루 실천하고 싶은 것은 무엇인가요?"
+            "이스라엘 백성들이 나가게 될 때 금과 은을 요구하라고 하신 이유는 무엇일까요? (2절)"
           }
           className={fieldTextarea}
         />
         <p className="text-label-sm text-muted-foreground">
-          {isKingdomQt
-            ? "책에 실린 질문을 그대로 씁니다. 사진에서 질문을 읽지 못했을 때만 AI로 만들어주세요."
-            : "비워두면 기본 묵상 질문으로 올라가요. 본문에 맞는 질문이 필요할 때만 AI로 만들어주세요."}
+          책에 실린 질문을 그대로 씁니다. 사진에서 질문을 읽지 못했을 때만 AI로 만들어주세요.
+          비워두면 기본 묵상 질문으로 올라가요.
         </p>
       </div>
 
-      {isKingdomQt && (
-        <>
-          <div className={fieldGroup}>
-            <label htmlFor="prayer" className={fieldLabel}>
-              기도 <span className="text-muted-foreground">(선택)</span>
-            </label>
-            <textarea
-              id="prayer"
-              rows={3}
-              value={values.prayer}
-              onChange={(event) => onChange({ prayer: event.target.value })}
-              placeholder="백성을 영화롭게 하시는 주님, ..."
-              className={fieldTextarea}
-            />
-          </div>
+      <div className={fieldGroup}>
+        <label htmlFor="prayer" className={fieldLabel}>
+          기도 <span className="text-muted-foreground">(선택)</span>
+        </label>
+        <textarea
+          id="prayer"
+          rows={3}
+          value={values.prayer}
+          onChange={(event) => onChange({ prayer: event.target.value })}
+          placeholder="백성을 영화롭게 하시는 주님, ..."
+          className={fieldTextarea}
+        />
+      </div>
 
-          <div className={fieldGroup}>
-            <label htmlFor="practice" className={fieldLabel}>
-              오늘 살기 <span className="text-muted-foreground">(선택, 한 줄)</span>
-            </label>
-            <textarea
-              id="practice"
-              rows={2}
-              value={values.practice}
-              onChange={(event) => onChange({ practice: event.target.value })}
-              placeholder="우리가 하나님을 영화롭게 하기 전에, ..."
-              className={fieldTextarea}
-            />
-          </div>
+      <div className={fieldGroup}>
+        <label htmlFor="practice" className={fieldLabel}>
+          오늘 살기 <span className="text-muted-foreground">(선택, 한 줄)</span>
+        </label>
+        <textarea
+          id="practice"
+          rows={2}
+          value={values.practice}
+          onChange={(event) => onChange({ practice: event.target.value })}
+          placeholder="우리가 하나님을 영화롭게 하기 전에, ..."
+          className={fieldTextarea}
+        />
+      </div>
 
-          <div className={fieldGroup}>
-            <label htmlFor="footnotes" className={fieldLabel}>
-              각주 <span className="text-muted-foreground">(선택, 한 줄에 하나씩)</span>
-            </label>
-            <textarea
-              id="footnotes"
-              rows={4}
-              value={values.footnotes}
-              onChange={(event) => onChange({ footnotes: event.target.value })}
-              placeholder={"a) 오랜 종살이의 정당한 품삯과 같다. (2절)"}
-              className={fieldTextarea}
-            />
-            <p className="text-label-sm text-muted-foreground">
-              지면에서 글씨가 가장 작은 부분이라 잘못 읽히기 쉬워요. 필요 없으면 비워두세요.
-            </p>
-          </div>
+      <div className={fieldGroup}>
+        <label htmlFor="footnotes" className={fieldLabel}>
+          각주 <span className="text-muted-foreground">(선택, 한 줄에 하나씩)</span>
+        </label>
+        <textarea
+          id="footnotes"
+          rows={4}
+          value={values.footnotes}
+          onChange={(event) => onChange({ footnotes: event.target.value })}
+          placeholder={"a) 오랜 종살이의 정당한 품삯과 같다. (2절)"}
+          className={fieldTextarea}
+        />
+        <p className="text-label-sm text-muted-foreground">
+          지면에서 글씨가 가장 작은 부분이라 잘못 읽히기 쉬워요. 필요 없으면 비워두세요.
+        </p>
+      </div>
 
-          <div className={fieldGroup}>
-            <label htmlFor="pageLabel" className={fieldLabel}>
-              책 페이지 <span className="text-muted-foreground">(선택)</span>
-            </label>
-            <input
-              id="pageLabel"
-              value={values.pageLabel}
-              onChange={(event) => onChange({ pageLabel: event.target.value })}
-              placeholder="예: 166-167"
-              className={fieldInput}
-            />
-          </div>
-        </>
-      )}
+      <div className={fieldGroup}>
+        <label htmlFor="pageLabel" className={fieldLabel}>
+          책 페이지 <span className="text-muted-foreground">(선택)</span>
+        </label>
+        <input
+          id="pageLabel"
+          value={values.pageLabel}
+          onChange={(event) => onChange({ pageLabel: event.target.value })}
+          placeholder="예: 166-167"
+          className={fieldInput}
+        />
+      </div>
     </>
   );
 }

@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 export interface DevotionListItem {
   id: string;
   devotion_date: string;
-  source: string | null;
   tag: string | null;
   title: string;
   reference: string;

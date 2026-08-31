@@ -142,7 +142,7 @@ export interface DevotionDetail {
   reference: string;
   verses: DevotionVerse[];
   questions: ReflectionQuestion[];
-  /** 아래는 하나님나라QT 묵상에만 있는 항목 (매일성경은 비어 있다) */
+  /** 아래는 QT 지면에서 읽어온 항목. 없으면 그 카드는 그려지지 않는다. */
   hymn: string | null;
   commentary: DevotionCommentarySection[];
   prayer: string | null;

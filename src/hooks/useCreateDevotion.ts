@@ -1,17 +1,14 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { DevotionSource } from "@/lib/devotionSource";
 
 export interface CreateDevotionInput {
   devotionDate: string;
-  source: DevotionSource;
   tag: string;
   title: string;
   reference: string;
   verses: string;
   questions: string;
-  /** 아래는 하나님나라QT에서만 채워지는 항목 (매일성경은 빈 문자열) */
   hymn?: string;
   commentary?: string;
   prayer?: string;

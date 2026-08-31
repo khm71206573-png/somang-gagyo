@@ -1,11 +1,10 @@
 import { linesToArray, linesToVerses } from "@/lib/adminFormParsing";
 import { textToCommentary, textToFootnotes } from "@/lib/devotionQtParsing";
-import { DEFAULT_DEVOTION_SOURCE, isDevotionSource } from "@/lib/devotionSource";
+import { DEVOTION_SOURCE } from "@/lib/devotionSource";
 
 /** 관리자 등록·수정 화면이 보내는 묵상 입력값 (모두 입력칸의 문자열 그대로) */
 export interface DevotionRequestBody {
   devotionDate?: string;
-  source?: string;
   tag?: string;
   title?: string;
   reference?: string;
@@ -58,10 +57,6 @@ export function toDevotionColumns(
     return { error: "날짜, 제목, 본문 구절, 말씀 내용을 입력해주세요." };
   }
 
-  if (body?.source !== undefined && !isDevotionSource(body.source)) {
-    return { error: "묵상 출처가 올바르지 않아요." };
-  }
-
   const imageUrls = Array.isArray(body?.imageUrls)
     ? body.imageUrls.filter((url): url is string => typeof url === "string")
     : [];
@@ -69,7 +64,8 @@ export function toDevotionColumns(
   return {
     columns: {
       devotion_date: devotionDate,
-      source: body?.source ?? DEFAULT_DEVOTION_SOURCE,
+      // 지금은 출처가 하나뿐이라 화면에서 고르지 않고 여기서 정한다.
+      source: DEVOTION_SOURCE,
       tag: trimmedOrNull(body?.tag),
       title,
       reference,

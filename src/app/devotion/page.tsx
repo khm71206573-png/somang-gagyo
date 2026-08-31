@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
 import { DevotionTopBar } from "@/components/devotion/DevotionTopBar";
-import { DevotionSourceTabs } from "@/components/devotion/DevotionSourceTabs";
 import { ScriptureHeading } from "@/components/devotion/ScriptureHeading";
 import { ScriptureCard } from "@/components/devotion/ScriptureCard";
 import { CommentaryCard } from "@/components/devotion/CommentaryCard";
@@ -17,13 +15,10 @@ import { ErrorState } from "@/components/common/ErrorState";
 import { EmptyState } from "@/components/common/EmptyState";
 import { useDevotionPageData } from "@/hooks/useDevotionPageData";
 import { defaultDevotionQuestions } from "@/lib/devotionQuestions";
-import type { DevotionSource } from "@/lib/devotionSource";
 
 export default function DevotionDetailPage() {
-  // 고르기 전에는 서버가 정한 기본 출처(매일성경 우선)를 따른다.
-  const [selectedSource, setSelectedSource] = useState<DevotionSource>();
   const { data, isLoading, isError, error, refetch, isFetching } =
-    useDevotionPageData(selectedSource);
+    useDevotionPageData();
 
   if (isLoading) {
     return <LoadingState />;
@@ -43,14 +38,7 @@ export default function DevotionDetailPage() {
     return <EmptyState message="등록된 묵상이 아직 없어요." />;
   }
 
-  const {
-    devotionId,
-    devotion,
-    source,
-    availableSources,
-    sharedReflections,
-    participantCount,
-  } = data;
+  const { devotionId, devotion, sharedReflections, participantCount } = data;
 
   return (
     <div className="relative mx-auto min-h-screen w-full max-w-[480px] bg-background pb-[104px]">
@@ -58,12 +46,7 @@ export default function DevotionDetailPage() {
         shareTitle={devotion.reference}
         shareText={`[오늘의 묵상] ${devotion.title}\n${devotion.reference}`}
       />
-      <DevotionSourceTabs
-        sources={availableSources}
-        activeSource={source}
-        onSelect={setSelectedSource}
-      />
-      <main className="flex flex-col gap-stack-lg px-margin-main pt-stack-md">
+      <main className="flex flex-col gap-stack-lg px-margin-main pt-stack-sm">
         <ScriptureHeading devotion={devotion} />
         <ScriptureCard verses={devotion.verses} />
         <CommentaryCard sections={devotion.commentary} />

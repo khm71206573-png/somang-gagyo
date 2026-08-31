@@ -16,11 +16,6 @@ import { useUpdateDevotion } from "@/hooks/useUpdateDevotion";
 import { useGenerateDevotionQuestions } from "@/hooks/useGenerateDevotionQuestions";
 import { arrayToLines, versesToLines } from "@/lib/adminFormParsing";
 import { commentaryToText, footnotesToText } from "@/lib/devotionQtParsing";
-import {
-  devotionSourceLabels,
-  toDevotionSource,
-  type DevotionSource,
-} from "@/lib/devotionSource";
 
 export default function EditDevotionPage({
   params,
@@ -34,7 +29,6 @@ export default function EditDevotionPage({
   const { mutateAsync: generateQuestions, isPending: isGenerating } =
     useGenerateDevotionQuestions();
 
-  const [source, setSource] = useState<DevotionSource>("daily_bible");
   const [values, setValues] = useState<DevotionFormValues>(() =>
     emptyDevotionFormValues(""),
   );
@@ -43,7 +37,6 @@ export default function EditDevotionPage({
   useEffect(() => {
     if (!data) return;
 
-    setSource(toDevotionSource(data.source));
     setValues({
       devotionDate: data.devotion_date,
       tag: data.tag ?? "",
@@ -111,7 +104,6 @@ export default function EditDevotionPage({
       await mutateAsync({
         id,
         ...values,
-        source,
         // 사진은 등록할 때 올린 것을 그대로 둔다.
         imageUrls: data?.image_urls ?? [],
       });
@@ -125,10 +117,6 @@ export default function EditDevotionPage({
     <div className="relative mx-auto min-h-screen w-full max-w-[480px] bg-background pb-[104px]">
       <AdminFormTopBar title="묵상 수정" listHref="/admin/devotion" />
       <main className="px-margin-main pt-stack-sm">
-        <p className="mb-stack-md text-label-sm text-muted-foreground">
-          출처 · {devotionSourceLabels[source]}
-        </p>
-
         {photoUrls.length > 0 && (
           <section className="mb-stack-md flex flex-col gap-stack-sm rounded-md border border-outline-variant/40 bg-surface-container-low p-4">
             <p className="text-label-sm text-muted-foreground">
@@ -153,7 +141,6 @@ export default function EditDevotionPage({
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-stack-md">
           <DevotionFormFields
-            source={source}
             values={values}
             onChange={patch}
             onGenerateQuestions={handleGenerateQuestions}
