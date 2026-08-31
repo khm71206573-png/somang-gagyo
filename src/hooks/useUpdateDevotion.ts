@@ -30,6 +30,7 @@ export function useUpdateDevotion() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["devotion"] });
     },
   });
 }

@@ -125,12 +125,30 @@ export interface ReflectionQuestion {
   question: string;
 }
 
+export interface DevotionCommentarySection {
+  heading: string;
+  body: string;
+}
+
+export interface DevotionFootnote {
+  marker: string;
+  text: string;
+  verse: number | null;
+}
+
 export interface DevotionDetail {
   dateLabel: string;
   title: string;
   reference: string;
   verses: DevotionVerse[];
   questions: ReflectionQuestion[];
+  /** 아래는 QT 지면에서 읽어온 항목. 없으면 그 카드는 그려지지 않는다. */
+  hymn: string | null;
+  commentary: DevotionCommentarySection[];
+  prayer: string | null;
+  practice: string | null;
+  footnotes: DevotionFootnote[];
+  imageUrls: string[];
 }
 
 export interface SharedReflection {
@@ -148,6 +166,12 @@ export const devotionDetail: DevotionDetail = {
   dateLabel: "2026년 8월 16일 주일",
   title: "여호와는 나의 목자시니",
   reference: "시편 23:1-3",
+  hymn: null,
+  commentary: [],
+  prayer: null,
+  practice: null,
+  footnotes: [],
+  imageUrls: [],
   verses: [
     { number: 1, text: "여호와는 나의 목자시니 내게 부족함이 없으리로다" },
     {

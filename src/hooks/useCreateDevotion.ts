@@ -9,6 +9,13 @@ export interface CreateDevotionInput {
   reference: string;
   verses: string;
   questions: string;
+  hymn?: string;
+  commentary?: string;
+  prayer?: string;
+  practice?: string;
+  footnotes?: string;
+  pageLabel?: string;
+  imageUrls?: string[];
 }
 
 async function createDevotion(input: CreateDevotionInput) {
@@ -34,6 +41,7 @@ export function useCreateDevotion() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["devotion"] });
     },
   });
 }

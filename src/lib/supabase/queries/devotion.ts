@@ -1,5 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { DevotionDetail, SharedReflection } from "@/lib/mock-data";
+import type {
+  DevotionCommentarySection,
+  DevotionDetail,
+  DevotionFootnote,
+  SharedReflection,
+} from "@/lib/mock-data";
 import { formatDateLabel, formatTimeAgo, unwrapRelation } from "./utils";
 
 export interface DevotionPageData {
@@ -19,7 +24,9 @@ export async function fetchDevotionPageData(
 
   const { data: devotionRow } = await supabase
     .from("devotions")
-    .select("id, devotion_date, title, reference, verses, questions")
+    .select(
+      "id, devotion_date, title, reference, verses, questions, hymn, commentary, prayer, practice, footnotes, image_urls",
+    )
     .order("devotion_date", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -50,6 +57,12 @@ export async function fetchDevotionPageData(
     reference: devotionRow.reference,
     verses,
     questions,
+    hymn: devotionRow.hymn ?? null,
+    commentary: (devotionRow.commentary ?? []) as DevotionCommentarySection[],
+    prayer: devotionRow.prayer ?? null,
+    practice: devotionRow.practice ?? null,
+    footnotes: (devotionRow.footnotes ?? []) as DevotionFootnote[],
+    imageUrls: (devotionRow.image_urls ?? []) as string[],
   };
 
   const sharedReflections: SharedReflection[] = (noteRows ?? []).map((row) => {

@@ -133,10 +133,13 @@ async function fetchDevotion(
   supabase: SupabaseClient,
   todayStr: string,
 ): Promise<DevotionInfo | null> {
+  // maybeSingle은 행이 둘이면 오류가 난다. 홈 화면 전체가 그것 때문에 깨지지
+  // 않도록 한 건만 받아온다.
   const { data } = await supabase
     .from("devotions")
     .select("tag, reference, verses")
     .eq("devotion_date", todayStr)
+    .limit(1)
     .maybeSingle();
 
   if (!data) return null;

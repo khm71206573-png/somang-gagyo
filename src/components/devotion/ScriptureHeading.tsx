@@ -14,6 +14,11 @@ export function ScriptureHeading({ devotion }: ScriptureHeadingProps) {
       <p className="mt-2 text-body-md text-muted-foreground">
         {devotion.reference}
       </p>
+      {devotion.hymn && (
+        <p className="mt-1 text-label-sm text-muted-foreground">
+          찬송가 {devotion.hymn}
+        </p>
+      )}
     </section>
   );
 }
