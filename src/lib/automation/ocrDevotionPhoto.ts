@@ -48,7 +48,6 @@ export interface OcrDevotionResult {
   prayer: string | null;
   practice: string | null;
   footnotes: OcrFootnote[];
-  pageLabel: string | null;
 }
 
 const OCR_TOOL_NAME = "submit_devotion_page";
@@ -95,7 +94,7 @@ const OCR_TOOL: Anthropic.Tool = {
       hymn: {
         type: "string",
         description:
-          "찬송가 표기 전체. 예: \"317장 (통 353) 내 주 예수 주신 은혜\". 없으면 생략.",
+          "찬송가가 몇 장인지만. 예: \"317장 (통 353)\". 앱 화면이 \"찬송가\"를 앞에 붙여 주므로 그 낱말은 넣지 않는다. 찬송가 제목도 넣지 않는다. 없으면 생략.",
       },
       verses: {
         type: "array",
@@ -150,10 +149,6 @@ const OCR_TOOL: Anthropic.Tool = {
           },
           required: ["marker", "text"],
         },
-      },
-      pageLabel: {
-        type: "string",
-        description: "책 페이지 표기. 예: \"166-167\". 못 읽으면 생략.",
       },
     },
     required: ["title", "reference", "verses", "questions", "commentary"],
@@ -214,6 +209,19 @@ function asQuestions(value: unknown): string[] {
   return value
     .map((item) => asString(item))
     .filter((question): question is string => question !== null);
+}
+
+/**
+ * 화면이 "찬송가"를 앞에 붙여 그리므로 값에는 그 낱말이 없어야 한다.
+ * 프롬프트로도 막지만, 모델이 "찬송가 317장"처럼 보내오면 "찬송가 찬송가 317장"이
+ * 되어버려서 여기서 한 번 더 떼어낸다.
+ */
+function normalizeHymn(value: unknown): string | null {
+  const text = asString(value);
+  if (!text) return null;
+
+  const stripped = text.replace(/^\s*찬송가\s*/, "").trim();
+  return stripped.length > 0 ? stripped : null;
 }
 
 /** "08-31"처럼 두 자리-두 자리이고 실제로 있는 날짜인지 본다. */
@@ -317,13 +325,12 @@ export async function ocrDevotionPhoto(
     monthDay: asMonthDay(input.monthDay),
     title,
     reference,
-    hymn: asString(input.hymn),
+    hymn: normalizeHymn(input.hymn),
     verses,
     questions: asQuestions(input.questions),
     commentary: asCommentary(input.commentary),
     prayer: asString(input.prayer),
     practice: asString(input.practice),
     footnotes: asFootnotes(input.footnotes),
-    pageLabel: asString(input.pageLabel),
   };
 }

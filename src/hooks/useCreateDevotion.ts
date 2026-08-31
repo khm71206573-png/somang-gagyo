@@ -14,7 +14,6 @@ export interface CreateDevotionInput {
   prayer?: string;
   practice?: string;
   footnotes?: string;
-  pageLabel?: string;
   imageUrls?: string[];
 }
 

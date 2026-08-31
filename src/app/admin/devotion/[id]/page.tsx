@@ -50,7 +50,6 @@ export default function EditDevotionPage({
       prayer: data.prayer ?? "",
       practice: data.practice ?? "",
       footnotes: footnotesToText(data.footnotes ?? []),
-      pageLabel: data.page_label ?? "",
     });
   }, [data]);
 

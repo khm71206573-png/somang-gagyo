@@ -6,7 +6,6 @@ import { ScriptureCard } from "@/components/devotion/ScriptureCard";
 import { CommentaryCard } from "@/components/devotion/CommentaryCard";
 import { ReflectionQuestions } from "@/components/devotion/ReflectionQuestions";
 import { PrayerCard } from "@/components/devotion/PrayerCard";
-import { FootnoteList } from "@/components/devotion/FootnoteList";
 import { ReflectionInput } from "@/components/devotion/ReflectionInput";
 import { SharedReflections } from "@/components/devotion/SharedReflections";
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -48,7 +47,7 @@ export default function DevotionDetailPage() {
       />
       <main className="flex flex-col gap-stack-lg px-margin-main pt-stack-sm">
         <ScriptureHeading devotion={devotion} />
-        <ScriptureCard verses={devotion.verses} />
+        <ScriptureCard verses={devotion.verses} footnotes={devotion.footnotes} />
         <CommentaryCard sections={devotion.commentary} />
         <ReflectionQuestions
           questions={
@@ -58,7 +57,6 @@ export default function DevotionDetailPage() {
           }
         />
         <PrayerCard prayer={devotion.prayer} practice={devotion.practice} />
-        <FootnoteList footnotes={devotion.footnotes} />
         <ReflectionInput devotionId={devotionId} />
         <SharedReflections
           reflections={sharedReflections}

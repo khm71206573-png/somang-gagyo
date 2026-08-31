@@ -20,7 +20,6 @@ export interface DevotionFormValues {
   prayer: string;
   practice: string;
   footnotes: string;
-  pageLabel: string;
 }
 
 export function emptyDevotionFormValues(devotionDate: string): DevotionFormValues {
@@ -36,7 +35,6 @@ export function emptyDevotionFormValues(devotionDate: string): DevotionFormValue
     prayer: "",
     practice: "",
     footnotes: "",
-    pageLabel: "",
   };
 }
 
@@ -109,13 +107,13 @@ export function DevotionFormFields({
 
       <div className={fieldGroup}>
         <label htmlFor="hymn" className={fieldLabel}>
-          찬송가 <span className="text-muted-foreground">(선택)</span>
+          찬송가 <span className="text-muted-foreground">(선택, 몇 장인지만)</span>
         </label>
         <input
           id="hymn"
           value={values.hymn}
           onChange={(event) => onChange({ hymn: event.target.value })}
-          placeholder="예: 317장 (통 353) 내 주 예수 주신 은혜"
+          placeholder="예: 317장 (통 353)"
           className={fieldInput}
         />
       </div>
@@ -228,21 +226,9 @@ export function DevotionFormFields({
           className={fieldTextarea}
         />
         <p className="text-label-sm text-muted-foreground">
-          지면에서 글씨가 가장 작은 부분이라 잘못 읽히기 쉬워요. 필요 없으면 비워두세요.
+          끝의 (N절)을 보고 그 절 옆에 작은 표시로 붙어요. 지면에서 글씨가 가장 작은
+          부분이라 잘못 읽히기 쉬우니, 필요 없으면 비워두세요.
         </p>
-      </div>
-
-      <div className={fieldGroup}>
-        <label htmlFor="pageLabel" className={fieldLabel}>
-          책 페이지 <span className="text-muted-foreground">(선택)</span>
-        </label>
-        <input
-          id="pageLabel"
-          value={values.pageLabel}
-          onChange={(event) => onChange({ pageLabel: event.target.value })}
-          placeholder="예: 166-167"
-          className={fieldInput}
-        />
       </div>
     </>
   );

@@ -61,7 +61,6 @@ export default function NewDevotionPage() {
         prayer: read.prayer,
         practice: read.practice,
         footnotes: read.footnotes,
-        pageLabel: read.pageLabel,
       });
       setImageUrls(read.imageUrls);
       setHasRead(true);

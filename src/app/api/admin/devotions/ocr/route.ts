@@ -153,7 +153,6 @@ export async function POST(request: Request) {
     prayer: result.prayer ?? "",
     practice: result.practice ?? "",
     footnotes: footnotesToText(result.footnotes),
-    pageLabel: result.pageLabel ?? "",
     imageUrls,
   });
 }

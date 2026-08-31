@@ -15,7 +15,6 @@ export interface DevotionRequestBody {
   prayer?: string;
   practice?: string;
   footnotes?: string;
-  pageLabel?: string;
   imageUrls?: unknown;
 }
 
@@ -32,7 +31,6 @@ export interface DevotionColumns {
   prayer: string | null;
   practice: string | null;
   footnotes: { marker: string; text: string; verse: number | null }[];
-  page_label: string | null;
   image_urls: string[];
 }
 
@@ -79,7 +77,6 @@ export function toDevotionColumns(
       prayer: trimmedOrNull(body?.prayer),
       practice: trimmedOrNull(body?.practice),
       footnotes: textToFootnotes(body?.footnotes ?? ""),
-      page_label: trimmedOrNull(body?.pageLabel),
       image_urls: imageUrls,
     },
   };

@@ -15,7 +15,6 @@ export interface DevotionDetailData {
   prayer: string | null;
   practice: string | null;
   footnotes: { marker: string; text: string; verse: number | null }[] | null;
-  page_label: string | null;
   image_urls: string[] | null;
 }
 
