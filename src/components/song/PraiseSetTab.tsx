@@ -14,6 +14,10 @@ import { useDeletePraiseSetItem } from "@/hooks/useDeletePraiseSetItem";
 import { PraiseSheetCarousel } from "@/components/song/PraiseSheetCarousel";
 import { PraiseSetLinkCard } from "@/components/song/PraiseSetLinkCard";
 import type { PraiseSetItem } from "@/lib/supabase/queries/praiseSet";
+import {
+  formatSundayLabel,
+  upcomingSundayDateString,
+} from "@/lib/supabase/queries/utils";
 
 export function PraiseSetTab() {
   const isAdmin = useIsAdmin();
@@ -33,6 +37,12 @@ export function PraiseSetTab() {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [linkUrl, setLinkUrl] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+
+  // 콘티는 주일 전에 올라오므로 안내 문구도 다가오는 주일 날짜로 보여준다.
+  const upcomingLabel = useMemo(
+    () => formatSundayLabel(upcomingSundayDateString()),
+    [],
+  );
 
   // 악보 사진은 좌우로 넘겨 보고, 유튜브 링크는 그 아래에 카드로 쌓는다.
   const sheetItems = useMemo(
@@ -123,14 +133,14 @@ export function PraiseSetTab() {
     <section className="flex flex-col gap-stack-md">
       <header className="flex items-baseline justify-between">
         <h2 className="text-title-lg text-foreground">
-          {data.isThisWeek ? "이번주 찬양콘티" : "지난 찬양콘티"}
+          {data.isUpcoming ? "다가오는 주일 찬양콘티" : "지난 찬양콘티"}
         </h2>
-        <span className="text-label-sm text-muted-foreground">{data.weekLabel}</span>
+        <span className="text-label-sm text-muted-foreground">{data.sundayLabel}</span>
       </header>
 
-      {!data.isThisWeek && data.items.length > 0 && (
+      {!data.isUpcoming && data.items.length > 0 && (
         <p className="rounded-md border border-outline-variant/40 bg-card p-3 text-label-sm text-muted-foreground">
-          이번 주 콘티가 아직 안 올라와서 가장 최근 콘티를 보여주고 있어요.
+          {upcomingLabel} 콘티가 아직 안 올라와서 가장 최근 콘티를 보여주고 있어요.
         </p>
       )}
 
@@ -230,7 +240,7 @@ export function PraiseSetTab() {
 
         <p className="text-center text-[11px] text-muted-foreground">
           누구나 올릴 수 있어요. 악보 사진과 유튜브 링크를 함께 고른 뒤 등록하기를 누르면
-          이번 주 콘티로 저장돼요.
+          {` ${upcomingLabel} `}콘티로 저장돼요.
         </p>
         {formError && (
           <p className="text-center text-label-sm text-destructive">{formError}</p>

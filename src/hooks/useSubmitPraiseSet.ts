@@ -10,7 +10,7 @@ import {
   PRAISE_SET_YOUTUBE_SETUP_MESSAGE,
   parseYoutubeLink,
 } from "@/lib/supabase/queries/praiseSet";
-import { weekStartDateString } from "@/lib/supabase/queries/utils";
+import { upcomingSundayDateString } from "@/lib/supabase/queries/utils";
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
@@ -80,7 +80,8 @@ async function submitPraiseSet(
     throw new Error("로그인이 필요해요.");
   }
 
-  const weekStart = weekStartDateString();
+  // 콘티는 주일 전(보통 금요일)에 올라오므로 다가오는 주일 날짜로 저장한다.
+  const sunday = upcomingSundayDateString();
   const total = files.length + (link ? 1 : 0);
   let done = 0;
   onProgress({ done, total });
@@ -106,7 +107,7 @@ async function submitPraiseSet(
     } = supabase.storage.from(PRAISE_SET_BUCKET).getPublicUrl(path);
 
     const { error: insertError } = await supabase.from("praise_sets").insert({
-      week_start: weekStart,
+      week_start: sunday,
       image_url: publicUrl,
       storage_path: path,
       created_by: user.id,
@@ -129,7 +130,7 @@ async function submitPraiseSet(
 
   if (link) {
     const { error } = await supabase.from("praise_sets").insert({
-      week_start: weekStart,
+      week_start: sunday,
       // 어디서 복사해 왔든 항상 열리는 형태로 저장한다.
       youtube_url: link.url,
       created_by: user.id,

@@ -48,12 +48,12 @@ export interface DashboardAnnouncement {
   isPinned: boolean;
 }
 
-/** 홈 찬양 카드에서 "이번주 찬양콘티" 쪽에 보여줄 요약 */
+/** 홈 찬양 카드에서 "주일 찬양콘티" 쪽에 보여줄 요약 */
 export interface DashboardPraiseSet {
-  /** "8월 24일 ~ 8월 30일" */
-  weekLabel: string;
-  /** 이번 주 콘티인지. false면 지난 주 콘티를 대신 보여주는 중이다. */
-  isThisWeek: boolean;
+  /** "9월 6일 주일" */
+  sundayLabel: string;
+  /** 다가오는 주일 콘티인지. false면 지난 주일 콘티를 대신 보여주는 중이다. */
+  isUpcoming: boolean;
   itemCount: number;
   /** 첫 번째 콘티의 사진(또는 유튜브 썸네일) 주소 */
   coverImageUrl: string | null;
@@ -66,7 +66,7 @@ export interface DashboardData {
   /** 진행 중인 통독 플랜마다 카드 하나 (없으면 빈 배열) */
   bibleReadings: BibleReadingInfo[];
   song: SongInfo | null;
-  /** 이번주 찬양콘티 요약 (홈 찬양 카드가 추천찬양과 번갈아 보여준다) */
+  /** 주일 찬양콘티 요약 (홈 찬양 카드가 추천찬양과 번갈아 보여준다) */
   praiseSet: DashboardPraiseSet | null;
   birthday: BirthdayInfo | null;
   prayerSummary: PrayerSummary;
@@ -232,7 +232,7 @@ async function fetchSong(
 }
 
 /**
- * 이번주(없으면 가장 최근 주) 찬양콘티 요약.
+ * 다가오는 주일(없으면 가장 최근 주일) 찬양콘티 요약.
  * 콘티 기능 설정 전이라 테이블이 없어도 홈 화면이 통째로 막히지 않도록 삼킨다.
  */
 async function fetchPraiseSetSummary(
@@ -245,8 +245,8 @@ async function fetchPraiseSetSummary(
     const first = week.items[0];
 
     return {
-      weekLabel: week.weekLabel,
-      isThisWeek: week.isThisWeek,
+      sundayLabel: week.sundayLabel,
+      isUpcoming: week.isUpcoming,
       itemCount: week.items.length,
       coverImageUrl: first.imageUrl ?? first.thumbnailUrl,
     };

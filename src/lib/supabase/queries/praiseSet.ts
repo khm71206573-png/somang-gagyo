@@ -1,5 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { formatTimeAgo, unwrapRelation, weekStartDateString } from "./utils";
+import {
+  formatSundayLabel,
+  formatTimeAgo,
+  unwrapRelation,
+  upcomingSundayDateString,
+} from "./utils";
 
 /** 42P01 = 테이블 없음, 42703 = 컬럼 없음. 마이그레이션 적용 전이면 이 코드로 온다. */
 const UNDEFINED_TABLE = "42P01";
@@ -193,32 +198,24 @@ export interface PraiseSetItem {
 }
 
 export interface PraiseSetWeek {
-  /** 보여주고 있는 콘티의 주 시작일(주일). 올라온 콘티가 없으면 이번 주. */
-  weekStart: string;
-  /** "8월 24일 ~ 8월 30일" */
-  weekLabel: string;
-  /** 이번 주 콘티인지. false면 지난 주 콘티를 대신 보여주는 중이다. */
-  isThisWeek: boolean;
+  /** 보여주고 있는 콘티를 쓰는 주일 날짜. 올라온 콘티가 없으면 다가오는 주일. */
+  sunday: string;
+  /** "9월 6일 주일" */
+  sundayLabel: string;
+  /** 다가오는 주일 콘티인지. false면 지난 주일 콘티를 대신 보여주는 중이다. */
+  isUpcoming: boolean;
   items: PraiseSetItem[];
-}
-
-/** "2026-08-24" → "8월 24일 ~ 8월 30일" */
-export function formatWeekRangeLabel(weekStart: string) {
-  const [year, month, day] = weekStart.split("-").map(Number);
-  const start = new Date(year, month - 1, day);
-  const end = new Date(year, month - 1, day + 6);
-  return `${start.getMonth() + 1}월 ${start.getDate()}일 ~ ${end.getMonth() + 1}월 ${end.getDate()}일`;
 }
 
 const ROW_COLUMNS =
   "id, image_url, storage_path, created_by, created_at, uploader:profiles(name)";
 
 /** 유튜브 컬럼이 아직 없는 DB에서도 콘티 목록이 보이도록 한 번 더 조회한다. */
-async function fetchRows(supabase: SupabaseClient, weekStart: string) {
+async function fetchRows(supabase: SupabaseClient, sunday: string) {
   const { data, error } = await supabase
     .from("praise_sets")
     .select(`${ROW_COLUMNS}, youtube_url`)
-    .eq("week_start", weekStart)
+    .eq("week_start", sunday)
     .order("created_at", { ascending: true });
 
   if (!error) return data ?? [];
@@ -229,7 +226,7 @@ async function fetchRows(supabase: SupabaseClient, weekStart: string) {
   const { data: legacy, error: legacyError } = await supabase
     .from("praise_sets")
     .select(ROW_COLUMNS)
-    .eq("week_start", weekStart)
+    .eq("week_start", sunday)
     .order("created_at", { ascending: true });
 
   if (legacyError) {
@@ -246,10 +243,10 @@ export async function fetchCurrentPraiseSet(
     data: { user },
   } = await supabase.auth.getUser();
 
-  const thisWeekStart = weekStartDateString();
+  const upcomingSunday = upcomingSundayDateString();
 
-  // 이번 주 콘티가 아직 안 올라온 날에도 화면이 비어 보이지 않도록,
-  // 가장 최근에 올라온 주의 콘티를 대신 보여준다. (추천 찬양과 같은 방식)
+  // 다가오는 주일 콘티가 아직 안 올라온 날에도 화면이 비어 보이지 않도록,
+  // 가장 최근에 올라온 주일의 콘티를 대신 보여준다. (추천 찬양과 같은 방식)
   const { data: latest, error } = await supabase
     .from("praise_sets")
     .select("week_start")
@@ -262,13 +259,13 @@ export async function fetchCurrentPraiseSet(
     throw new Error(error.message || "찬양콘티를 불러오지 못했어요.");
   }
 
-  const weekStart = (latest?.week_start as string | undefined) ?? thisWeekStart;
-  const rows = await fetchRows(supabase, weekStart);
+  const sunday = (latest?.week_start as string | undefined) ?? upcomingSunday;
+  const rows = await fetchRows(supabase, sunday);
 
   return {
-    weekStart,
-    weekLabel: formatWeekRangeLabel(weekStart),
-    isThisWeek: weekStart === thisWeekStart,
+    sunday,
+    sundayLabel: formatSundayLabel(sunday),
+    isUpcoming: sunday === upcomingSunday,
     items: rows.map((row) => {
       const uploader = unwrapRelation(
         row.uploader as { name: string | null } | { name: string | null }[] | null,

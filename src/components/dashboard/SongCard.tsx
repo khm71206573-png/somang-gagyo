@@ -36,17 +36,17 @@ export function SongCard({ song, praiseSet = null }: SongCardProps) {
 
   // 누르면 찬양 탭의 해당 메뉴로 바로 열린다.
   const href = isPraiseSlide ? "/song?tab=praiseSet" : "/song?tab=recommended";
-  const label = isPraiseSlide ? "이번주 찬양콘티" : "추천찬양";
+  const label = isPraiseSlide ? "주일 찬양콘티" : "추천찬양";
   const title = isPraiseSlide
     ? praiseSet
-      ? praiseSet.isThisWeek
-        ? "이번주 콘티"
-        : "지난주 콘티"
+      ? praiseSet.isUpcoming
+        ? "다가오는 주일 콘티"
+        : "지난 주일 콘티"
       : "찬양콘티"
     : (song?.title ?? "오늘의 찬양");
   const subtitle = isPraiseSlide
     ? praiseSet
-      ? `${praiseSet.weekLabel} · ${praiseSet.itemCount}개`
+      ? `${praiseSet.sundayLabel} · ${praiseSet.itemCount}개`
       : "아직 등록 전이에요"
     : song
       ? song.artist

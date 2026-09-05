@@ -20,7 +20,8 @@ const OFFLINE_QUERY_KEYS = ["dashboard", "devotion", "bible-progress"];
 // v7 : 통독 일시중지 상태(isPaused) 추가
 // v8 : 통독 플랜 다중 진행 (홈 bibleReadings 배열, 통독탭 planTabs)
 // v9 : 홈 공지 배너 목록(announcements) 추가
-const CACHE_BUSTER = "v9";
+// v10 : 찬양콘티 기준일을 "다가오는 주일"로 변경 (sundayLabel·isUpcoming)
+const CACHE_BUSTER = "v10";
 
 const noopStorage: Storage = {
   getItem: () => null,

@@ -16,11 +16,22 @@ export function toDateString(date: Date) {
   return `${y}-${m}-${d}`;
 }
 
-/** 주어진 날짜가 속한 주의 시작일(주일)을 "YYYY-MM-DD"로 돌려준다. */
-export function weekStartDateString(date: Date = new Date()) {
-  const start = new Date(date);
-  start.setDate(date.getDate() - date.getDay());
-  return toDateString(start);
+/**
+ * 다가오는 주일(일요일) 날짜를 "YYYY-MM-DD"로 돌려준다. 오늘이 주일이면 오늘.
+ *
+ * 찬양콘티는 주일 전(보통 금요일)에 올라오므로, 올린 날이 속한 주의 시작일이 아니라
+ * 그 콘티를 실제로 쓰는 "다가오는 주일"을 기준 날짜로 삼는다.
+ */
+export function upcomingSundayDateString(date: Date = new Date()) {
+  const sunday = new Date(date);
+  sunday.setDate(date.getDate() + ((7 - date.getDay()) % 7));
+  return toDateString(sunday);
+}
+
+/** "2026-09-06" → "9월 6일 주일" */
+export function formatSundayLabel(sunday: string) {
+  const [, month, day] = sunday.split("-").map(Number);
+  return `${month}월 ${day}일 주일`;
 }
 
 export function monthDayOf(dateStr: string) {
